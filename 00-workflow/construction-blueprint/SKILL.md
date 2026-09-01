@@ -1,10 +1,139 @@
 ---
 name: construction-blueprint
 display_name: 施工蓝图
-description: Use when an Architecture Director has frozen the current Stage Contract and an implementation agent needs a deterministic, repository-grounded execution contract before coding begins.
+description: Use when an Architecture Director has frozen the current Stage Contract and an implementation agent needs a deterministic, repository-grounded execution contract that delivers the Stage through continuous vertical integration, real product checkpoints, and user-verifiable outcomes.
 ---
 
 # 施工蓝图
+
+# 最高优先级施工原则
+
+以下原则高于后续任务拆分、依赖排序、测试组织与局部效率优化。发生冲突时，以本节为准。
+
+## 1. 先让真实产品成立，再继续扩建
+
+对于包含用户界面、客户端或真实产品交互的 Stage，施工必须尽早形成最薄的真实端到端链路，并在后续施工中持续保持产品可运行、可交互、可观察。
+
+默认禁止：
+
+`Backend → Database → Services → Frontend → Final Integration`
+
+默认采用：
+
+`Thin Vertical Slice → Real Integration → Product Checkpoint → Expand → Re-integrate → Product Checkpoint → Stage Acceptance`
+
+不得把跨层集成推迟到 Stage 尾部。
+
+## 2. Stage 按 Integration Slice 施工，不按技术层批量施工
+
+一个 Stage 可以包含很多 Tasks，但 Tasks 必须组织进一个或多个 `Integration Slice`。
+
+每个 Integration Slice 必须形成一个已经连接起来的产品状态，而不是一组“分别完成、以后再组装”的零件。
+
+典型 Slice 可以同时包含：
+
+- 最小 UI / Client interaction
+- 对应 API / Backend behavior
+- 对应 Data / State change
+- 必要 External Service
+- Error / Loading / Failure behavior
+- Real integration verification
+
+任务数量不是风险；**长期不集成才是风险**。
+
+## 3. CI PASS 不是产品成立
+
+Unit / Integration / CI / Typecheck / Mock 测试是必要工程证据，但不能替代真实产品路径。
+
+对于用户型 Stage，至少必须证明：
+
+`Real Product Entry → Real User Action → Real Call Path → Real Backend / Service → Real State Change → Real Visible Result`
+
+如果主要产品路径仍依赖 Mock、stub、fake service 或绕过真实入口，只能证明组件，不得证明 Stage Delivery 完成。
+
+## 4. UI 是产品行为的一部分，不是最后的装饰层
+
+当 Stage 的 Product Outcome 需要 UI / Client 才能被用户体验时，UI 必须进入早期 Integration Slice。
+
+不得默认把 UI 安排到所有 Backend / Data / Service 工作完成之后。
+
+以下产品问题通常只有接入真实 UI 后才能被验证：
+
+- loading / pending 状态
+- error feedback
+- stale state / refresh
+- repeated action
+- disabled / enabled condition
+- navigation / return state
+- persistence visibility
+- optimistic / asynchronous behavior
+- timeout / long-running action
+- permission / empty state
+- user-visible recovery
+
+## 5. 每个 Integration Slice 都必须有 Product Checkpoint
+
+每个 Slice 必须定义一个可重复执行的 `Product Checkpoint`，至少包含：
+
+- `Product Entry`
+- `Actor / Test Identity`
+- `Preconditions`
+- `Hands-on Steps`
+- `Real Services Used`
+- `Expected Visible Result`
+- `Expected State / Persistence`
+- `Required Failure Behavior`
+- `Automated Evidence`
+- `Mocks Allowed`
+- `Slice Exit State`
+
+Checkpoint 必须能够从真实产品入口验证当前 Slice 已经集成成立。
+
+用户不必在每个 Slice 后亲自批准施工继续，但蓝图必须保证任何 Slice 结束时都存在一个可上手验证的真实产品状态。
+
+## 6. Stage 必须有最终 Hands-on Acceptance
+
+对于用户型 Stage，Execution Contract 必须提供最终 `Hands-on Acceptance`。
+
+它必须让非技术用户知道：
+
+- 从哪里进入产品
+- 用什么账号 / 前置条件
+- 做哪几个操作
+- 应该看到什么
+- 数据 / 状态应如何保持
+- 关键失败时应看到什么
+
+自动化证据不能替代最终 Hands-on Acceptance。
+
+## 7. Technical-only Stage 是例外
+
+如果 Current Stage 无法形成用户可体验的产品变化，只允许在 Stage Contract 已明确批准纯技术前置时继续。
+
+该 Stage 必须同时满足：
+
+- 是紧邻产品闭环的真实必要前置；
+- 有明确可验证 Exit State；
+- 明确下一哪个 Stage 会消费该能力；
+- 不把多个可纵向切开的产品能力连续拆成黑盒技术 Stage。
+
+若当前 Stage 本应产生产品 Visible Delta，但真实仓库路径只能形成后端 / 数据库 / 基础设施黑盒变化，则：
+
+`REPLAN_BLUEPRINT` 或 `PLAN_BLOCKED_ARCHITECTURE`
+
+不得自行把“内部完成”当成产品完成。
+
+## 8. 失败的 Product Checkpoint 阻断后续扩建
+
+如果某 Slice 的真实产品路径失败：
+
+- 不继续堆叠后续 Slice；
+- 先定位当前 Slice 内的产品 / 集成 / 实现问题；
+- 属于实现错误 → `LOCAL_FIX`；
+- 属于蓝图顺序 / 落点问题 → `REPLAN_BLUEPRINT`；
+- 属于 Stage / Architecture / Product 语义问题 → 向上游升级。
+
+目标是尽早暴露真实产品问题，而不是把问题积累到 Stage 80%–90% 时一次爆发。
 
 ## Purpose
 
@@ -19,7 +148,10 @@ The execution contract is complete when:
 - every upstream requirement is traceable to implementation work and evidence;
 - every preservation, regression, architecture, and scope obligation is verifiable;
 - every exception routes to a defined control path;
-- dry-run reaches the Stage Exit State without introducing a new product, architecture, scope, or acceptance decision.
+- dry-run reaches the Stage Exit State without introducing a new product, architecture, scope, or acceptance decision;
+- user-facing work is grouped into continuously integrated vertical slices rather than late-stage component integration;
+- every Integration Slice ends in a real Product Checkpoint;
+- every user-facing Stage ends in a reproducible Hands-on Acceptance path.
 
 ## Authority Boundary
 
@@ -77,6 +209,8 @@ Collect and reconcile:
 - Regression Set
 - Escalation Triggers
 - Stop Rule
+- Hands-on / user-visible acceptance intent when defined upstream
+- Technical-only Stage designation when applicable
 
 ### Architecture Inputs
 
@@ -130,9 +264,13 @@ Translate the Stage Exit State into concrete observable repository and runtime c
 - Acceptance Criteria satisfied;
 - Regression Set preserved;
 - Deferred Set remains outside current construction;
-- Stage Stop Rule becomes true.
+- Stage Stop Rule becomes true;
+- the real product entry path exposes the Stage Visible Delta when the Stage is user-facing;
+- the Stage has a reproducible Hands-on Acceptance path.
 
 Current Stage completion is independent from final-product completion.
+
+For a user-facing Stage, repository correctness without a working product path is not a valid Target State.
 
 ### 3. Operationalize Frozen Decisions
 
@@ -187,9 +325,41 @@ Every task must trace upward to at least one current-stage requirement, acceptan
 
 Every current-stage requirement must trace downward to at least one task and one verification point.
 
-### 6. Build the Dependency Graph
+### 6. Build Integration Slices
 
-Decompose the Target State into ordered tasks.
+Before decomposing into individual tasks, divide the Stage into the smallest practical vertical `Integration Slice`s.
+
+Each Slice must define:
+
+- `Slice ID`
+- `Product / System Outcome`
+- `Real Product Entry`
+- `Vertical Path`
+- `Required Layers`
+- `Real Dependencies`
+- `Tasks`
+- `Product Checkpoint`
+- `Automated Evidence`
+- `Slice Exit State`
+- `Next Slice Dependency`
+
+Rules:
+
+- the first real end-to-end slice occurs as early as practical;
+- a Slice integrates the minimum necessary Client / UI, Backend, Data, and External Service layers required for its outcome;
+- later Slices extend an already-running product path instead of waiting for a final integration phase;
+- no user-facing Stage may contain a single late `FINAL INTEGRATION` task that first connects independently built major layers;
+- component-level preparatory tasks are allowed only when consumed by the nearest upcoming Slice;
+- if two or more major technical layers are being substantially completed in isolation before any real product path exists, re-slice unless the Stage Contract explicitly authorizes technical-only construction;
+- every Slice must end with a Product Checkpoint before dependent expansion work proceeds.
+
+A Slice is complete only when its layers are connected and its real product behavior works.
+
+`code exists` is not equivalent to `Slice complete`.
+
+### 7. Build the Dependency Graph
+
+Decompose each Integration Slice into ordered tasks.
 
 A task is valid when it:
 
@@ -205,11 +375,12 @@ Order tasks by real dependency.
 
 Mark `[parallel]` only when prerequisites, write surfaces, generated artifacts, shared state, and verification dependencies are independent.
 
-### 7. Compile Tasks into Mechanical Steps
+### 8. Compile Tasks into Mechanical Steps
 
 Each task must contain:
 
 - `Task ID`
+- `Slice ID`
 - `Requirement Coverage`
 - `Objective`
 - `Prerequisites`
@@ -221,6 +392,8 @@ Each task must contain:
 - `Verification`
 - `Expected Result`
 - `Exit Condition`
+
+`Slice ID` identifies the Integration Slice whose real product state this task advances.
 
 `Requirement Coverage` lists exact Requirement IDs, Acceptance IDs, invariant IDs, preservation IDs, or regression IDs served by the task.
 
@@ -240,7 +413,7 @@ Each task must contain:
 
 `Exit Condition` states the condition that unlocks dependent tasks.
 
-### 8. Define Acceptance Matrix
+### 9. Define Acceptance Matrix
 
 Map the complete Stage Contract to verification.
 
@@ -262,6 +435,7 @@ Each item records:
 - `PRESERVATION`
 - `REGRESSION`
 - `SCOPE`
+- `USER_REALITY`
 
 Coverage requirements:
 
@@ -269,13 +443,16 @@ Coverage requirements:
 - every current-stage Architecture Invariant obligation → `ARCHITECTURE`;
 - every Preservation Set commitment → `PRESERVATION`;
 - every Regression Set item → `REGRESSION`;
-- current Authorized Scope and Deferred boundary → `SCOPE`.
+- current Authorized Scope and Deferred boundary → `SCOPE`;
+- every user-facing Slice Product Checkpoint and final Hands-on Acceptance → `USER_REALITY`.
+
+`USER_REALITY` evidence must come from the real product path. Unit tests, mocks, isolated API calls, or database inspection alone are insufficient.
 
 Every item produces one verdict:
 
 `PASS | FAIL | BLOCKED`
 
-### 9. Define Exception Routing
+### 10. Define Exception Routing
 
 Every expected execution exception must map to one control path.
 
@@ -317,9 +494,12 @@ Define routes for at least:
 - a new architectural or product decision becomes necessary;
 - the documented sequence cannot reach an Acceptance Criterion;
 - migration / deployment ordering is unsafe;
-- preservation or regression obligations become incompatible with the approved path.
+- preservation or regression obligations become incompatible with the approved path;
+- Product Checkpoint fails even though isolated component tests pass;
+- current ordering postpones real integration until late in the Stage;
+- the primary product path can only be demonstrated through mocks or bypasses.
 
-### 10. Dry-Run the Document
+### 11. Dry-Run the Document
 
 Simulate execution from verified Entry State through every task to final Stage acceptance using the current repository.
 
@@ -327,6 +507,8 @@ Validate:
 
 - every referenced path, symbol, interface, schema, command, and tool resolves;
 - every task prerequisite exists before use;
+- Integration Slices appear in a dependency-valid order;
+- the earliest practical real end-to-end path is not unnecessarily postponed;
 - every output satisfies dependent task inputs;
 - names, signatures, IDs, schemas, and state transitions remain consistent;
 - every task exposes one approved implementation path;
@@ -339,6 +521,11 @@ Validate:
 - Deferred items remain outside the execution graph;
 - every exception has one defined route;
 - intermediate repository states remain valid;
+- every Integration Slice reaches its Product Checkpoint using the real product path;
+- primary user-facing paths do not rely on mocks as proof of completion;
+- UI / Client behavior required by the Stage is integrated before late-stage bulk completion;
+- a failed Product Checkpoint prevents dependent expansion work;
+- final Hands-on Acceptance is reproducible for user-facing Stages;
 - final repository and runtime state satisfy the Stage Exit State;
 - Stage Stop Rule becomes true.
 
@@ -365,11 +552,14 @@ Generate the execution document with this exact section order:
    - `### Regression Set`
    - `### Deferred Set`
 10. `## Requirement Traceability`
-11. `## Execution Graph`
-12. `## Tasks`
-13. `## Acceptance Matrix`
-14. `## Exception Routing`
-15. `## Completion Protocol`
+11. `## Integration Slices`
+12. `## Execution Graph`
+13. `## Tasks`
+14. `## Product Checkpoints`
+15. `## Hands-on Acceptance`
+16. `## Acceptance Matrix`
+17. `## Exception Routing`
+18. `## Completion Protocol`
 
 ## Stage Authority Format
 
@@ -391,6 +581,96 @@ REQ-02 -> AC-02 -> T02     -> EVID-02
 INV-03 -> AC-A03 -> T04    -> EVID-A03
 ```
 
+## Integration Slice Format
+
+Use for every Slice:
+
+```markdown
+### SXX — <slice name>
+
+**Outcome:**
+
+**Real Product Entry:**
+
+**Vertical Path:**
+
+**Required Layers:**
+
+**Real Dependencies:**
+
+**Tasks:**
+
+**Product Checkpoint:**
+
+**Automated Evidence:**
+
+**Slice Exit State:**
+
+**Next Slice Dependency:**
+```
+
+## Product Checkpoint Format
+
+```markdown
+### PC-SXX — <checkpoint name>
+
+**Product Entry:**
+
+**Actor / Test Identity:**
+
+**Preconditions:**
+
+**Hands-on Steps:**
+1.
+2.
+3.
+
+**Real Services Used:**
+
+**Expected Visible Result:**
+
+**Expected State / Persistence:**
+
+**Required Failure Behavior:**
+
+**Automated Evidence:**
+
+**Mocks Allowed:**
+
+**Pass Condition:**
+```
+
+For the primary product path, `Mocks Allowed` should normally be `NO`. If `YES`, state exactly what remains unproven and do not use the checkpoint as final Stage delivery evidence.
+
+## Hands-on Acceptance Format
+
+For every user-facing Stage:
+
+```markdown
+## Hands-on Acceptance
+
+**Who can test:**
+
+**Product Entry:**
+
+**Preconditions / Test Account:**
+
+**Steps:**
+1.
+2.
+3.
+
+**Expected Visible Result:**
+
+**Expected Persistence / State:**
+
+**Expected Failure Behavior:**
+
+**What This Proves:**
+```
+
+This section is written for a non-technical user. It must be directly executable without reading implementation details.
+
 ## Execution Graph Format
 
 Represent dependencies compactly:
@@ -409,6 +689,8 @@ Use this structure for every task:
 
 ```markdown
 ### TXX — <task name>
+
+**Slice ID:**
 
 **Requirement Coverage:**
 
@@ -450,17 +732,24 @@ The execution contract ends in `READY` only when:
 - all authoritative inputs are present and mutually compatible;
 - all repository references resolve;
 - all current-stage implementation decisions are fixed;
+- user-facing work is organized into vertical Integration Slices;
 - no task requires a new product or architecture decision;
 - all Accepted Requirements are traceable to tasks and evidence;
 - all tasks have deterministic prerequisites, actions, outputs, verification, and exit conditions;
 - all Acceptance Criteria are covered;
+- every Integration Slice has a real Product Checkpoint;
+- the first real end-to-end path is not unnecessarily postponed;
+- no user-facing Stage relies on one late final-integration task to connect major layers;
 - all Architecture Invariants relevant to the Stage are protected;
 - all Preservation commitments are verifiable;
 - all Regression obligations are verifiable;
 - all Deferred requirements remain outside current execution;
 - every planned change maps to current Stage authority;
 - all exception conditions route to a deterministic control path;
-- dry-run reaches the Stage Exit State;
+- every Slice checkpoint can be executed against the real product path;
+- component tests / CI / mocks are not used as substitutes for real product delivery evidence;
+- user-facing Stages include a reproducible final Hands-on Acceptance;
+- dry-run reaches the Stage Exit State through continuously integrated product states;
 - the Stage Stop Rule can be mechanically evaluated.
 
 Otherwise end in:
@@ -481,7 +770,9 @@ Owner: <Construction Blueprint | Architecture Director | Product / User>
 
 When status is `READY`, hand the Execution Contract to the implementation agent.
 
-The implementation agent executes the blueprint under the project’s construction rules and returns implementation changes plus verification evidence.
+The implementation agent executes the blueprint under the project’s construction rules, completes one Integration Slice at a time, and returns implementation changes plus automated and Product Checkpoint evidence.
+
+A failed Product Checkpoint blocks expansion into dependent Slices until resolved or formally replanned.
 
 The Stage Verifier later evaluates:
 
@@ -500,3 +791,5 @@ Prefer repository-grounded references over descriptive prose.
 Keep rationale only when it constrains execution, preserves an upstream decision, or explains a required exception route.
 
 The blueprint is complete when the implementation agent can execute from Entry State to Exit State without deciding what the product means, what architecture should exist, what belongs in the Stage, or what counts as completion.
+
+For user-facing work, the execution path must continuously produce working integrated product states. A plan that reaches “80% component completion” before the product can be meaningfully used is structurally invalid even if CI is green.
