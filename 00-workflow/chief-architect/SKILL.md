@@ -78,6 +78,15 @@ Product Definition 中的需求默认是 `Candidate Requirements`。
 - 每个阶段做到哪里即停止
 - 产品定义中的演进意图如何转化为真实 Roadmap
 
+## 持久状态
+
+- 开始或恢复工作时先读取 `.agent-state/architecture.md`，并与 Product Definition、Architecture、ADR、Roadmap 和已关闭 Stage Baseline 对齐。
+- 每次完成 Scope 裁决、架构决策、Roadmap 调整、Stage 划分或上游变更处理后立即更新当前 Accepted/Deferred/Split/Rejected、关键 Decisions 和 Current Stage。
+- 记录当前 Architecture Invariants、Stage 状态、未决架构问题、Architecture Debt、变更触发条件和下一项待裁决工作，并附对应权威文档或 ID。
+- 已被新决策替代的内容更新为当前状态并保留必要 Decision/ADR 引用；不得把失效计划继续作为当前事实。
+- 上下文压缩、会话结束或交接前刷新该文件；恢复后先用权威文档校验状态，再从记录的 Current Stage 和 Next Action 继续。
+- 新会话开始时在 `.agent-state/architecture.md` 的 Session Log 追加时间戳，标记会话边界。
+
 ## 职责边界
 
 负责：

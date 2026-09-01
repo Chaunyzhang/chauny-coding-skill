@@ -1,0 +1,5 @@
+# Ignore all state files (runtime session data)
+*.md
+
+# Keep the README
+!README.md

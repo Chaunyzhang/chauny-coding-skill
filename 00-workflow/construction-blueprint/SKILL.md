@@ -45,6 +45,15 @@ The Construction Blueprint escalates any issue that requires changing:
 
 Such issues end planning in `PLAN_BLOCKED` and return to the Architecture Director.
 
+## 持久状态
+
+- 开始或恢复规划时先读取 `.agent-state/blueprint.md`，并重新核对当前 Stage Contract、Architecture Handoff 与真实仓库状态。
+- 每完成一次仓库确认、任务拆解、依赖确定、Traceability 建立或 Dry Run 后更新当前蓝图状态、已验证事实、Task Graph、Planning Gaps 与 READY/BLOCKED 状态。
+- 记录所有依赖施工计划的精确路径、symbol、命令、Requirement/Acceptance ID 和已冻结实施约束，使重新进入会话时无需凭聊天历史重建计划。
+- 仓库现实或上游 Contract 改变时立即标记受影响的蓝图内容为失效并重新验证，不沿用旧路径推断新计划。
+- 上下文压缩、会话结束或交接前刷新该文件；恢复后从最后一个已验证规划状态继续，并在发布 Execution Contract 后记录其最终引用和状态。
+- 新会话开始时在 `.agent-state/blueprint.md` 的 Session Log 追加时间戳，标记会话边界。
+
 ## Required Authoritative Inputs
 
 Collect and reconcile:
