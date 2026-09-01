@@ -1,102 +1,207 @@
 ---
 name: construction-blueprint
 display_name: 施工蓝图
-description: Use when requirements and design decisions are settled and an agent needs a deterministic, repository-grounded implementation document before coding begins.
+description: Use when an Architecture Director has frozen the current Stage Contract and an implementation agent needs a deterministic, repository-grounded execution contract before coding begins.
 ---
 
 # 施工蓝图
 
 ## Purpose
 
-Compile approved intent, repository reality, fixed decisions, scope, and acceptance criteria into an execution document that an implementation agent can follow mechanically.
+Compile a frozen Stage Contract, approved architecture decisions, repository reality, scope boundaries, and acceptance requirements into a deterministic execution contract that an implementation agent can follow mechanically.
 
-The execution document is complete when every implementation choice required during construction is already resolved, every step has deterministic inputs and outputs, every verification has an observable verdict, and every exception maps to a defined control path.
+The blueprint compiles approved decisions; it does not create product or architecture decisions.
 
-## Required Inputs
+The execution contract is complete when:
+
+- every construction-time implementation choice is already resolved;
+- every task has deterministic prerequisites, actions, outputs, verification, and exit conditions;
+- every upstream requirement is traceable to implementation work and evidence;
+- every preservation, regression, architecture, and scope obligation is verifiable;
+- every exception routes to a defined control path;
+- dry-run reaches the Stage Exit State without introducing a new product, architecture, scope, or acceptance decision.
+
+## Authority Boundary
+
+Source-of-truth order:
+
+`Product / Architecture → Stage Contract → Construction Blueprint → Implementation → Evidence`
+
+The Construction Blueprint may decide execution mechanics inside already-approved boundaries, including task decomposition, repository targets, ordering, dependency sequencing, test placement, migration sequencing, and verification placement.
+
+The Construction Blueprint escalates any issue that requires changing:
+
+- Product Outcome or Product Rule;
+- Accepted Requirement;
+- Stage Scope;
+- Stage Exit State;
+- Architecture Invariant;
+- data ownership or lifecycle semantics;
+- interface semantics;
+- security or permission semantics;
+- transaction or consistency semantics;
+- acceptance semantics;
+- approved technical direction.
+
+Such issues end planning in `PLAN_BLOCKED` and return to the Architecture Director.
+
+## Required Authoritative Inputs
 
 Collect and reconcile:
 
-- Approved requirement or stage objective
-- Current repository state
-- Relevant architecture and project rules
-- Existing implementation patterns
-- Fixed technical decisions
-- Current-stage boundaries
-- Deferred requirements
-- Acceptance criteria
+### Current Stage Contract
 
-Treat repository contents as evidence and approved decisions as authority. Resolve conflicts during planning and record the resolved result in the execution document.
+- Stage ID / Name
+- Roadmap Position
+- Accepted Requirement IDs
+- Intent
+- Entry State
+- Exit State
+- Visible Delta
+- Decisions
+- Authorized Scope
+- Architecture Delta
+- Architecture Invariants
+- Preservation Set
+- Deferred Set
+- Acceptance Criteria
+- Regression Set
+- Escalation Triggers
+- Stop Rule
+
+### Architecture Inputs
+
+- Relevant Architecture Spine
+- Relevant ADR / Decision Log entries
+- Architecture Director Blueprint Handoff
+- Applicable project rules
+
+### Repository Inputs
+
+- Current repository state
+- Relevant implementation, callers, schemas, migrations, tests, configuration, and generated artifacts
+- Existing implementation patterns
+- Available build, test, typecheck, migration, generation, and inspection commands
+
+Approved upstream decisions are authority. Repository state is execution reality.
+
+Differences between authority and reality must be classified before planning:
+
+- repository detail compatible with approved decisions → incorporate into blueprint;
+- implementation-path ambiguity inside approved boundaries → resolve in blueprint;
+- upstream semantic or architectural conflict → `PLAN_BLOCKED`.
 
 ## Planning Procedure
 
 ### 1. Establish Current State
 
-Identify:
+Identify the verified Entry State:
 
-- Existing behavior relevant to the stage
-- Existing files, symbols, interfaces, schemas, tests, commands, and conventions used by the work
-- Dependencies between the affected components
-- Existing invariants that remain valid after the stage
+- existing behavior relevant to the Stage;
+- exact files, symbols, interfaces, schemas, tests, commands, generated artifacts, and conventions involved;
+- affected component dependencies;
+- current call, data, state, and side-effect paths;
+- applicable Architecture Invariants;
+- Preservation Set and Regression Set baselines;
+- repository facts required by later tasks.
 
 Use exact repository paths and symbol names.
 
-### 2. Define Target State
+Record discrepancies between documented Entry State and repository reality.
 
-State the observable repository and system state after execution:
+### 2. Establish Target State
 
-- Capability added or changed
-- Existing behavior preserved
-- Interfaces or data shapes established
-- Stage-level completion boundary
-- Requirements assigned to later stages
+Translate the Stage Exit State into concrete observable repository and runtime conditions:
 
-Define completion for the current stage independently from final-project completion.
+- capability added or changed;
+- Visible Delta produced;
+- required interfaces, schemas, state transitions, or artifacts established;
+- existing behavior preserved;
+- Architecture Delta realized;
+- Acceptance Criteria satisfied;
+- Regression Set preserved;
+- Deferred Set remains outside current construction;
+- Stage Stop Rule becomes true.
 
-### 3. Freeze Decisions
+Current Stage completion is independent from final-product completion.
 
-Record every decision that affects implementation shape, including:
+### 3. Operationalize Frozen Decisions
 
-- Architecture placement
-- Interfaces and signatures
-- Data ownership and lifecycle
-- Persistence behavior
-- Error semantics
-- Dependency choices
-- Compatibility behavior
-- Transaction or concurrency boundaries
-- Test strategy
-- Migration strategy
+Extract every approved decision that constrains implementation:
 
-Each decision must select one implementation path. Any unresolved multi-path choice is a planning gap.
+- architecture placement;
+- interfaces and signatures;
+- data ownership and lifecycle;
+- persistence behavior;
+- error semantics;
+- dependency choices;
+- compatibility behavior;
+- transaction / concurrency / consistency boundaries;
+- security / permission semantics;
+- migration strategy;
+- test strategy;
+- generation strategy;
+- rollout or ordering constraints.
+
+Convert these decisions into repository-level implementation constraints.
+
+If a required decision is absent, contradictory, or still has multiple product/architecture-valid paths, return `PLAN_BLOCKED` to the Architecture Director.
 
 ### 4. Establish Scope Sets
 
-Define four explicit sets:
+Define:
 
-- `Change Set`: files, directories, symbols, schemas, or tests expected to change
-- `Preservation Set`: behaviors, contracts, files, interfaces, and invariants that remain unchanged
-- `Creation Set`: new artifacts expected after execution
-- `Deferred Set`: recognized requirements assigned outside the current stage
+- `Change Set`: existing files, directories, symbols, schemas, configurations, or tests expected to change;
+- `Creation Set`: new files, symbols, schemas, migrations, tests, or artifacts expected after execution;
+- `Preservation Set`: existing behaviors, interfaces, data contracts, invariants, files, or runtime guarantees that must remain valid;
+- `Regression Set`: existing tests, journeys, commands, or observable behavior that must continue to pass;
+- `Deferred Set`: recognized requirements intentionally outside the current Stage.
 
-Use paths, symbol names, identifiers, or requirement IDs wherever possible.
+Use exact paths, symbols, Acceptance IDs, Requirement IDs, ADR IDs, or invariant IDs wherever possible.
 
-### 5. Build the Dependency Graph
+Every planned change must belong to the current Stage Contract.
 
-Decompose the target state into ordered tasks. A task is valid when it:
+### 5. Build Requirement Traceability
 
-- Produces one independently verifiable state transition
-- Has explicit prerequisites
-- Has a bounded change surface
-- Supplies everything required by dependent tasks
-- Ends with an observable verification result
+Before task decomposition, establish:
 
-Order tasks by dependency. Mark tasks parallel only when their inputs and write surfaces are independent.
+`Accepted Requirement → Stage Acceptance → Blueprint Task → Verification Evidence`
 
-### 6. Compile Tasks into Mechanical Steps
+For every Accepted Requirement and Acceptance Criterion identify:
+
+- implementation responsibility;
+- task coverage;
+- expected evidence;
+- preservation or regression dependencies.
+
+Every task must trace upward to at least one current-stage requirement, acceptance item, architecture obligation, preservation obligation, or regression obligation.
+
+Every current-stage requirement must trace downward to at least one task and one verification point.
+
+### 6. Build the Dependency Graph
+
+Decompose the Target State into ordered tasks.
+
+A task is valid when it:
+
+- produces one independently verifiable state transition;
+- has explicit prerequisites;
+- has a bounded change surface;
+- implements a coherent requirement or architectural obligation;
+- supplies everything required by dependent tasks;
+- ends with an observable verification result;
+- leaves the repository in a valid intermediate state.
+
+Order tasks by real dependency.
+
+Mark `[parallel]` only when prerequisites, write surfaces, generated artifacts, shared state, and verification dependencies are independent.
+
+### 7. Compile Tasks into Mechanical Steps
 
 Each task must contain:
 
 - `Task ID`
+- `Requirement Coverage`
 - `Objective`
 - `Prerequisites`
 - `Targets`
@@ -108,89 +213,174 @@ Each task must contain:
 - `Expected Result`
 - `Exit Condition`
 
-`Targets` names exact files and symbols.
+`Requirement Coverage` lists exact Requirement IDs, Acceptance IDs, invariant IDs, preservation IDs, or regression IDs served by the task.
 
-`References` names exact repository artifacts whose structure or convention governs the task.
+`Targets` names exact files, symbols, schemas, migrations, configurations, tests, or generated artifacts.
 
-`Actions` are ordered state-changing operations. Each action describes one operation and contains enough detail to produce a single intended implementation path.
+`References` names exact repository artifacts, ADRs, interfaces, tests, or conventions that govern implementation.
 
-`Outputs` describe the concrete repository state created by the task.
+`Inputs` names the concrete repository state required before execution.
 
-`Verification` specifies executable commands, test selectors, inspections, or deterministic checks.
+`Actions` are ordered state-changing operations. Each action describes one operation and contains enough detail to produce the single approved implementation path.
 
-`Expected Result` states the exact observable result of verification.
+`Outputs` describe the concrete repository and runtime state produced by the task.
+
+`Verification` specifies executable commands, test selectors, inspections, state checks, migration checks, generation checks, or deterministic manual procedures.
+
+`Expected Result` states the exact observable verdict.
 
 `Exit Condition` states the condition that unlocks dependent tasks.
 
-### 7. Define Acceptance Matrix
+### 8. Define Acceptance Matrix
 
-Map every stage requirement to one or more verification points.
+Map the complete Stage Contract to verification.
 
-For each acceptance item record:
+Each item records:
 
 - `Acceptance ID`
-- `Requirement`
+- `Type`
+- `Requirement / Obligation`
+- `Requirement Source`
+- `Blueprint Task`
 - `Evidence Source`
 - `Verification Method`
 - `Pass Condition`
 
-Include preservation checks for existing behavior and scope checks for the planned change surface.
+`Type` is one of:
 
-Every acceptance item must produce a deterministic verdict: `PASS`, `FAIL`, or `BLOCKED`.
+- `DELIVERY`
+- `ARCHITECTURE`
+- `PRESERVATION`
+- `REGRESSION`
+- `SCOPE`
 
-### 8. Define Exception Routing
+Coverage requirements:
 
-Define execution-time control paths for:
+- every Stage Acceptance Criterion → `DELIVERY`;
+- every current-stage Architecture Invariant obligation → `ARCHITECTURE`;
+- every Preservation Set commitment → `PRESERVATION`;
+- every Regression Set item → `REGRESSION`;
+- current Authorized Scope and Deferred boundary → `SCOPE`.
 
-- Repository state differs from the documented prerequisite
-- Referenced file or symbol is absent or has a different contract
-- Required dependency or tool is unavailable
-- A verification fails within the current task
-- A verification exposes a pre-existing failure outside the current task
-- A new architectural or product decision becomes necessary
-- A deferred requirement becomes a prerequisite for the current stage
-- The documented sequence cannot reach an acceptance condition
+Every item produces one verdict:
 
-Each condition maps to one action: local correction within the current task, return to a named earlier task, or `PLAN_BLOCKED` with exact evidence and the missing decision.
+`PASS | FAIL | BLOCKED`
 
-### 9. Dry-Run the Document
+### 9. Define Exception Routing
 
-Simulate execution from the first task to final acceptance using the current repository.
+Every expected execution exception must map to one control path.
+
+#### `LOCAL_FIX`
+
+Use when the issue is an implementation error inside the current task and the approved design remains unchanged.
+
+#### `RETURN_TO_TASK:<TXX>`
+
+Use when the current failure proves an earlier blueprint task did not reach its Exit Condition.
+
+#### `REPLAN_BLUEPRINT`
+
+Use when the Stage Contract remains valid but the current task decomposition, ordering, repository targeting, or verification path cannot reach the approved Exit State.
+
+Blueprint may revise execution mechanics while preserving all upstream semantics and boundaries.
+
+#### `PLAN_BLOCKED_ARCHITECTURE`
+
+Use when continuing requires a new or changed architecture, scope, data, interface, security, transaction, compatibility, or acceptance decision.
+
+Return exact evidence and the unresolved decision to the Architecture Director.
+
+#### `PRODUCT_CHANGE`
+
+Use when the current Product Outcome, Product Rule, business behavior, acceptance meaning, or user-authorized requirement has changed.
+
+Freeze blueprint generation and route through Product Definition / Architecture Director replanning.
+
+Define routes for at least:
+
+- repository state differs from Entry State;
+- referenced file or symbol is absent or has a different contract;
+- required tool or dependency is unavailable;
+- verification fails inside the current task;
+- verification exposes a pre-existing external failure;
+- generated artifact and source-of-truth differ;
+- a deferred requirement becomes a true prerequisite;
+- a new architectural or product decision becomes necessary;
+- the documented sequence cannot reach an Acceptance Criterion;
+- migration / deployment ordering is unsafe;
+- preservation or regression obligations become incompatible with the approved path.
+
+### 10. Dry-Run the Document
+
+Simulate execution from verified Entry State through every task to final Stage acceptance using the current repository.
 
 Validate:
 
-- Every referenced path and symbol resolves
-- Every task prerequisite is created before use
-- Names and signatures remain consistent across tasks
-- Each task exposes one intended implementation path
-- Every required decision is frozen
-- Every requirement maps to implementation work and verification
-- Every verification has a defined expected result
-- Every exception has a defined route
-- The final repository state satisfies the target state and preservation set
+- every referenced path, symbol, interface, schema, command, and tool resolves;
+- every task prerequisite exists before use;
+- every output satisfies dependent task inputs;
+- names, signatures, IDs, schemas, and state transitions remain consistent;
+- every task exposes one approved implementation path;
+- no task creates a new product or architecture decision;
+- every Accepted Requirement maps to task work and evidence;
+- every Acceptance Criterion maps to deterministic verification;
+- every Architecture Invariant has a current-stage verification or preservation path;
+- every Preservation and Regression item has evidence;
+- every implementation change maps upward to a Stage obligation;
+- Deferred items remain outside the execution graph;
+- every exception has one defined route;
+- intermediate repository states remain valid;
+- final repository and runtime state satisfy the Stage Exit State;
+- Stage Stop Rule becomes true.
 
-Repair planning gaps before publishing the execution document.
+Repair blueprint-level gaps before publishing.
+
+If dry-run exposes an upstream decision gap, end in `PLAN_BLOCKED`.
 
 ## Output Document Schema
 
 Generate the execution document with this exact section order:
 
-1. `# <Stage or Feature> — Execution Contract`
-2. `## Objective`
-3. `## Current State`
-4. `## Target State`
-5. `## Fixed Decisions`
-6. `## Repository References`
-7. `## Scope`
+1. `# <Stage> — Execution Contract`
+2. `## Stage Authority`
+3. `## Objective`
+4. `## Entry State`
+5. `## Exit State`
+6. `## Visible Delta`
+7. `## Fixed Decisions`
+8. `## Repository References`
+9. `## Scope`
    - `### Change Set`
-   - `### Preservation Set`
    - `### Creation Set`
+   - `### Preservation Set`
+   - `### Regression Set`
    - `### Deferred Set`
-8. `## Execution Graph`
-9. `## Tasks`
-10. `## Acceptance Matrix`
-11. `## Exception Routing`
-12. `## Completion Protocol`
+10. `## Requirement Traceability`
+11. `## Execution Graph`
+12. `## Tasks`
+13. `## Acceptance Matrix`
+14. `## Exception Routing`
+15. `## Completion Protocol`
+
+## Stage Authority Format
+
+Record:
+
+- `Stage ID`
+- `Accepted Requirement IDs`
+- `Architecture / ADR References`
+- `Stage Contract Reference`
+- `Stop Rule`
+
+## Requirement Traceability Format
+
+Represent compactly:
+
+```text
+REQ-01 -> AC-01 -> T01,T03 -> EVID-01
+REQ-02 -> AC-02 -> T02     -> EVID-02
+INV-03 -> AC-A03 -> T04    -> EVID-A03
+```
 
 ## Execution Graph Format
 
@@ -210,6 +400,8 @@ Use this structure for every task:
 
 ```markdown
 ### TXX — <task name>
+
+**Requirement Coverage:**
 
 **Objective:**
 
@@ -235,32 +427,67 @@ Use this structure for every task:
 **Exit Condition:**
 ```
 
+## Acceptance Matrix Format
+
+Use:
+
+| ID | Type | Requirement / Obligation | Source | Task | Evidence | Verification | Pass Condition |
+|---|---|---|---|---|---|---|---|
+
 ## Completion Protocol
 
-The execution document ends in `READY` only when:
+The execution contract ends in `READY` only when:
 
-- All repository references resolve
-- All implementation decisions required by the task graph are fixed
-- All tasks have deterministic prerequisites, actions, outputs, verification, and exit conditions
-- All requirements are covered by the acceptance matrix
-- All preservation commitments are verifiable
-- All deferred requirements are explicitly classified
-- All exception conditions route to a deterministic action
-- The dry-run reaches the target state without introducing a new decision
+- all authoritative inputs are present and mutually compatible;
+- all repository references resolve;
+- all current-stage implementation decisions are fixed;
+- no task requires a new product or architecture decision;
+- all Accepted Requirements are traceable to tasks and evidence;
+- all tasks have deterministic prerequisites, actions, outputs, verification, and exit conditions;
+- all Acceptance Criteria are covered;
+- all Architecture Invariants relevant to the Stage are protected;
+- all Preservation commitments are verifiable;
+- all Regression obligations are verifiable;
+- all Deferred requirements remain outside current execution;
+- every planned change maps to current Stage authority;
+- all exception conditions route to a deterministic control path;
+- dry-run reaches the Stage Exit State;
+- the Stage Stop Rule can be mechanically evaluated.
 
 Otherwise end in:
 
 ```text
 PLAN_BLOCKED
 
+Type: <REPLAN_BLUEPRINT | PLAN_BLOCKED_ARCHITECTURE | PRODUCT_CHANGE>
 Gap: <identifier>
 Location: <section/task>
-Evidence: <repository fact or requirement conflict>
+Evidence: <repository fact / contract conflict>
+Upstream Source: <Stage Contract / ADR / Product Rule / Requirement ID>
 Decision Required: <single unresolved decision>
+Owner: <Construction Blueprint | Architecture Director | Product / User>
 ```
+
+## Handoff
+
+When status is `READY`, hand the Execution Contract to the implementation agent.
+
+The implementation agent executes the blueprint under the project’s construction rules and returns implementation changes plus verification evidence.
+
+The Stage Verifier later evaluates:
+
+`Architecture → Stage Contract → Construction Blueprint → Implementation → Evidence`
+
+The blueprint therefore preserves complete forward and reverse traceability.
 
 ## Quality Standard
 
-Optimize the document for execution certainty and information density.
+Optimize for execution certainty and information density.
 
-Use exact paths, symbols, commands, selectors, state transitions, identifiers, and observable outcomes. Prefer repository-grounded references over descriptive prose. Keep rationale only when it constrains implementation or resolves an otherwise ambiguous choice.
+Use exact paths, symbols, commands, selectors, requirement IDs, acceptance IDs, state transitions, dependency edges, and observable outcomes.
+
+Prefer repository-grounded references over descriptive prose.
+
+Keep rationale only when it constrains execution, preserves an upstream decision, or explains a required exception route.
+
+The blueprint is complete when the implementation agent can execute from Entry State to Exit State without deciding what the product means, what architecture should exist, what belongs in the Stage, or what counts as completion.
