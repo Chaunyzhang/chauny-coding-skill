@@ -362,24 +362,44 @@ docs/
 
 ### `PROJECT_STRUCTURE.md`
 
-必须给出完整的目标项目目录树，使非技术用户也能看出整个项目如何组成。
+必须给出完整的项目文件结构树，包含所有顶层目录和关键子目录，使用户能快速了解整个项目的模块组成和架构边界。
 
-目录树至少覆盖到能够表达架构边界的文件夹层级，并包含关键架构文件。每个节点标记：
+目录树必须：
 
-- `[existing]`：当前已经存在；
-- `[new]`：当前或近期 Stage 将建立；
-- `[reserved]`：架构已预留、尚未施工。
+- 覆盖到能够表达架构边界的文件夹层级（frontend / backend / ai-platform / admin / shared / infrastructure / tests / docs 等）
+- 包含关键架构文件（如 package.json / pom.xml / Dockerfile / schema 等）
+- 每个节点标记状态：
+  - `[existing]`：当前已经存在
+  - `[new]`：当前或近期 Stage 将建立
+  - `[reserved]`：架构已预留、尚未施工
+- **每个目录和关键文件必须附带中文说明或备注**，说明其职责和用途
+
+示例：
+```
+project-root/
+├── frontend/                  # 前端应用
+│   ├── src/
+│   │   ├── components/       # UI 组件
+│   │   └── pages/            # 页面
+│   └── package.json          # 前端依赖
+├── backend/                   # 后端服务
+│   ├── api/                  # API 接口
+│   └── models/               # 数据模型
+├── ai-platform/              # AI 中台
+│   └── embeddings/           # 向量服务
+└── admin/                    # 管理后台
+```
 
 树后必须说明：
 
-- 每个顶层目录负责什么；
-- Frontend / Backend / Admin / Shared / Infrastructure / Tests / Docs 分别在哪里；
-- 各模块允许依赖谁；
-- 数据模型、API、配置、迁移、测试、生成物分别归属哪里；
-- 当前 Stage 会触达哪些目录；
-- 哪些目录属于未来阶段。
+- 每个顶层目录负责什么
+- Frontend / Backend / AI Platform / Admin / Shared / Infrastructure / Tests / Docs 分别在哪里
+- 各模块允许依赖谁
+- 数据模型、API、配置、迁移、测试、生成物分别归属哪里
+- 当前 Stage 会触达哪些目录
+- 哪些目录属于未来阶段
 
-`PROJECT_STRUCTURE.md` 是长期维护的目标结构图；仓库结构发生架构级变化时同步更新。
+`PROJECT_STRUCTURE.md` 是长期维护的目标结构图；仓库结构发生架构级变化时同步更新。用户可通过此文档快速判断项目各模块是否齐全。
 
 ### `ENGINEERING_STANDARDS.md`
 
