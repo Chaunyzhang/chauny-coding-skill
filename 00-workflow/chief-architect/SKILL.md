@@ -362,11 +362,12 @@ docs/
 
 ### `PROJECT_STRUCTURE.md`
 
-必须给出完整的项目文件结构树，包含所有顶层目录和关键子目录，使用户能快速了解整个项目的模块组成和架构边界。
+必须给出完整的项目文件结构树，反映项目实际的模块组成和架构边界，使用户能快速了解整个项目的结构。
 
 目录树必须：
 
-- 覆盖到能够表达架构边界的文件夹层级（frontend / backend / ai-platform / admin / shared / infrastructure / tests / docs 等）
+- 真实反映项目实际需要的目录结构（有 frontend 就写 frontend，有 ai-platform 就写 ai-platform，按实际情况来）
+- 覆盖到能够表达架构边界的文件夹层级
 - 包含关键架构文件（如 package.json / pom.xml / Dockerfile / schema 等）
 - 每个节点标记状态：
   - `[existing]`：当前已经存在
@@ -393,13 +394,12 @@ project-root/
 树后必须说明：
 
 - 每个顶层目录负责什么
-- Frontend / Backend / AI Platform / Admin / Shared / Infrastructure / Tests / Docs 分别在哪里
 - 各模块允许依赖谁
 - 数据模型、API、配置、迁移、测试、生成物分别归属哪里
 - 当前 Stage 会触达哪些目录
 - 哪些目录属于未来阶段
 
-`PROJECT_STRUCTURE.md` 是长期维护的目标结构图；仓库结构发生架构级变化时同步更新。用户可通过此文档快速判断项目各模块是否齐全。
+`PROJECT_STRUCTURE.md` 的目的是让用户快速了解项目实际结构和模块组成，判断架构是否符合预期。仓库结构发生架构级变化时同步更新。
 
 ### `ENGINEERING_STANDARDS.md`
 
