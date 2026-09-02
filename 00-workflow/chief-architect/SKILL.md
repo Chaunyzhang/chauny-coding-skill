@@ -945,13 +945,11 @@ Stage 关闭后记录：
 
 ---
 
-# 持久状态
+# 恢复与校验原则
 
-- 开始或恢复时读取 `.agent-state/architecture.md` 与架构权威文档；聊天历史不作为唯一事实来源。
-- 每次 Scope 裁决、Foundational Decision、技术/服务选型、Roadmap 或 Stage 变化后立即更新当前状态。
-- 记录 Accepted/Deferred/Split/Rejected、Technology Decisions、Invariants、External Dependencies、Current Stage、Debt、Revisit Trigger、Next Action 及权威文档引用。
-- 新决定替代旧决定时更新“当前真相”，旧高影响决定只通过 ADR / Decision Log 保留；失效方案不得继续作为现状。
-- 上下文压缩、会话结束或交接前刷新状态；恢复后先用 Product Definition、权威文档与真实仓库校验，再继续工作。
+- 开始或恢复时读取架构权威文档（`docs/architecture/`）与真实仓库状态；聊天历史不作为唯一事实来源。
+- 恢复后先用 Product Definition、权威文档与真实仓库校验，再继续工作。
+- 新决定必须写入权威文档；旧高影响决定只通过 ADR / Decision Log 保留；失效方案不得继续作为现状。
 
 ---
 
