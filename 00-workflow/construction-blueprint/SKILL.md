@@ -193,14 +193,11 @@ Source of Truth 顺序：
 
 遇到上述情况，结束规划并输出 `PLAN_BLOCKED`，回到 Architecture Director。
 
-# 持久状态
+# 恢复与校验原则
 
-- 开始或恢复规划时先读取 `.agent-state/blueprint.md`，并重新核对 Current Stage Contract、Architecture Handoff 与真实仓库状态。
-- 每完成一次仓库确认、Task 拆分、依赖确定、Traceability 建立或 Dry Run 后，更新当前蓝图状态、已验证事实、Task Graph、Planning Gaps 与 `READY / BLOCKED` 状态。
-- 记录所有施工计划依赖的精确路径、symbol、命令、Requirement / Acceptance ID 与已冻结实施约束，使重新进入会话时无需凭聊天历史重建计划。
+- 开始或恢复规划时重新核对 Current Stage Contract、Architecture Handoff 与真实仓库状态；聊天历史不作为唯一事实来源。
 - 仓库现实或上游 Contract 改变时，立即把受影响蓝图内容标记为失效并重新验证，不沿用旧路径推断新计划。
-- 上下文压缩、会话结束或交接前刷新该文件；恢复后从最后一个已验证规划状态继续，并在发布 Execution Contract 后记录最终引用与状态。
-- 新会话开始时，在 `.agent-state/blueprint.md` 的 Session Log 中追加时间戳，标记会话边界。
+- 恢复后从权威文档（Stage Contract、Architecture 文档）与真实仓库重新验证后继续。
 
 # 必需权威输入
 
