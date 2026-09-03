@@ -126,6 +126,29 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 
 不能因为完整产品未来还缺功能而继续扩大当前 Stage。
 
+## 7. 可观测性随施工同步增长
+
+**Observability 不是 Stage 完成后的补充工作，而是每个 Stage、每个施工增量的组成部分。**
+
+任何 Stage 都不得先完成业务能力、最后再统一补日志 / 埋点 / tracing。
+
+必须遵守：
+
+- 每个 Stage 至少包含一个明确的 Observability / Instrumentation 建设与验收增量。
+- 每个 Stage 的关键流程、状态转换、外部依赖、异步生命周期与失败路径不得形成观测盲区。
+- Blueprint 拆分出的每个 Task 必须声明自己的 Observability Delta。
+- 凡新增或改变运行时行为的 Task，必须在同一个 Task 内同步完成对应 logs / events / error tracking / correlation / metrics / tracing 中适用的观测能力。
+- 不得把多个 Task 的必要埋点延迟到 Stage 尾部的“统一补埋点”任务。
+- Task 完成意味着“行为完成 + 对该行为的必要观测完成”；缺少必要观测时不得视为 Task Complete。
+
+原则：
+
+`Build a little → observe a little → verify a little.`
+
+即：
+
+`做一点，就同步获得一点可观测性；任何施工增量都不得先进入黑盒状态。`
+
 ---
 
 # 使命与权限
@@ -300,6 +323,7 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 - Interface Contract
 - Security Baseline
 - Observability / Error Diagnosis Baseline
+- Incremental Instrumentation / Stage Observability Contract
 - Engineering Standards
 
 不适用必须显式 `NOT APPLICABLE`，不得留空。
@@ -378,6 +402,11 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 
 ## Quality Model
 安全、可靠性、性能、可维护性、可观测性与必要扩展目标。
+
+## Observability Model
+必须定义关键流程、状态转换、边界调用、失败路径、事件 / 日志 / 指标 / trace、correlation、telemetry schema、隐私脱敏与 Stage 增量观测规则。
+
+Observability Model 必须足以约束后续 Blueprint，不得只写“需要日志 / 埋点”而不定义最低覆盖。
 
 ## Architecture Invariants
 跨 Stage 长期不得被普通施工破坏的规则。
@@ -459,14 +488,49 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 - Structured Logging
 - Error Tracking
 - Product / Business Events
-- Correlation / Request ID
+- Diagnostic / Flow Events
+- Correlation / Request ID / Trace ID
 - Health / Readiness
 - Metrics / Tracing / Alerting（按风险决定）
 - PII / Secret redaction
 - Timeout / Retry / Recovery / Degradation
 - Incident diagnosis
 
-产品总设计师定义“业务上需要知道什么”；架构总设计师定义“系统如何可靠观察和定位”；蓝图定义当前 Stage 的具体埋点与落点。
+必须建立 Observability Contract，至少冻结：
+
+- Critical Flows：必须可连续观察的关键用户 / 业务 / 系统流程
+- State Transitions：必须可识别的关键状态变化
+- Boundary Checkpoints：API、DB、Queue、Job、AI / External Provider 等关键边界的开始 / 成功 / 失败
+- Failure Coverage：validation、permission、timeout、retry、fallback、degradation、terminal failure 等失败路径
+- Correlation Model：request / trace / flow / entity 等关联标识如何贯穿链路
+- Telemetry Envelope：事件 / 日志公共字段、命名、版本、环境与时间规则
+  - 至少统一考虑 `event_name`、`event_version`、`event_id`、`occurred_at`、`environment`、`source`、`actor_id`、`session_id`、`request_id`、`correlation_id`、`trace_id`、`flow_id`、`stage_id`、`entity_type`、`entity_id`、`outcome`、`error_code`、`duration_ms`、`metadata`；按事件语义填写适用字段，不要求所有字段非空
+- Privacy / Redaction：PII、Secret、用户内容与敏感字段不得违规进入 telemetry；password、token、secret、authorization header、原始支付数据及未经批准的敏感内容默认禁止进入 telemetry
+- Stage Instrumentation Rule：每个 Stage 必须产生可验证的 Observability Delta
+- Task Instrumentation Rule：每个 Blueprint Task 必须声明 Observability Delta；新增或改变运行时行为时必须同 Task 落实
+
+架构总设计师决定“什么必须可观察、最低覆盖到哪里、哪些上下文必须关联”；蓝图只决定这些要求具体落到哪个 Task、模块、文件、函数、handler / component 与验证步骤。
+
+不得把 Observability 的必要覆盖范围重新留给蓝图自行取舍。
+
+### Incremental Instrumentation Contract
+
+每个 Stage 必须满足：
+
+1. 至少一个明确的 Observability / Instrumentation 建设与验收增量。
+2. 新增关键流程必须有 start / success / failure 或语义等价的可诊断闭环。
+3. 新增关键状态转换必须能够判断转换是否发生、结果是什么、失败在哪一阶段。
+4. 新增外部依赖必须能够区分 request started / succeeded / failed / timeout，并保留必要 correlation。
+5. 新增异步任务必须能够识别 enqueue / start / success / failure / retry 等适用生命周期。
+6. Stage 中不存在“功能已存在，但对应必要 telemetry 计划以后再补”的已知关键盲区。
+
+Blueprint 必须把这些要求增量化到 Task：
+
+`Task Behavior Delta → Task Observability Delta → Task Verification Evidence`
+
+凡 Task 新增或改变运行时行为，Observability Delta 与 Behavior Delta 必须同 Task 完成。
+
+允许独立的 telemetry-only Task 用于建立共享底座、补齐历史阻塞盲区或进行 Stage 级验证；不得用它替代前序 Task 本应同步完成的必要埋点。
 
 ---
 
@@ -481,7 +545,7 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 - Data：ID、时间、时区、金额、枚举、nullability、删除、审计字段
 - Error：分类、错误码、异常传播、用户消息、日志
 - Security：认证、授权、输入校验、Secret、敏感数据
-- Observability：logs、analytics、metrics、tracing、error tracking
+- Observability：logs、analytics、diagnostic events、metrics、tracing、error tracking、correlation、telemetry schema、incremental instrumentation
 - Testing：单测 / 集成 / E2E 边界、真实集成原则
 - Compatibility：API、Schema、Migration、版本升级
 - Repository：模块边界、依赖方向、public/private、generated artifacts
@@ -548,7 +612,7 @@ docs/
 | `PROJECT_STRUCTURE.md` | 完整目标目录树、职责、依赖、Stage 触达范围 |
 | `ENGINEERING_STANDARDS.md` | 全项目长期工程规则 |
 | `EXTERNAL_SERVICES.md` | 外部服务、Build/Buy、数据影响、成本、Lock-in、Exit |
-| `OBSERVABILITY.md` | 埋点、日志、错误、指标、追踪、告警、恢复 |
+| `OBSERVABILITY.md` | Observability Contract、埋点、日志、错误、指标、追踪、关联、Stage / Task 增量观测、告警、恢复 |
 | `ROADMAP.md` | Scope 裁决、Stage 路线、依赖、Definition of Enough |
 | `DECISIONS.md` | 高影响 Architecture Decisions / ADR 索引 |
 | `stages/<ID>.md` | 当前 Stage Contract |
@@ -714,7 +778,8 @@ AI / External Providers:
 5. Engineering Standards
 6. External Dependency decisions
 7. Observability / Reliability baseline
-8. Project Structure Architecture
+8. Incremental Instrumentation Contract
+9. Project Structure Architecture
 
 门禁：
 
@@ -724,6 +789,9 @@ AI / External Providers:
 - `TECH_STACK.md` 无空项
 - `PROJECT_STRUCTURE.md` 已建立
 - Engineering Standards 已建立
+- Observability Contract 已冻结
+- Current Stage 已定义明确 Observability Delta，且至少包含一个埋点 / 诊断建设与验收增量
+- Blueprint 上游约束已要求每个 Task 声明 Observability Delta，运行时行为变更不得与其必要埋点拆离
 - 生产错误至少存在可诊断路径
 
 满足后：
@@ -755,7 +823,8 @@ AI / External Providers:
 5. 当前 Stage 不依赖未来 Stage 才能成立。
 6. 基础设施只建设到近期实际使用程度。
 7. Foundational Technology 仍必须适配长期产品方向。
-8. 固定质量，Scope 可变。
+8. 每个 Stage 必须同步建设该 Stage 所需的 Observability，不允许功能先行、埋点后补。
+9. 固定质量，Scope 可变。
 
 每 Stage 定义：
 
@@ -765,6 +834,7 @@ AI / External Providers:
 - Accepted Requirement IDs
 - Must Have
 - Architecture / Platform Delta
+- Observability Delta
 - Dependencies
 - Entry State
 - Exit State
@@ -836,6 +906,22 @@ Stage ID / Name / Roadmap Position / Accepted Requirement IDs
 ### Operational Obligations
 日志、错误追踪、埋点、指标、健康、告警、备份、恢复、诊断等适用要求。
 
+其中 Observability 必须明确：
+
+- 本 Stage 的 Critical Flows
+- Required Product / Business Events
+- Required Diagnostic / Flow Checkpoints
+- Required Failure Events / Error Tracking
+- Required Correlation IDs
+- Required Metrics / Traces（适用时）
+- Privacy / Redaction Rules
+- Debug / Verification Evidence
+- 本 Stage 的 Observability Delta
+
+每个 Stage 至少存在一个明确的埋点 / 诊断建设与验收增量；不得出现 Observability Delta 为空的 Stage。
+
+对本 Stage 每个新增或改变的关键运行时行为，Stage Contract 必须给出足够上游约束，使 Blueprint 能把它的必要观测与对应施工 Task 同步完成。
+
 ### Architecture Invariants
 长期不可破坏规则。
 
@@ -858,7 +944,7 @@ Stage ID / Name / Roadmap Position / Accepted Requirement IDs
 
 当：
 
-`Acceptance + Invariants + Preservation + Regression`
+`Acceptance + Invariants + Preservation + Regression + Observability`
 
 全部成立：
 
@@ -880,16 +966,33 @@ Stage ID / Name / Roadmap Position / Accepted Requirement IDs
 - Repository Reality
 - Preservation / Deferred / Regression
 - Risks / Escalation Triggers
+- Stage Observability Delta / Instrumentation Contract
 
 施工蓝图负责：
 
 `Stage Contract → 确定 Construction Blueprint`
+
+并必须把 Stage Observability Contract 编译到具体 Task：
+
+- 每个 Task 声明 `Behavior Delta` 与 `Observability Delta`。
+- 凡新增或改变运行时行为的 Task，必须在同一 Task 内完成对应必要埋点 / logs / error tracking / correlation / metrics / tracing。
+- 每个 Task 必须定义对应 Observability Verification Evidence。
+- 不得把前序 Task 的必要 telemetry 统一延迟到 Stage 尾部。
+- Blueprint 必须至少包含一个明确可识别的 Stage-level Instrumentation / Observability 验证步骤，用于确认本 Stage 的观测链路真实成立。
 
 架构总设计师只判断：
 
 - `BLUEPRINT APPROVED`
 - `REPLAN BLUEPRINT`
 - `REPLAN ARCHITECTURE`
+
+若 Blueprint 存在以下任一情况，不得 `BLUEPRINT APPROVED`：
+
+- Current Stage 没有明确 Observability / Instrumentation 增量。
+- 有 Task 新增 / 改变运行时行为，却没有对应 Observability Delta。
+- 必要埋点被统一推迟到 Stage 尾部。
+- 关键流程 / 状态转换 / 外部依赖 / 异步任务 / 失败路径存在已知关键观测盲区。
+- 没有可执行的 Observability Verification Evidence。
 
 不替代蓝图编写逐文件施工步骤。
 
@@ -1007,6 +1110,11 @@ Stage 关闭后记录：
 - `ENGINEERING_STANDARDS.md` 已建立。
 - External Services 与退出路径已记录。
 - Observability / Error Diagnosis baseline 已建立。
+- Observability Contract / Incremental Instrumentation Rule 已冻结。
+- Evolution Roadmap 中每个 Stage 均定义 Observability Delta。
+- Current Stage 至少包含一个明确的埋点 / 诊断建设与验收增量。
+- Blueprint 上游约束已保证每个 Task 声明 Observability Delta，运行时行为变更与必要观测同 Task 完成。
+- Current Stage 不存在已知 Critical Observability Blind Spot。
 - Evolution Roadmap 已形成。
 - Current Stage Contract 已冻结。
 - Blueprint 不需要重新做产品或基础架构选择。
