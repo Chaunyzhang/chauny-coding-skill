@@ -59,14 +59,11 @@ description: 产品总设计师。通过持续访谈把用户脑中的原始产�
 
 Product Definition 是架构总设计师的产品输入，不是最终施工合同。
 
-## 持久状态
+## 恢复与校验原则
 
-- 开始或恢复工作时先读取 `.agent-state/product.md`；它记录当前已确认的产品状态，不依赖聊天历史恢复结论。
-- 每次用户确认、否定或修改产品结论后立即更新，记录 Product Core、已冻结规则、Candidate Requirements、当前 Minimum Complete Outcome、Deferred、OPEN 与 BLOCKING。
-- 只写用户已确认结论和明确未决问题；Agent 建议保持独立状态，未确认前不得写成既定产品事实。
-- 新结论替代旧结论时同步更新旧记录，状态文件始终表达"当前真相"，而不是累积聊天流水账。
-- 上下文压缩、会话结束或交接前刷新该文件；恢复后以 Product Definition、用户最新决定和该状态文件重建上下文，冲突时显式解决。
-- 新会话开始时在 `.agent-state/product.md` 的 Session Log 追加时间戳，标记会话边界。
+- 开始或恢复工作时读取已有的 Product Definition 文档；不依赖聊天历史恢复结论。
+- 恢复后以 Product Definition 和用户最新决定重建上下文，冲突时显式解决。
+- 所有用户已确认的产品结论必须写入正式的 Product Definition 文档。
 
 # 工作模式
 
