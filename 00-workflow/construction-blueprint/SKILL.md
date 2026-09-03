@@ -88,6 +88,8 @@ Unit Test / Integration Test / CI / Typecheck / Mock 测试是必要工程证据
 - `Expected State / Persistence`
 - `Required Failure Behavior`
 - `Automated Evidence`
+- `Observability Coverage`
+- `Observability Evidence`
 - `Mocks Allowed`
 - `Slice Exit State`
 
@@ -143,6 +145,28 @@ Checkpoint 必须能够从真实产品入口证明当前 Slice 已经真实集�
 
 目标是尽早暴露真实产品问题，而不是把问题积累到 Stage 80%–90% 时一次爆发。
 
+## 9. 可观测性必须随 Task 同步施工
+
+Observability 不是 Stage 尾部的补充任务。Blueprint 必须把上游 Stage Observability Contract 增量化到具体 Integration Slice 与 Task。
+
+必须遵守：
+
+- 每个 Stage 至少包含一个明确、可验证的 Observability / Instrumentation 增量。
+- 每个 Task 都必须声明 `Behavior Delta` 与 `Observability Delta`。
+- 凡 Task 新增或改变运行时行为，必须在同一个 Task 内完成该行为所需的 logs / events / error tracking / correlation / metrics / tracing 中适用的观测能力。
+- 不得把多个前序 Task 的必要埋点集中推迟到 Stage 尾部的“统一补埋点”Task。
+- Task 完成意味着“行为完成 + 对该行为的必要观测完成 + 对观测本身的验证完成”。
+- 纯文档、纯静态配置或其他确实不产生运行时行为变化的 Task 可以声明 `Observability Delta: NONE`，但必须写明原因。
+- 一个 Stage 不得所有 Task 都声明 `Observability Delta: NONE`。
+
+原则：
+
+`Build a little → observe a little → verify a little.`
+
+即：
+
+`做一点，就同步获得一点可观测性；任何新增运行时行为都不得先进入黑盒状态。`
+
 # 目的
 
 把已经冻结的 Stage Contract、已批准架构决策、真实仓库状态、Scope 边界与验收要求，编译成一份确定性的 Execution Contract，使施工 Agent 可以机械执行，而不需要在施工时重新做产品或架构判断。
@@ -160,6 +184,9 @@ Execution Contract 只有同时满足以下条件才算完整：
 - 用户型工作被组织为持续集成的纵向 Slice，而不是最后才把各组件拼起来；
 - 每个 Integration Slice 都以真实 Product Checkpoint 结束；
 - 每个用户型 Stage 都有可重复执行的 Hands-on Acceptance 路径。
+- Stage Observability Contract 已被映射到具体 Slice、Task 与 Verification Evidence；
+- 每个 Task 都声明 Observability Delta，运行时行为变更与必要观测同 Task 完成；
+- 每个 Stage 至少存在一个明确的 Stage-level Observability / Instrumentation 验证步骤。
 
 # 权限边界
 
@@ -176,6 +203,7 @@ Source of Truth 顺序：
 - 测试放置
 - Migration 顺序
 - Verification 放置
+- 已冻结 Observability Contract 的具体 instrumentation placement、Task 映射与验证落点
 
 如果继续规划需要改变以下任何内容，蓝图无权自行决定：
 
@@ -190,6 +218,7 @@ Source of Truth 顺序：
 - Transaction / Consistency 语义
 - Acceptance 语义
 - 已批准技术方向
+- Stage Observability Contract 的最低覆盖范围、关键流程、必要 checkpoints、correlation 或 privacy / redaction 语义
 
 遇到上述情况，结束规划并输出 `PLAN_BLOCKED`，回到 Architecture Director。
 
@@ -224,6 +253,12 @@ Source of Truth 顺序：
 - Stop Rule
 - 上游已经定义的 Hands-on / 用户可见 Acceptance Intent
 - 如适用，Technical-only Stage 标记
+- Operational Obligations
+- Stage Observability Delta / Incremental Instrumentation Contract
+- Critical Flows / Required Events / Diagnostic Checkpoints / Failure Coverage
+- Required Correlation IDs / Metrics / Traces（适用时）
+- Privacy / Redaction Rules
+- Observability Verification Evidence requirements
 
 ## Architecture Inputs
 
@@ -231,6 +266,7 @@ Source of Truth 顺序：
 - 相关 ADR / Decision Log
 - Architecture Director 的 Blueprint Handoff
 - 当前适用的项目工程规则
+- `OBSERVABILITY.md` 或等价 Observability Contract
 
 ## Repository Inputs
 
@@ -260,6 +296,8 @@ Source of Truth 顺序：
 - 适用 Architecture Invariants；
 - Preservation Set 与 Regression Set 基线；
 - 后续 Task 所依赖的仓库事实。
+- 与本 Stage 相关的既有 logs / events / error tracking / metrics / traces / correlation 实现与 telemetry conventions；
+- 已知 observability blind spots，以及哪些属于 Current Stage 必须消除。
 
 必须使用精确 Repository Path 与 Symbol Name。
 
@@ -280,6 +318,9 @@ Source of Truth 顺序：
 - Stage Stop Rule 已成立；
 - 对用户型 Stage，真实产品入口可以直接暴露本 Stage 的 Visible Delta；
 - Stage 拥有可重复执行的 Hands-on Acceptance 路径。
+- Stage Observability Delta 已真实落地并可验证；
+- 新增或改变的关键运行时行为不存在已知 critical observability blind spot；
+- 至少一个 Stage-level Observability / Instrumentation Checkpoint 可以重复执行。
 
 Current Stage 完成与最终产品完成相互独立。
 
@@ -304,6 +345,11 @@ Current Stage 完成与最终产品完成相互独立。
 - Test strategy
 - Generation strategy
 - Rollout / ordering constraints
+- Observability Contract / Critical Flow coverage
+- Event / Log / Trace naming and schema conventions
+- Correlation / Context propagation requirements
+- Privacy / Redaction requirements
+- Stage Incremental Instrumentation requirements
 
 把这些决策转换成 Repository-level 的实施约束。
 
@@ -321,6 +367,7 @@ Current Stage 完成与最终产品完成相互独立。
 
 - `Change Set`：预计要修改的既有文件、目录、symbol、schema、configuration 或 test；
 - `Creation Set`：施工后应该新增的文件、symbol、schema、migration、test 或 artifact；
+- `Observability Set`：本 Stage 必须新增、改变或验证的 events、logs、error tracking、metrics、traces、correlation、telemetry schema 与 instrumentation points；
 - `Preservation Set`：必须继续成立的既有行为、interface、data contract、invariant、文件或 runtime guarantee；
 - `Regression Set`：必须继续通过的既有 test、journey、command 或 observable behavior；
 - `Deferred Set`：已经识别但明确不属于 Current Stage 的要求。
@@ -342,12 +389,17 @@ Task 拆分前建立：
 
 `Accepted Requirement → Stage Acceptance → Blueprint Task → Verification Evidence`
 
+同时建立：
+
+`Stage Observability Obligation → Blueprint Task → Observability Verification Evidence`
+
 对每个 Accepted Requirement 与 Acceptance Criterion，明确：
 
 - Implementation Responsibility
 - Task Coverage
 - Expected Evidence
 - Preservation / Regression dependencies
+- Observability Obligation / Evidence dependencies
 
 每个 Task 至少必须向上追溯到一个：
 
@@ -377,6 +429,8 @@ Task 拆分前建立：
 - `Tasks`
 - `Product Checkpoint`
 - `Automated Evidence`
+- `Observability Coverage`
+- `Observability Evidence`
 - `Slice Exit State`
 - `Next Slice Dependency`
 
@@ -389,6 +443,8 @@ Task 拆分前建立：
 - Component-level 的准备型 Task 只有在最近的下一 Slice 会立即消费时才允许存在；
 - 如果两个或更多主要技术层在没有真实产品路径的情况下被大量独立完成，应重新切 Slice，除非 Stage Contract 已明确批准 Technical-only Construction；
 - 每个 Slice 必须先通过 Product Checkpoint，再进入依赖它的后续扩展。
+- 每个 Slice 必须明确本 Slice 新增 / 改变行为的 Observability Coverage，并在 Slice 结束时提供可执行 Observability Evidence；
+- 不得让一个 Slice 的必要 instrumentation 等待后续 Slice 才补齐。
 
 Slice 只有在：
 
@@ -412,6 +468,9 @@ Slice 只有在：
 - 为后续依赖 Task 提供完整输入；
 - 以可观察 Verification Result 结束；
 - 让 Repository 保持在有效中间状态。
+- 声明 `Behavior Delta` 与 `Observability Delta`；
+- 若新增或改变运行时行为，则 Observability Delta 不得为 `NONE`，且必须与行为实现同 Task 完成；
+- 以可执行的 Observability Verification 证明必要 telemetry 真实产生且可关联。
 
 按真实依赖排序。
 
@@ -430,20 +489,28 @@ Slice 只有在：
 - `Task ID`
 - `Slice ID`
 - `Requirement Coverage`
+- `Behavior Delta`
+- `Observability Delta`
 - `Objective`
 - `Prerequisites`
 - `Targets`
 - `References`
 - `Inputs`
 - `Actions`
+- `Instrumentation Actions`
 - `Outputs`
 - `Verification`
+- `Observability Verification`
 - `Expected Result`
 - `Exit Condition`
 
 `Slice ID`：标明该 Task 正在推进哪个 Integration Slice 的真实产品状态。
 
 `Requirement Coverage`：列出该 Task 服务的精确 Requirement ID、Acceptance ID、Invariant ID、Preservation ID 或 Regression ID。
+
+`Behavior Delta`：写明该 Task 新增或改变的运行时行为；若确实没有运行时行为变化，写 `NONE` 并说明原因。
+
+`Observability Delta`：写明与 Behavior Delta 同步新增或改变的 events、logs、error tracking、correlation、metrics、traces 或其他 diagnostic signals。运行时行为变化时不得写 `NONE`。
 
 `Targets`：写明精确 File、Symbol、Schema、Migration、Configuration、Test 或 Generated Artifact。
 
@@ -453,13 +520,19 @@ Slice 只有在：
 
 `Actions`：按顺序写状态改变操作。每个 Action 只描述一个操作，并提供足够细节，使施工 Agent 只能沿唯一已批准路径实施。
 
+`Instrumentation Actions`：明确 telemetry 具体落到哪个 File / Symbol / handler / component / boundary，使用什么 event / log / span / metric / error signal，以及需要携带哪些 correlation / context。不得用“补充日志”“增加埋点”等泛化描述。
+
 `Outputs`：描述 Task 完成后真实产生的 Repository 与 Runtime State。
 
 `Verification`：写出可执行 Command、Test Selector、Inspection、State Check、Migration Check、Generation Check 或确定性 Manual Procedure。
 
+`Observability Verification`：写出如何机械证明该 Task 的 telemetry 已真实产生、字段 / outcome 正确、成功与失败路径按 Contract 覆盖、必要 correlation 可以串联。允许使用 test、local inspection、log / event inspection、trace inspection 或确定性 manual procedure，但不能只证明代码中“存在 instrumentation 调用”。
+
 `Expected Result`：写出精确、可观察的预期判定。
 
 `Exit Condition`：写明什么状态成立后，才能解锁依赖它的后续 Task。
+
+若 Task 改变运行时行为，则其 Exit Condition 必须同时包含对应 Observability Verification PASS；否则 Task 不得解锁后续依赖。
 
 ## 9. 定义 Acceptance Matrix
 
@@ -484,6 +557,7 @@ Slice 只有在：
 - `REGRESSION`
 - `SCOPE`
 - `USER_REALITY`
+- `OBSERVABILITY`
 
 覆盖要求：
 
@@ -493,6 +567,9 @@ Slice 只有在：
 - 每个 Regression Set item → `REGRESSION`
 - Current Authorized Scope 与 Deferred Boundary → `SCOPE`
 - 每个用户型 Slice 的 Product Checkpoint 与最终 Hands-on Acceptance → `USER_REALITY`
+- Stage Observability Delta、每个运行时行为变更 Task 的 Observability Obligation、Stage-level Observability Checkpoint → `OBSERVABILITY`
+
+`OBSERVABILITY` Evidence 必须证明 signal 真实产生并满足上游 Contract；只证明代码存在 event / log / span 调用不算通过。
 
 `USER_REALITY` 的 Evidence 必须来自真实产品路径。
 
@@ -574,6 +651,10 @@ Stage Contract 仍然正确，但当前：
 - Product Checkpoint 失败，但局部 Component Test 仍通过；
 - 当前排序把真实 Integration 推迟到 Stage 后期；
 - Primary Product Path 只能依赖 Mock 或 Bypass 才能演示。
+- Task 新增 / 改变运行时行为，但对应 Observability Delta 缺失或无法验证；
+- 必要 telemetry 被推迟到后续 Task 或 Stage 尾部；
+- Stage-level Observability Checkpoint 无法从真实运行链路获得证据；
+- 新增关键流程、状态转换、外部依赖、异步生命周期或失败路径存在上游明确禁止的 observability blind spot。
 
 ## 11. Dry Run 整份蓝图
 
@@ -588,9 +669,13 @@ Stage Contract 仍然正确，但当前：
 - 每个 Output 能满足后续 Task 的 Input；
 - Name、Signature、ID、Schema、State Transition 保持一致；
 - 每个 Task 都只有一条已批准实施路径；
+- 每个 Task 都声明 Behavior Delta 与 Observability Delta；
+- 每个新增 / 改变运行时行为的 Task 都在同一 Task 内完成必要 instrumentation；
+- 不存在把前序 Task 必要 telemetry 统一推迟到 Stage 尾部的计划；
 - 没有 Task 在施工中创造新的 Product / Architecture Decision；
 - 每个 Accepted Requirement 都映射到 Task 与 Evidence；
 - 每个 Acceptance Criterion 都映射到确定性 Verification；
+- 每个 Stage Observability Obligation 都映射到 Task 与 Observability Evidence；
 - 每个 Current-stage Architecture Invariant 都有 Verification 或 Preservation 路径；
 - 每个 Preservation / Regression Item 都有 Evidence；
 - 每个 Implementation Change 都能向上追溯到 Stage Obligation；
@@ -602,6 +687,10 @@ Stage Contract 仍然正确，但当前：
 - Stage 所需 UI / Client 行为在大批后端工作全部完成之前就已经进入真实集成；
 - 某 Slice Product Checkpoint 失败后，不允许继续依赖它的后续扩建；
 - 用户型 Stage 的最终 Hands-on Acceptance 可以重复执行；
+- 每个 Slice 的 Observability Evidence 可以重复取得；
+- Stage 至少存在一个非 `NONE` 的 Observability Delta；
+- Stage-level Observability / Instrumentation Checkpoint 可以重复执行并证明观测链路真实成立；
+- Current Stage 不存在已知 Critical Observability Blind Spot；
 - 最终 Repository / Runtime State 满足 Stage Exit State；
 - Stage Stop Rule 成立。
 
@@ -626,14 +715,17 @@ Execution Contract 必须严格按以下顺序生成：
 9. `## Scope`
    - `### Change Set`
    - `### Creation Set`
+   - `### Observability Set`
    - `### Preservation Set`
    - `### Regression Set`
    - `### Deferred Set`
 10. `## Requirement Traceability`
+10.1. `## Observability Plan`
 11. `## Integration Slices`
 12. `## Execution Graph`
 13. `## Tasks`
 14. `## Product Checkpoints`
+14.1. `## Observability Checkpoint`
 15. `## Hands-on Acceptance`
 16. `## Acceptance Matrix`
 17. `## Exception Routing`
@@ -657,6 +749,7 @@ Execution Contract 必须严格按以下顺序生成：
 REQ-01 -> AC-01 -> T01,T03 -> EVID-01
 REQ-02 -> AC-02 -> T02     -> EVID-02
 INV-03 -> AC-A03 -> T04    -> EVID-A03
+OBS-01 -> T01,T03 -> OBS-EVID-01
 ```
 
 # Integration Slice 格式
@@ -681,6 +774,10 @@ INV-03 -> AC-A03 -> T04    -> EVID-A03
 **Product Checkpoint：**
 
 **Automated Evidence：**
+
+**Observability Coverage：**
+
+**Observability Evidence：**
 
 **Slice Exit State：**
 
@@ -713,6 +810,8 @@ INV-03 -> AC-A03 -> T04    -> EVID-A03
 
 **Automated Evidence：**
 
+**Observability Evidence：**
+
 **Mocks Allowed：**
 
 **Pass Condition：**
@@ -727,6 +826,65 @@ INV-03 -> AC-A03 -> T04    -> EVID-A03
 - 哪些真实行为仍未被证明；
 - 为什么当前允许 Mock；
 - 该 Checkpoint 不得作为最终 Stage Delivery Evidence。
+
+# Observability Plan 格式
+
+必须把上游 Stage Observability Contract 编译成 Task-level instrumentation：
+
+```markdown
+## Observability Plan
+
+**Stage Observability Delta：**
+
+**Critical Flows：**
+
+**Required Checkpoints / Events：**
+
+**Failure Coverage：**
+
+**Correlation / Context：**
+
+**Privacy / Redaction：**
+
+| Obligation | Slice | Task | Behavior Delta | Observability Delta | Evidence |
+|---|---|---|---|---|---|
+```
+
+规则：
+
+- 每个 Task 必须出现在该映射中，或者明确说明为什么 `Observability Delta: NONE`。
+- 凡 Task 新增 / 改变运行时行为，`Observability Delta` 不得为 `NONE`。
+- Stage 至少有一个 Task 的 Observability Delta 非 `NONE`。
+- 独立 telemetry-only Task 只允许用于共享 telemetry 底座、补齐历史阻塞盲区或 Stage-level 验证；不能替代前序运行时 Task 本应同步完成的 instrumentation。
+
+# Observability Checkpoint 格式
+
+每个 Stage 至少提供一个：
+
+```markdown
+## Observability Checkpoint
+
+**Stage / Slice：**
+
+**Trigger Path：**
+
+**Expected Signals：**
+
+**Required Context / Correlation：**
+
+**Success Evidence：**
+
+**Failure Evidence：**
+
+**Inspection / Verification Steps：**
+1.
+2.
+3.
+
+**Pass Condition：**
+```
+
+该 Checkpoint 必须证明观测链路真实工作，而不是只检查 instrumentation 代码是否存在。
 
 # Hands-on Acceptance 格式
 
@@ -786,6 +944,10 @@ T04 -> T05
 
 **Requirement Coverage：**
 
+**Behavior Delta：**
+
+**Observability Delta：**
+
 **Objective：**
 
 **Prerequisites：**
@@ -801,9 +963,15 @@ T04 -> T05
 2.
 3.
 
+**Instrumentation Actions：**
+1.
+2.
+
 **Outputs：**
 
 **Verification：**
+
+**Observability Verification：**
 
 **Expected Result：**
 
@@ -832,8 +1000,11 @@ Execution Contract 只有同时满足以下全部条件，才可以结束为：
 - 没有 Task 需要新的 Product / Architecture Decision；
 - 所有 Accepted Requirement 都能追溯到 Task 与 Evidence；
 - 所有 Task 都有确定 Prerequisite、Action、Output、Verification 与 Exit Condition；
+- 所有 Task 都声明 Behavior Delta 与 Observability Delta；
+- 所有新增 / 改变运行时行为的 Task 都在同 Task 完成必要 instrumentation 并通过 Observability Verification；
 - 所有 Acceptance Criteria 都已覆盖；
 - 每个 Integration Slice 都有真实 Product Checkpoint；
+- 每个 Integration Slice 都有明确 Observability Coverage / Evidence；
 - 第一个真实 End-to-End Path 没有被无必要推迟；
 - 用户型 Stage 不依赖一个很晚的 Final Integration Task 才第一次连接主要技术层；
 - 所有 Current-stage Architecture Invariant 都被保护；
@@ -845,6 +1016,10 @@ Execution Contract 只有同时满足以下全部条件，才可以结束为：
 - 每个 Slice Checkpoint 都能针对真实产品路径执行；
 - Component Test / CI / Mock 没有被用来替代真实 Product Delivery Evidence；
 - 用户型 Stage 包含可重复执行的最终 Hands-on Acceptance；
+- Stage 至少包含一个非 `NONE` 的 Observability / Instrumentation 增量；
+- Stage 包含至少一个可重复执行的 Stage-level Observability Checkpoint；
+- 必要 telemetry 没有被推迟到 Stage 尾部统一补做；
+- Current Stage 不存在已知 Critical Observability Blind Spot；
 - Dry Run 能通过持续集成的产品状态到达 Stage Exit State；
 - Stage Stop Rule 可以被机械判断。
 
@@ -873,6 +1048,9 @@ Owner: <Construction Blueprint | Architecture Director | Product / User>
 - 返回 Implementation Changes；
 - 返回 Automated Evidence；
 - 返回 Product Checkpoint Evidence。
+- 按 Task 同步实现 Observability Delta，不得先完成功能后补 telemetry；
+- 返回 Task-level Observability Evidence；
+- 返回 Stage-level Observability Checkpoint Evidence。
 
 某个 Product Checkpoint 失败时：
 
@@ -903,6 +1081,9 @@ Stage Verifier 后续按照：
 - State Transition
 - Dependency Edge
 - Observable Outcome
+- Behavior Delta / Observability Delta
+- Correlation / Traceability
+- Telemetry Verification Evidence
 
 优先使用 Repository-grounded Reference，而不是泛泛描述。
 
@@ -920,5 +1101,7 @@ Rationale 只在以下情况保留：
 - 什么算完成。
 
 对于用户型工作，Execution Path 必须持续产生已经集成、真实可运行的产品状态。
+
+对于所有会改变运行时行为的工作，Execution Path 还必须持续产生同步增长、可验证的 observability；不得出现“功能已经存在，但诊断能力以后再补”的中间状态。
 
 **如果一个计划做到“80% 组件完成”时，产品仍然无法被真正使用，即使 CI 全绿，这个蓝图在结构上也是无效的。**
