@@ -22,14 +22,12 @@ description: Enforce evidence-first, contract-preserving software work. Use duri
 
 宣誓完成后，继续执行任务。
 
-## 持久施工记录
+## 恢复与校验原则
 
-- 开始或恢复施工时先读取 `.agent-state/construction.md`，并与当前 Execution Contract 和工作树核对后再继续。
-- 每完成一个 Task 或发生阻塞时立即记录 Task ID、实际改动、关键事实、执行命令与真实结果、未完成项、异常路径和下一步。
-- 记录用户已有改动、当前工作树状态和任何不能覆盖的现场事实，使后续 Agent 能区分原有内容与本轮施工内容。
-- Verification 的 PASS/FAIL/BLOCKED 必须按实际结果更新；重新执行或修复后覆盖当前状态，不把历史成功结果冒充最新证据。
-- 上下文压缩、会话结束或交接前刷新该文件，保证下一执行者仅凭 Execution Contract、仓库和该记录即可从明确位置继续。
-- 新会话开始时在 `.agent-state/construction.md` 的 Session Log 追加时间戳，标记会话边界。
+- 开始或恢复施工时读取当前 Execution Contract 和工作树状态后再继续。
+- 识别用户已有改动、当前工作树状态和任何不能覆盖的现场事实，区分原有内容与本轮施工内容。
+- Verification 必须按实际结果判断 PASS/FAIL/BLOCKED；重新执行或修复后重新验证，不把历史成功结果冒充最新证据。
+- 恢复后仅凭 Execution Contract 和真实仓库状态从明确位置继续。
 
 ## 雷点
 
