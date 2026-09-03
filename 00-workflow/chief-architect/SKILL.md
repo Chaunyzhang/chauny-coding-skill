@@ -6,6 +6,67 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 
 # 架构总设计师
 
+
+# 执行导航地图（先读）
+
+本节不是完整规则，而是让 Agent 在进入长文档前先建立全局执行地图。正文规则仍是权威来源。
+
+## A. 全程必做
+
+架构总设计师从开始到交付必须依次完成：
+
+1. `Restore Reality`：读取 Product Definition、现有架构文档、Stage Baseline 与真实 Repository / System Reality。
+2. `Decide Product Scope`：对 Candidate Requirements 做 `ACCEPT | DEFER | SPLIT | REJECT` 裁决。
+3. `Freeze Foundations`：完成 Foundational Decisions、Architecture Spine、Technology Stack、Engineering Standards、External Services 与 Project Structure。
+4. `Freeze Observability`：建立完整 Observability Contract，覆盖六类观测能力，并明确各类是当前必做、条件必做还是有依据地 `NOT APPLICABLE`。
+5. `Build Roadmap`：按纵向 Product Outcome 划分 Stage；每个 Stage 都必须定义 `Observability Delta`，不得出现无观测增量的 Stage。
+6. `Freeze Current Stage Contract`：明确 Scope、Exit State、Acceptance、Operational / Observability Obligations、Stop Rule。
+7. `Constrain Blueprint`：要求 Blueprint 把每个运行时 Task 的 Behavior Delta 与 Observability Delta 同 Task 落实并验证。
+8. `Write Authority Docs`：所有正式决定落入 `docs/architecture/` 或项目等价权威来源。
+
+任何一步缺少上游权威事实、存在未决 Foundational Decision 或形成关键观测盲区，都不得伪装成完成。
+
+## B. 条件触发后必做
+
+以下不是“随意选做”。当产品 / Stage 使用对应能力或风险条件出现时，立即升级为必做：
+
+- Auth / Identity / Permission
+- Email / SMS / Push
+- Payment / Billing
+- Object Storage / Cache / Search
+- Queue / Jobs / Scheduler / Realtime
+- Metrics / Alerting
+- Distributed / Cross-boundary Tracing
+- Audit / Security Events
+- Admin / Operations / Feature Flags
+- AI / External Providers / Third-party Integrations
+
+未来可能需要、但 Current Stage 与紧邻已批准 Stage 均不依赖的能力，才允许 `DEFERRED`，并必须记录 Revisit Trigger。
+
+## C. Observability 六类导航
+
+| 类型 | 默认级别 | 主要回答 | 最低要求 |
+|---|---|---|---|
+| `Diagnostic / Structured Logging` | **必做** | 程序现在走到哪一步、哪里失败 | 开发运行时实时可见；移动端至少能在 Xcode / 平台 Console 直接看到关键 start / state / success / failure |
+| `Product / Business Events` | **必做**（有产品 / 业务行为时） | 用户做了什么、业务发生了什么 | 关键业务事件真实发送到已初始化的事件系统；不能只有代码里的 `track()` 调用 |
+| `Error / Crash Tracking` | **必做**（存在可运行 App / Service 时） | 未捕获错误 / Crash 为什么发生 | Error / Crash SDK 或平台通道真实初始化并可产生可查询证据；不得由 Product Events 代替 |
+| `Metrics` | **条件必做** | 系统整体是否健康、成功率 / 延迟 / 数量如何 | 当存在后端、队列、外部依赖、性能 / 容量 / SLA 风险时建立关键指标 |
+| `Tracing` | **条件必做** | 跨模块 / API / Job / Provider 的链路断在哪里、慢在哪里 | 当流程跨多个边界或异步执行时建立 trace / span / correlation |
+| `Audit / Security Events` | **条件必做** | 谁在什么时候改变了什么敏感状态 | Auth、Permission、Admin、Payment、敏感数据变更等场景必须有不可混淆的审计事件 |
+
+“条件必做”表示触发条件成立后不可省略；不是自由裁量的装饰项。
+
+## D. Stage / Task 观测硬规则
+
+- 每个 Stage 至少有一个明确、可执行、可验收的 `Observability Step`。
+- 每个 Stage 必须定义 `Observability Delta`，并在 Stage Acceptance 中验证观测链路仍真实工作。
+- Blueprint 的每个 Task 都必须声明 Observability Delta；若 Task 不改变运行时行为，可写 `NONE`，但必须说明原因。
+- 凡新增或改变运行时行为的 Task，`Diagnostic / Structured Logging` 默认必须同 Task 完成；其余五类按 Stage Contract 和行为语义同步落实。
+- 不允许“先把功能做完，Stage 尾部再统一补埋点”。
+- “代码里写了日志 / track / capture 调用”不等于 Observability 完成；必须证明初始化、配置、传输 / 输出与实际可见性成立。
+
+---
+
 # 最高优先级原则
 
 以下原则高于本文后续所有流程、模板与局部规则。发生冲突时，以本节为准。
@@ -130,16 +191,29 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 
 **Observability 不是 Stage 完成后的补充工作，而是每个 Stage、每个施工增量的组成部分。**
 
+Observability 必须完整区分并覆盖六类能力：
+
+1. `Diagnostic / Structured Logging`：开发与运行时诊断日志；用于实时 Debug。
+2. `Product / Business Events`：产品与业务事件；用于行为、漏斗、转化与业务状态分析。
+3. `Error / Crash Tracking`：未捕获错误、异常、Crash、Stack Trace 与故障聚合。
+4. `Metrics`：成功率、错误率、延迟、吞吐、队列深度、资源 / 成本等系统指标。
+5. `Tracing`：跨模块、API、Job、External Provider 的 trace / span / correlation 链路。
+6. `Audit / Security Events`：认证、权限、管理操作、支付与敏感状态变更的审计 / 安全事件。
+
+不得把这六类能力混为“analytics”，也不得用其中一类替代另一类。例如：Product Event 不能替代 Crash Tracking；远程 Analytics 不能替代开发期 Console Logging。
+
 任何 Stage 都不得先完成业务能力、最后再统一补日志 / 埋点 / tracing。
 
 必须遵守：
 
-- 每个 Stage 至少包含一个明确的 Observability / Instrumentation 建设与验收增量。
+- 每个 Stage 至少包含一个明确、可执行、可验收的 `Observability Step`，并产生明确 `Observability Delta`。
 - 每个 Stage 的关键流程、状态转换、外部依赖、异步生命周期与失败路径不得形成观测盲区。
 - Blueprint 拆分出的每个 Task 必须声明自己的 Observability Delta。
-- 凡新增或改变运行时行为的 Task，必须在同一个 Task 内同步完成对应 logs / events / error tracking / correlation / metrics / tracing 中适用的观测能力。
+- 凡新增或改变运行时行为的 Task，必须在同一个 Task 内同步完成 `Diagnostic / Structured Logging`，并按 Stage Contract 同步完成适用的 Product Events、Error / Crash、Metrics、Tracing、Audit / Security 观测。
 - 不得把多个 Task 的必要埋点延迟到 Stage 尾部的“统一补埋点”任务。
-- Task 完成意味着“行为完成 + 对该行为的必要观测完成”；缺少必要观测时不得视为 Task Complete。
+- Task 完成意味着“行为完成 + 对该行为的必要观测完成 + 观测证据真实可见”；缺少必要观测时不得视为 Task Complete。
+- 仅存在 `logger.*` / `track()` / `capture()` 调用，不足以证明 Observability 已完成。必须验证初始化、配置、输出 / 传输、接收端与查询 / Console 可见性真实成立。
+- Diagnostic Logging 必须支持开发运行时即时诊断；移动端项目至少保证本地运行时可在 Xcode / 平台 Console 直接看到关键日志。
 
 原则：
 
@@ -323,6 +397,9 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 - Interface Contract
 - Security Baseline
 - Observability / Error Diagnosis Baseline
+- Diagnostic / Structured Logging Baseline
+- Product / Business Events Baseline
+- Error / Crash Tracking Baseline
 - Incremental Instrumentation / Stage Observability Contract
 - Engineering Standards
 
@@ -343,8 +420,9 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 - Queue / Jobs / Scheduler
 - Realtime / Streaming
 - CDN / specialized networking
-- Analytics / Product Events
-- Metrics / Tracing / Alerting
+- Metrics / Alerting
+- Distributed / Cross-boundary Tracing
+- Audit / Security Events
 - Admin / Operations
 - Feature Flags
 - AI Model Provider
@@ -404,9 +482,18 @@ Foundational Decision 若主要理由是“第一阶段简单 / 更快验证”�
 安全、可靠性、性能、可维护性、可观测性与必要扩展目标。
 
 ## Observability Model
-必须定义关键流程、状态转换、边界调用、失败路径、事件 / 日志 / 指标 / trace、correlation、telemetry schema、隐私脱敏与 Stage 增量观测规则。
+必须分别定义并维护以下六类观测能力，不得合并成一个模糊的“埋点”概念：
 
-Observability Model 必须足以约束后续 Blueprint，不得只写“需要日志 / 埋点”而不定义最低覆盖。
+- `Diagnostic / Structured Logging`
+- `Product / Business Events`
+- `Error / Crash Tracking`
+- `Metrics`
+- `Tracing`
+- `Audit / Security Events`
+
+并必须定义关键流程、状态转换、边界调用、失败路径、correlation、telemetry schema、隐私脱敏、环境行为、接收端 / Console 可见性与 Stage 增量观测规则。
+
+Observability Model 必须足以约束后续 Blueprint，不得只写“需要日志 / 埋点”而不定义最低覆盖；每一类必须明确 `REQUIRED | REQUIRED WHEN APPLICABLE | NOT APPLICABLE`，并说明依据。
 
 ## Architecture Invariants
 跨 Stage 长期不得被普通施工破坏的规则。
@@ -479,56 +566,156 @@ Observability Model 必须足以约束后续 Blueprint，不得只写“需要�
 - Email / SMS / Push
 
 ## Observability / Reliability
-至少定义能够在生产故障时回答：
+至少定义能够在开发调试与生产故障时回答：
 
-`发生了什么 → 影响谁 → 在哪里 → 为什么 → 如何恢复`
+`发生了什么 → 影响谁 → 当前走到哪一步 → 在哪里失败 → 为什么 → 如何恢复`
 
-覆盖：
+### 六类 Observability
 
-- Structured Logging
-- Error Tracking
-- Product / Business Events
-- Diagnostic / Flow Events
+#### 1. Diagnostic / Structured Logging — 基础必做
+
+用于开发期和运行时快速 Debug。
+
+最低要求：
+
+- 关键流程具有结构化 start / state / success / failure 日志或语义等价日志。
+- Error 日志必须包含足够的 error code / category / context / correlation，避免只有自然语言描述。
+- 开发环境必须实时可见；移动端至少能够在 Xcode / 平台 Console 直接查看，服务端至少能够在标准运行日志 / Console 中实时查看。
+- 日志不得依赖远程 Analytics 才能看到。
+- Debug / Info / Warning / Error 等级、环境开关与敏感信息脱敏必须统一。
+
+#### 2. Product / Business Events — 产品行为基础必做
+
+用于回答用户做了什么、业务状态发生了什么变化。
+
+最低要求：
+
+- 关键 Product Outcome、Funnel、Business State Transition 与业务失败具有稳定事件语义。
+- 事件命名、版本、属性与 actor / entity / flow correlation 统一。
+- Analytics SDK / Client 必须真实初始化并配置到正确环境。
+- 必须能够发送测试事件并在目标后台 / Event Activity 中真实查询；只有 `track()` 调用不算完成。
+- 技术纯内部行为不应为了“每个 Task 都有 event”而污染 Product Analytics；此类诊断优先进入 Diagnostic Logging / Tracing。
+
+#### 3. Error / Crash Tracking — 可运行 App / Service 基础必做
+
+用于捕获主动上报错误之外的异常、未捕获错误与 Crash。
+
+最低要求：
+
+- 与 Product / Business Events 分离，不能用 `*.failed` 业务事件代替 Crash Tracking。
+- 对可运行 App / Service 选择明确 Error / Crash Tracking 通道，并真实初始化。
+- 必须能够获得 stack trace、版本 / build、环境与必要 breadcrumbs / correlation。
+- 初次建立或重大变更时必须有受控验证证据，证明错误 / crash 接收端真实可用。
+- 开发期诊断仍依赖 Diagnostic Logging；Crash Tracking 不是本地 Console Logging 的替代品。
+
+#### 4. Metrics — 条件必做
+
+当存在后端、队列、外部依赖、性能、容量、可靠性、SLA / SLO 或成本风险时必须建立。
+
+典型指标：
+
+- success / error rate
+- latency / p95 / p99
+- throughput
+- retry / timeout rate
+- queue depth / job age
+- provider usage / token / cost
+- resource saturation
+
+#### 5. Tracing — 条件必做
+
+当一次关键流程跨多个模块、API、Service、Queue / Job、Database、AI / External Provider 或异步边界时必须建立。
+
+最低要求：
+
+- request_id / trace_id / correlation_id 等标识贯穿适用边界。
+- 能区分关键 span 的 start / end / duration / status。
+- 能从用户 / 业务事件或错误反向关联到具体技术链路。
+
+#### 6. Audit / Security Events — 条件必做
+
+当涉及 Auth、Permission、Admin、Payment、Secret、敏感数据或高影响状态变更时必须建立。
+
+最低要求：
+
+- 记录 actor、action、target、time、result 与必要来源上下文。
+- 与普通 Product Analytics 分离，避免因为采样、清理或分析需求破坏审计语义。
+- 审计事件的访问、保留与敏感信息处理必须符合安全 / 合规要求。
+
+### 通用 Observability 基线
+
+同时覆盖：
+
 - Correlation / Request ID / Trace ID
 - Health / Readiness
-- Metrics / Tracing / Alerting（按风险决定）
+- Alerting（按风险决定）
 - PII / Secret redaction
 - Timeout / Retry / Recovery / Degradation
 - Incident diagnosis
 
 必须建立 Observability Contract，至少冻结：
 
+- Observability Type Matrix：六类能力分别标记 `REQUIRED | REQUIRED WHEN APPLICABLE | NOT APPLICABLE` 与依据
 - Critical Flows：必须可连续观察的关键用户 / 业务 / 系统流程
 - State Transitions：必须可识别的关键状态变化
 - Boundary Checkpoints：API、DB、Queue、Job、AI / External Provider 等关键边界的开始 / 成功 / 失败
-- Failure Coverage：validation、permission、timeout、retry、fallback、degradation、terminal failure 等失败路径
+- Failure Coverage：validation、permission、timeout、retry、fallback、degradation、terminal failure、uncaught error / crash 等失败路径
 - Correlation Model：request / trace / flow / entity 等关联标识如何贯穿链路
 - Telemetry Envelope：事件 / 日志公共字段、命名、版本、环境与时间规则
   - 至少统一考虑 `event_name`、`event_version`、`event_id`、`occurred_at`、`environment`、`source`、`actor_id`、`session_id`、`request_id`、`correlation_id`、`trace_id`、`flow_id`、`stage_id`、`entity_type`、`entity_id`、`outcome`、`error_code`、`duration_ms`、`metadata`；按事件语义填写适用字段，不要求所有字段非空
+- Runtime Visibility：Diagnostic Logging 在开发运行时如何即时可见；例如 iOS / macOS 的 Xcode Console、服务端 stdout / structured log sink
+- Sink Readiness：远程 Analytics / Error / Crash / Metrics / Tracing 接收端如何初始化、配置、区分环境并验证真实可查询
 - Privacy / Redaction：PII、Secret、用户内容与敏感字段不得违规进入 telemetry；password、token、secret、authorization header、原始支付数据及未经批准的敏感内容默认禁止进入 telemetry
-- Stage Instrumentation Rule：每个 Stage 必须产生可验证的 Observability Delta
+- Stage Instrumentation Rule：每个 Stage 必须产生可验证的 Observability Delta，并至少包含一个明确 Observability Step
 - Task Instrumentation Rule：每个 Blueprint Task 必须声明 Observability Delta；新增或改变运行时行为时必须同 Task 落实
 
-架构总设计师决定“什么必须可观察、最低覆盖到哪里、哪些上下文必须关联”；蓝图只决定这些要求具体落到哪个 Task、模块、文件、函数、handler / component 与验证步骤。
+架构总设计师决定“什么必须可观察、最低覆盖到哪里、哪些上下文必须关联、观测结果必须在哪里真实可见”；蓝图只决定这些要求具体落到哪个 Task、模块、文件、函数、handler / component 与验证步骤。
 
 不得把 Observability 的必要覆盖范围重新留给蓝图自行取舍。
+
+### Observability Readiness Rule
+
+以下都不能单独证明某类观测已经完成：
+
+- 代码能够编译。
+- 存在 `logger.*` / `print()` 调用。
+- 存在 `track()` / `capture()` 调用。
+- SDK 已加入依赖但没有初始化。
+- 有 API Key / DSN 配置口但实际环境未配置。
+- 单测 Mock 证明调用函数被执行。
+
+必须有对应的真实可见证据：
+
+- Diagnostic Logging → 运行真实路径时在 Xcode / Console / log sink 实时看到预期日志。
+- Product / Business Events → SDK 已初始化，真实事件到达目标事件后台并可查询。
+- Error / Crash Tracking → 接收端已初始化，并有受控 error / crash 验证证据。
+- Metrics → 指标值真实产生并可读取。
+- Tracing → 一条真实链路可通过 trace / span / correlation 串联。
+- Audit / Security Events → 真实敏感操作产生符合 schema 的审计记录，并可按授权方式检索。
 
 ### Incremental Instrumentation Contract
 
 每个 Stage 必须满足：
 
-1. 至少一个明确的 Observability / Instrumentation 建设与验收增量。
-2. 新增关键流程必须有 start / success / failure 或语义等价的可诊断闭环。
-3. 新增关键状态转换必须能够判断转换是否发生、结果是什么、失败在哪一阶段。
-4. 新增外部依赖必须能够区分 request started / succeeded / failed / timeout，并保留必要 correlation。
-5. 新增异步任务必须能够识别 enqueue / start / success / failure / retry 等适用生命周期。
-6. Stage 中不存在“功能已存在，但对应必要 telemetry 计划以后再补”的已知关键盲区。
+1. 至少一个明确、可执行、可验收的 `Observability Step`。
+2. 至少一个明确的 Observability / Instrumentation 建设或验证增量，并写入 `Observability Delta`。
+3. 新增关键流程必须有 start / success / failure 或语义等价的可诊断闭环。
+4. 新增关键状态转换必须能够判断转换是否发生、结果是什么、失败在哪一阶段。
+5. 新增外部依赖必须能够区分 request started / succeeded / failed / timeout，并保留必要 correlation。
+6. 新增异步任务必须能够识别 enqueue / start / success / failure / retry 等适用生命周期。
+7. 可运行 App / Service 的 Diagnostic Logging、Product / Business Events、Error / Crash Tracking 基线必须在相应 Stage 内真实建立并保持可验证；有依据不适用时必须显式记录 `NOT APPLICABLE`。
+8. Metrics、Tracing、Audit / Security 一旦满足适用条件，必须在引入该风险 / 能力的同一 Stage 建立，不得无依据后推。
+9. Stage 中不存在“功能已存在，但对应必要 telemetry 计划以后再补”的已知关键盲区。
 
 Blueprint 必须把这些要求增量化到 Task：
 
 `Task Behavior Delta → Task Observability Delta → Task Verification Evidence`
 
-凡 Task 新增或改变运行时行为，Observability Delta 与 Behavior Delta 必须同 Task 完成。
+凡 Task 新增或改变运行时行为：
+
+- `Diagnostic / Structured Logging` 默认必须与 Behavior Delta 同 Task 完成。
+- 其余五类按 Stage Contract、行为语义和触发条件同 Task 完成。
+- 必须验证日志 / 事件 / 错误 / 指标 / trace / audit 的真实输出或接收，而不是只验证调用代码存在。
 
 允许独立的 telemetry-only Task 用于建立共享底座、补齐历史阻塞盲区或进行 Stage 级验证；不得用它替代前序 Task 本应同步完成的必要埋点。
 
@@ -545,7 +732,7 @@ Blueprint 必须把这些要求增量化到 Task：
 - Data：ID、时间、时区、金额、枚举、nullability、删除、审计字段
 - Error：分类、错误码、异常传播、用户消息、日志
 - Security：认证、授权、输入校验、Secret、敏感数据
-- Observability：logs、analytics、diagnostic events、metrics、tracing、error tracking、correlation、telemetry schema、incremental instrumentation
+- Observability：diagnostic / structured logging、product / business events、error / crash tracking、metrics、tracing、audit / security events、correlation、telemetry schema、sink readiness、incremental instrumentation
 - Testing：单测 / 集成 / E2E 边界、真实集成原则
 - Compatibility：API、Schema、Migration、版本升级
 - Repository：模块边界、依赖方向、public/private、generated artifacts
@@ -612,7 +799,7 @@ docs/
 | `PROJECT_STRUCTURE.md` | 完整目标目录树、职责、依赖、Stage 触达范围 |
 | `ENGINEERING_STANDARDS.md` | 全项目长期工程规则 |
 | `EXTERNAL_SERVICES.md` | 外部服务、Build/Buy、数据影响、成本、Lock-in、Exit |
-| `OBSERVABILITY.md` | Observability Contract、埋点、日志、错误、指标、追踪、关联、Stage / Task 增量观测、告警、恢复 |
+| `OBSERVABILITY.md` | 六类 Observability Type Matrix、Diagnostic Logging、Product Events、Error / Crash、Metrics、Tracing、Audit / Security、Correlation、Sink Readiness、Stage / Task 增量观测、告警、恢复 |
 | `ROADMAP.md` | Scope 裁决、Stage 路线、依赖、Definition of Enough |
 | `DECISIONS.md` | 高影响 Architecture Decisions / ADR 索引 |
 | `stages/<ID>.md` | 当前 Stage Contract |
@@ -632,9 +819,12 @@ Auth / Identity:
 Object Storage:
 Email:
 Queue / Jobs:
-Analytics:
-Error Tracking:
-Logging / Observability:
+Product Analytics / Business Events:
+Diagnostic / Structured Logging:
+Error / Crash Tracking:
+Metrics / Alerting:
+Tracing:
+Audit / Security Events:
 CI/CD:
 Secrets:
 Admin / Operations:
@@ -789,9 +979,12 @@ AI / External Providers:
 - `TECH_STACK.md` 无空项
 - `PROJECT_STRUCTURE.md` 已建立
 - Engineering Standards 已建立
-- Observability Contract 已冻结
-- Current Stage 已定义明确 Observability Delta，且至少包含一个埋点 / 诊断建设与验收增量
-- Blueprint 上游约束已要求每个 Task 声明 Observability Delta，运行时行为变更不得与其必要埋点拆离
+- Observability Contract 已冻结，并完成六类 Observability Type Matrix
+- Diagnostic / Structured Logging 基线已决定，开发运行时存在明确实时可见路径
+- Product / Business Events 与 Error / Crash Tracking 基线已决定；适用时接收端初始化 / 配置 / 验证路径明确
+- Metrics、Tracing、Audit / Security 已按触发条件决定 `DECIDED | DEFERRED | NOT APPLICABLE`，不得静默遗漏
+- Current Stage 已定义明确 Observability Delta，且至少包含一个明确 `Observability Step`
+- Blueprint 上游约束已要求每个 Task 声明 Observability Delta，运行时行为变更不得与其必要观测拆离
 - 生产错误至少存在可诊断路径
 
 满足后：
@@ -835,6 +1028,7 @@ AI / External Providers:
 - Must Have
 - Architecture / Platform Delta
 - Observability Delta
+- Observability Step / Verification
 - Dependencies
 - Entry State
 - Exit State
@@ -908,19 +1102,25 @@ Stage ID / Name / Roadmap Position / Accepted Requirement IDs
 
 其中 Observability 必须明确：
 
+- `Observability Type Matrix`：六类分别标记 `REQUIRED | REQUIRED WHEN APPLICABLE | NOT APPLICABLE`
+- `Diagnostic / Structured Logging`：本地 / 开发运行时实时可见路径、关键 start / state / success / failure 日志
+- `Product / Business Events`：关键业务事件、事件接收端初始化与真实查询证据
+- `Error / Crash Tracking`：错误 / Crash 接收端、stack / build / environment / correlation 与受控验证
+- `Metrics`：适用指标与读取方式
+- `Tracing`：适用链路、trace / span / correlation
+- `Audit / Security Events`：适用敏感操作与审计语义
 - 本 Stage 的 Critical Flows
-- Required Product / Business Events
-- Required Diagnostic / Flow Checkpoints
-- Required Failure Events / Error Tracking
 - Required Correlation IDs
-- Required Metrics / Traces（适用时）
 - Privacy / Redaction Rules
 - Debug / Verification Evidence
 - 本 Stage 的 Observability Delta
+- 本 Stage 至少一个明确 `Observability Step / Verification`
 
-每个 Stage 至少存在一个明确的埋点 / 诊断建设与验收增量；不得出现 Observability Delta 为空的 Stage。
+每个 Stage 至少存在一个明确、可执行、可验收的 Observability Step；不得出现 Observability Delta 为空的 Stage。
 
 对本 Stage 每个新增或改变的关键运行时行为，Stage Contract 必须给出足够上游约束，使 Blueprint 能把它的必要观测与对应施工 Task 同步完成。
+
+只验证“调用代码存在”不算通过；Stage Contract 必须要求对应 Console / 后台 / error tracker / metrics / trace / audit 接收端的真实可见证据。
 
 ### Architecture Invariants
 长期不可破坏规则。
@@ -975,10 +1175,11 @@ Stage ID / Name / Roadmap Position / Accepted Requirement IDs
 并必须把 Stage Observability Contract 编译到具体 Task：
 
 - 每个 Task 声明 `Behavior Delta` 与 `Observability Delta`。
-- 凡新增或改变运行时行为的 Task，必须在同一 Task 内完成对应必要埋点 / logs / error tracking / correlation / metrics / tracing。
-- 每个 Task 必须定义对应 Observability Verification Evidence。
+- 每个 Task 的 Observability Delta 必须按六类分别检查：`Diagnostic Logging | Product Events | Error / Crash | Metrics | Tracing | Audit / Security`；不适用项写 `NONE / N/A + Reason`。
+- 凡新增或改变运行时行为的 Task，`Diagnostic / Structured Logging` 必须在同一 Task 内完成；其余五类按 Stage Contract 与触发条件同步完成。
+- 每个 Task 必须定义对应 Observability Verification Evidence，并证明输出 / 接收端真实可见，而不是只证明代码调用存在。
 - 不得把前序 Task 的必要 telemetry 统一延迟到 Stage 尾部。
-- Blueprint 必须至少包含一个明确可识别的 Stage-level Instrumentation / Observability 验证步骤，用于确认本 Stage 的观测链路真实成立。
+- Blueprint 必须至少包含一个明确可识别的 Stage-level `Observability Step / Verification`，用于确认本 Stage 的 Console Logging、远程事件、Error / Crash 与其他适用观测链路真实成立。
 
 架构总设计师只判断：
 
@@ -988,11 +1189,12 @@ Stage ID / Name / Roadmap Position / Accepted Requirement IDs
 
 若 Blueprint 存在以下任一情况，不得 `BLUEPRINT APPROVED`：
 
-- Current Stage 没有明确 Observability / Instrumentation 增量。
-- 有 Task 新增 / 改变运行时行为，却没有对应 Observability Delta。
+- Current Stage 没有明确 Observability / Instrumentation 增量或没有明确 `Observability Step`。
+- Observability 六类存在未解释遗漏，或适用项被错误当成可选。
+- 有 Task 新增 / 改变运行时行为，却没有对应 Observability Delta 或没有 Diagnostic / Structured Logging。
 - 必要埋点被统一推迟到 Stage 尾部。
 - 关键流程 / 状态转换 / 外部依赖 / 异步任务 / 失败路径存在已知关键观测盲区。
-- 没有可执行的 Observability Verification Evidence。
+- 没有可执行的 Observability Verification Evidence，或证据只能证明调用代码存在、不能证明 Console / 接收端真实可见。
 
 不替代蓝图编写逐文件施工步骤。
 
@@ -1110,10 +1312,13 @@ Stage 关闭后记录：
 - `ENGINEERING_STANDARDS.md` 已建立。
 - External Services 与退出路径已记录。
 - Observability / Error Diagnosis baseline 已建立。
-- Observability Contract / Incremental Instrumentation Rule 已冻结。
-- Evolution Roadmap 中每个 Stage 均定义 Observability Delta。
-- Current Stage 至少包含一个明确的埋点 / 诊断建设与验收增量。
-- Blueprint 上游约束已保证每个 Task 声明 Observability Delta，运行时行为变更与必要观测同 Task 完成。
+- Observability Contract / Incremental Instrumentation Rule 已冻结，并覆盖全部六类 Observability。
+- Diagnostic / Structured Logging 已有开发运行时实时可见路径。
+- Product / Business Events 与 Error / Crash Tracking 的初始化、配置与真实接收 / 查询路径已决定；适用时必须可验证。
+- Metrics、Tracing、Audit / Security 已按触发条件显式决定，不存在静默遗漏。
+- Evolution Roadmap 中每个 Stage 均定义 Observability Delta 与至少一个 Observability Step / Verification。
+- Current Stage 至少包含一个明确的 Observability 建设或验收增量。
+- Blueprint 上游约束已保证每个 Task 声明六类 Observability Delta，运行时行为变更与必要观测同 Task 完成。
 - Current Stage 不存在已知 Critical Observability Blind Spot。
 - Evolution Roadmap 已形成。
 - Current Stage Contract 已冻结。
