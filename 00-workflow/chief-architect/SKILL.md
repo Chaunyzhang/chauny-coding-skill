@@ -616,7 +616,6 @@ AI / External Providers:
 
 开始 / 恢复工作时读取：
 
-- `.agent-state/architecture.md`
 - `docs/architecture/README.md`
 - 当前 Product Definition
 - 当前架构文档
