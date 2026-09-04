@@ -10,7 +10,15 @@ description: 当架构总设计师已经冻结当前 Stage Contract，需要在�
 
 本节不是完整规则，而是让 Agent 在进入长文档前先建立施工全局地图。正文规则与上游 Stage Contract 仍是权威来源。
 
-## A. 全程必做
+## A. 角色边界
+
+施工蓝图只负责一件事：把上游已冻结的 Stage Contract 编译为确定性 Execution Contract。
+
+- 不创造产品 / 架构决策：产品决策归上游 Product Definition，架构决策归上游 chief-architect；发现上游缺口只能以 `PLAN_BLOCKED` / `PLAN_BLOCKED_ARCHITECTURE` 停止并回报，不得自行补决策。
+- 不亲自施工：蓝图只产出 Execution Contract，施工执行归下游施工 Agent；蓝图 Agent 不写产品代码、不改仓库实现。
+- 不负责验收：阶段验收归 stage-verifier；蓝图只保证合同本身可验证、可验收，不替验收方下结论。
+
+## B. 全程主流程
 
 施工蓝图从开始到 `READY` 必须依次完成：
 
@@ -23,7 +31,22 @@ description: 当架构总设计师已经冻结当前 Stage Contract，需要在�
 7. `Verify Stage Observability`：每个 Stage 至少有一个明确 `Observability Step / Checkpoint`，证明 Console、远程 Sink、Crash / Error 与其他适用观测链路真实工作。
 8. `Dry Run & Gate`：从 Entry State 机械走到 Stage Exit State；存在未解决产品 / 架构决策、观测盲区或不可验证 Sink 时不得输出 `READY`。
 
-## B. 六类 Observability 执行地图
+最终 Execution Contract 必须让施工 Agent 一眼知道：
+
+- 当前 Stage 要形成什么产品 / 系统结果；
+- 最早哪个 Slice 会出现真实 End-to-End Path；
+- 每个 Task 改什么、在哪改、怎么验证；
+- 每个 Task 六类 Observability 分别是 `ADD / CHANGE / PRESERVE / N/A`；
+- Xcode / Console 应该看到什么关键日志；
+- 哪些 Product Events 应该在什么后台出现；
+- Error / Crash 通道如何证明真实接通；
+- Metrics / Tracing / Audit 在什么触发条件下必须出现；
+- 哪个 Observability Checkpoint 证明 Stage 不存在关键黑盒；
+- 什么状态满足后才可以进入下一个 Task / Slice 与最终 `READY`。
+
+## C. 硬门禁
+
+### 六类 Observability 执行地图
 
 蓝图不得把“埋点”理解为单一 analytics。每个 Task 必须逐类检查以下六种能力：
 
@@ -47,7 +70,7 @@ Task 逐类状态使用：
 - `N/A`：必须写明理由；不能用 `N/A` 逃避上游已经标记 `REQUIRED` / `REQUIRED WHEN APPLICABLE` 且触发条件已成立的能力。
 - 凡 Task 新增或改变运行时行为，`Diagnostic / Structured Logging` 不得为 `N/A`。
 
-## C. Stage / Task 硬门禁
+### Stage / Task 硬门禁
 
 - 每个 Stage 至少存在一个非 `NONE` 的 `Observability Delta` 和一个明确、可执行、可重复的 `Observability Step / Checkpoint`。
 - 不允许“功能先做完，Stage 尾部统一补日志 / events / crash / metrics / tracing / audit”。
@@ -57,24 +80,49 @@ Task 逐类状态使用：
 - Product Events、Diagnostic Logging、Error / Crash Tracking 是不同能力，不得互相冒充。
 - 上游 Observability Contract 缺失、六类状态不完整或要求与 Repository Reality 冲突时，蓝图不得自行降级，必须 `PLAN_BLOCKED_ARCHITECTURE`。
 
-## D. 最终 Execution Contract 必须让施工 Agent 一眼知道
+### 合同与术语导航
 
-- 当前 Stage 要形成什么产品 / 系统结果；
-- 最早哪个 Slice 会出现真实 End-to-End Path；
-- 每个 Task 改什么、在哪改、怎么验证；
-- 每个 Task 六类 Observability 分别是 `ADD / CHANGE / PRESERVE / N/A`；
-- Xcode / Console 应该看到什么关键日志；
-- 哪些 Product Events 应该在什么后台出现；
-- Error / Crash 通道如何证明真实接通；
-- Metrics / Tracing / Audit 在什么触发条件下必须出现；
-- 哪个 Observability Checkpoint 证明 Stage 不存在关键黑盒；
-- 什么状态满足后才可以进入下一个 Task / Slice 与最终 `READY`。
+- 唯一合同原则：见正文 `0. 唯一合同原则` 节，不可违反。
+- 术语表（Stage / Slice / Task / Phase）：见正文 `0.1 术语表` 节，与上游全局一致、写死。
+
+## D. 文档地图（写权限白名单）
+
+| 动作 | 允许的文件 |
+|---|---|
+| 写 | `docs/blueprint/EXECUTION_CONTRACT.md`（唯一合同，只准 in-place 修改；唯一例外：施工期临时草稿只允许放仓库根 `.workbench/` 目录，文件头必须标注“临时草稿”，交付前必须合并回唯一合同或删除） |
+| 读 | `docs/product/` + `docs/architecture/` + 唯一合同本身 |
+
+白名单即全部：不得在上表之外新建或修改任何项目文档。确需新增文档类型时，停止并回报用户裁决。
 
 ---
 
 # 最高优先级施工原则
 
 以下原则高于后续任务拆分、依赖排序、测试组织与局部效率优化。发生冲突时，以本节为准。
+
+## 0. 唯一合同原则（Single Contract，不可违反）
+
+一个项目在任一时刻只能存在**一份权威 Execution Contract 文档**（路径由上游指定，默认 `docs/blueprint/EXECUTION_CONTRACT.md`）。
+
+- 合同的所有演进、补充、修复、增补章节，都必须**直接修改该文档本身**（in-place revision），并在文档头部维护修订记录（日期 / 修订原因 / 修订范围）。
+- **禁止**新建任何平行的补充、补丁、汇总、分片文档作为合同内容的载体（如 `*_SUPPLEMENT.md`、`*_ADDITIONS.md`、`*_SUMMARY.md`、`*_OBSERVABILITY.md`、分 Stage 的合同副本等）。合同内容只能存在于唯一合同之内。
+- 即使补充内容体量很大（例如为 61 个 Task 补六类 Observability Matrix），也必须逐节写入唯一合同；合同变长是预期结果，不是新建文件的理由。
+- 新规则使旧合同大面积失效时，仍然修订同一份文档（重写对应章节），不得另起新文件。
+- Stage Verifier 与施工 Agent 只以唯一合同为准；任何合同性内容出现在其他文件中，一律视为未生效、无约束力。
+- 发现仓库中已存在平行合同文档时，先将其有效内容合并回唯一合同并删除平行文档，再继续规划。
+- 本原则不改变权限边界：修订仍只能编译已批准决策，不得借"合并回原文"创造新产品 / 架构决策。
+
+## 0.1 术语表（与上游全局一致，写死）
+
+| 术语 | 含义 |
+|---|---|
+| **Stage** | 产品阶段（产品 ROADMAP / 架构 Stage Contract），不用于蓝图内部细分 |
+| **Slice** | 蓝图内部的施工纵向切片（Vertical Slice），蓝图 S 级细分一律称 Slice（SLICE-N），与 Stage 编号无对应关系 |
+| **Task** | 最小施工单元（T 编号） |
+| **Phase** | 仅限 skill 工作流程步骤，禁止用于交付物命名 |
+| **节** | 文档内部结构的称呼。所有层级与文档结构必须按本表规定的名称称呼，不得自创层级或结构名称 |
+
+蓝图中不得出现以 "Stage" 命名内部施工细分的表述；发现既有蓝图混用时，先改正再继续。
 
 ## 1. 先让真实产品成立，再继续扩建
 
@@ -887,8 +935,9 @@ Stage Contract 仍然正确，但当前：
 
 # 输出文档结构
 
-Execution Contract 必须严格按以下顺序生成：
+Execution Contract 必须严格按以下顺序生成。第 `0` 节为新增的文档导航节；原 `1`–`18` 节编号与内容保持不变（含既有 `10.1`、`14.1` 子节），以保证全文交叉引用不被破坏：
 
+0. `## 文档导航`（结构索引 + 本文档为唯一合同的权威声明 + 建议阅读顺序）
 1. `# <Stage> — Execution Contract`
 2. `## Stage Authority`
 3. `## Objective`
@@ -1252,6 +1301,7 @@ Execution Contract 只有同时满足以下全部条件，才可以结束为：
 
 条件：
 
+- 合同内容仅存在于唯一 Execution Contract 文档中；不存在任何平行补充 / 补丁 / 汇总文档承载合同内容；
 - 所有权威输入都存在且相互兼容；
 - 所有 Repository Reference 都能解析；
 - 所有 Current-stage Implementation Decision 已冻结；

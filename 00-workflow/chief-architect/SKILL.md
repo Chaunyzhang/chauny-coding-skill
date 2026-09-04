@@ -11,7 +11,23 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 
 本节不是完整规则，而是让 Agent 在进入长文档前先建立全局执行地图。正文规则仍是权威来源。
 
-## A. 全程必做
+## A. 角色边界
+
+架构总设计师负责：
+
+- 基础技术选型
+- 完整技术架构
+- 工程规范
+- Roadmap
+- Stage Contract 冻结
+- 蓝图上游约束
+
+架构总设计师不负责：
+
+- 产品定义（上游 product-designer 的产物，本角色只读消费）
+- 施工执行（下游 construction-blueprint / 施工 Agent 的职责）
+
+## B. 全程主流程
 
 架构总设计师从开始到交付必须依次完成：
 
@@ -22,11 +38,11 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 5. `Build Roadmap`：按纵向 Product Outcome 划分 Stage；每个 Stage 都必须定义 `Observability Delta`，不得出现无观测增量的 Stage。
 6. `Freeze Current Stage Contract`：明确 Scope、Exit State、Acceptance、Operational / Observability Obligations、Stop Rule。
 7. `Constrain Blueprint`：要求 Blueprint 把每个运行时 Task 的 Behavior Delta 与 Observability Delta 同 Task 落实并验证。
-8. `Write Authority Docs`：所有正式决定落入 `docs/architecture/` 或项目等价权威来源。
+8. `Write Authority Docs`：所有正式决定落入 `docs/architecture/` 或项目等价权威来源（写权限见 D. 文档地图）。
 
 任何一步缺少上游权威事实、存在未决 Foundational Decision 或形成关键观测盲区，都不得伪装成完成。
 
-## B. 条件触发后必做
+### 条件触发后必做
 
 以下不是“随意选做”。当产品 / Stage 使用对应能力或风险条件出现时，立即升级为必做：
 
@@ -43,7 +59,18 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 
 未来可能需要、但 Current Stage 与紧邻已批准 Stage 均不依赖的能力，才允许 `DEFERRED`，并必须记录 Revisit Trigger。
 
-## C. Observability 六类导航
+## C. 硬门禁
+
+### Stage / Task 观测硬规则
+
+- 每个 Stage 至少有一个明确、可执行、可验收的 `Observability Step`。
+- 每个 Stage 必须定义 `Observability Delta`，并在 Stage Acceptance 中验证观测链路仍真实工作。
+- Blueprint 的每个 Task 都必须声明 Observability Delta；若 Task 不改变运行时行为，可写 `NONE`，但必须说明原因。
+- 凡新增或改变运行时行为的 Task，`Diagnostic / Structured Logging` 默认必须同 Task 完成；其余五类按 Stage Contract 和行为语义同步落实。
+- 不允许“先把功能做完，Stage 尾部再统一补埋点”。
+- “代码里写了日志 / track / capture 调用”不等于 Observability 完成；必须证明初始化、配置、传输 / 输出与实际可见性成立。
+
+### Observability 六类导航
 
 | 类型 | 默认级别 | 主要回答 | 最低要求 |
 |---|---|---|---|
@@ -56,14 +83,19 @@ description: 接收 Product Definition，以产品理想终局和长期演进为
 
 “条件必做”表示触发条件成立后不可省略；不是自由裁量的装饰项。
 
-## D. Stage / Task 观测硬规则
+### 其他硬规则导航
 
-- 每个 Stage 至少有一个明确、可执行、可验收的 `Observability Step`。
-- 每个 Stage 必须定义 `Observability Delta`，并在 Stage Acceptance 中验证观测链路仍真实工作。
-- Blueprint 的每个 Task 都必须声明 Observability Delta；若 Task 不改变运行时行为，可写 `NONE`，但必须说明原因。
-- 凡新增或改变运行时行为的 Task，`Diagnostic / Structured Logging` 默认必须同 Task 完成；其余五类按 Stage Contract 和行为语义同步落实。
-- 不允许“先把功能做完，Stage 尾部再统一补埋点”。
-- “代码里写了日志 / track / capture 调用”不等于 Observability 完成；必须证明初始化、配置、传输 / 输出与实际可见性成立。
+- 术语表：术语全局唯一、写死，不得混用（见正文“术语表”节）。
+- 文档写入规则：权威文档未落盘不视为完成；同一事实只有一个 Source of Truth（见正文“文档写入规则”节）。
+
+## D. 文档地图（写权限白名单）
+
+| 动作 | 允许的文件 |
+|---|---|
+| 写 | `docs/architecture/` 下：`README.md`、`ARCHITECTURE.md`、`TECH_STACK.md`、`PROJECT_STRUCTURE.md`、`ENGINEERING_STANDARDS.md`、`EXTERNAL_SERVICES.md`、`OBSERVABILITY.md`、`DECISIONS.md`，以及 `docs/architecture/stages/STAGE-*.md`（仅这些，只准 in-place 修改） |
+| 读 | `docs/product/` 全部 + `docs/architecture/` 全部 |
+
+白名单即全部：不得在上表之外新建或修改任何项目文档。确需新增文档类型时，停止并回报用户裁决。
 
 ---
 
@@ -767,6 +799,21 @@ Blueprint 必须把这些要求增量化到 Task：
 
 ---
 
+# 术语表（项目全局，写死）
+
+以下术语在所有上游文档、Stage Contract、蓝图与验收报告中含义唯一，不得混用：
+
+| 术语 | 含义 | 权威文档 |
+|---|---|---|
+| **Product** | 产品整体定义与规则 | `docs/product/Product-Definition.md` |
+| **Stage** | 产品阶段 / 里程碑。产品 ROADMAP 的 Stage N 与架构 `stages/STAGE-N.md` 一一对应，是同一个 Stage | `docs/product/ROADMAP.md` → `docs/architecture/stages/<ID>.md` |
+| **Slice** | Stage 内部的施工纵向切片（Vertical Slice），仅存在于施工蓝图层；Slice 编号与 Stage 编号无对应关系 | `docs/blueprint/EXECUTION_CONTRACT.md` |
+| **Task** | 最小施工单元（T 编号） | `docs/blueprint/EXECUTION_CONTRACT.md` |
+| **Phase** | 仅限 skill 内部工作流程步骤（如 Phase 0-8），**禁止**用于项目文档与交付物命名 | — |
+| **节** | 文档内部结构的称呼。所有层级与文档结构必须按本表规定的名称称呼，不得自创层级或结构名称 | — |
+
+下游文档引用层级时必须使用上表术语；发现混用（如把施工细分称为 Stage）时，先改正再继续。
+
 # 架构文档
 
 正式架构成果写入项目文档，不依赖聊天历史。
@@ -783,7 +830,6 @@ docs/
     ├── ENGINEERING_STANDARDS.md
     ├── EXTERNAL_SERVICES.md
     ├── OBSERVABILITY.md
-    ├── ROADMAP.md
     ├── DECISIONS.md
     └── stages/
         └── <STAGE-ID>.md
@@ -800,9 +846,11 @@ docs/
 | `ENGINEERING_STANDARDS.md` | 全项目长期工程规则 |
 | `EXTERNAL_SERVICES.md` | 外部服务、Build/Buy、数据影响、成本、Lock-in、Exit |
 | `OBSERVABILITY.md` | 六类 Observability Type Matrix、Diagnostic Logging、Product Events、Error / Crash、Metrics、Tracing、Audit / Security、Correlation、Sink Readiness、Stage / Task 增量观测、告警、恢复 |
-| `ROADMAP.md` | Scope 裁决、Stage 路线、依赖、Definition of Enough |
+| Roadmap | 产品层权威，见 `docs/product/ROADMAP.md`，本层只读引用（Scope 裁决、Stage 路线、依赖、Definition of Enough） |
 | `DECISIONS.md` | 高影响 Architecture Decisions / ADR 索引 |
 | `stages/<ID>.md` | 当前 Stage Contract |
+
+所有权威架构文档必须在开头带“文档导航”节，包含：结构索引、本节为权威的声明、建议阅读顺序。
 
 ## TECH_STACK.md
 
