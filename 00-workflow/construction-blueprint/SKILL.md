@@ -1,1425 +1,742 @@
 ---
 name: construction-blueprint
 display_name: 施工蓝图
-description: 当架构总设计师已经冻结当前 Stage Contract，需要在编码前为施工 Agent 生成一份确定性、基于真实仓库、按持续纵向集成与同步可观测性推进，并能通过真实产品检查点、Observability Evidence 与用户上手验收证明结果成立的 Execution Contract 时使用。
+description: 接收架构总设计师冻结的 Current Stage Contract，在不创造产品或架构决策的前提下，基于真实仓库把 Stage 编译成可机械施工的纵向 Slice 与精确 Task；让真实产品路径尽早成立，并用最小合理成本完成局部、能力和 Stage 三层验证，同时把已触发的日志、埋点、Crash、Metrics、Tracing、Audit 等运行义务落到实际施工位置。
 ---
 
 # 施工蓝图
 
-# 执行导航地图（先读）
+## 使命
 
-本节不是完整规则，而是让 Agent 在进入长文档前先建立施工全局地图。正文规则与上游 Stage Contract 仍是权威来源。
+把已经冻结的 `Stage-n` 从“架构上可建设”编译成“施工 Agent 可以直接执行”。
 
-## A. 角色边界
+蓝图必须同时做到：
 
-施工蓝图只负责一件事：把上游已冻结的 Stage Contract 编译为确定性 Execution Contract。
+1. **不重新设计产品**：产品语义来自 Product Definition 与 Stage Contract。
+2. **不重新设计架构**：技术方向、模块边界、数据 / 接口 /权限 / Provider 等来自架构权威文档。
+3. **真实仓库落地**：所有计划必须建立在真实 Path、Symbol、Schema、Command 和现有实现上。
+4. **尽早形成真实纵向能力**：优先让最薄的真实产品 / 系统路径跑起来，而不是先批量完成技术层。
+5. **施工步骤确定**：施工 Agent 不需要在 Task 中重新决定“做什么、放哪里、怎么验证”。
+6. **验证成本受控**：Task、Slice、Stage 三层各证明不同事实；同一事实不重复测试。
+7. **运行义务同步落地**：Stage 真正触发的 Logging、Product Events、Crash、Metrics、Tracing、Audit、Backup、Alert 等不能被拖到功能完成之后。
+8. **文档克制**：Execution Contract 只记录施工所需的当前有效事实，不复制上游长篇理由和讨论过程。
 
-- 不创造产品 / 架构决策：产品决策归上游 Product Definition，架构决策归上游 chief-architect；发现上游缺口只能以 `PLAN_BLOCKED` / `PLAN_BLOCKED_ARCHITECTURE` 停止并回报，不得自行补决策。
-- 不亲自施工：蓝图只产出 Execution Contract，施工执行归下游施工 Agent；蓝图 Agent 不写产品代码、不改仓库实现。
-- 不负责验收：阶段验收归 stage-verifier；蓝图只保证合同本身可验证、可验收，不替验收方下结论。
+核心原则：
 
-## B. 全程主流程
+`Frozen Stage → Repository Reality → Vertical Slices → Deterministic Tasks → Minimum Sufficient Verification`
 
-施工蓝图从开始到 `READY` 必须依次完成：
+施工执行约束：
 
-1. `Restore Authority & Reality`：读取 Current Stage Contract、Architecture Handoff、Observability Contract 与真实 Repository State。
-2. `Compile Target State`：把 Stage Exit State、Acceptance、Preservation、Regression 与 Observability Delta 翻译成可执行 Repository / Runtime 条件。
-3. `Build Scope & Traceability`：建立 Change / Creation / Observability / Preservation / Regression / Deferred Sets，并完成双向 Requirement 与 Observability Traceability。
-4. `Build Integration Slices`：优先形成最薄真实纵向链路；每个 Slice 同时定义 Product Checkpoint 与六类 Observability Type Coverage / Evidence。
-5. `Compile Tasks`：每个 Task 都写明 `Behavior Delta`，并逐类检查六种 Observability；运行时行为与必要观测必须同 Task 完成。
-6. `Verify Incrementally`：每个运行时 Task 必须先通过功能 Verification 与 Observability Verification，才允许解锁依赖它的后续 Task。
-7. `Verify Stage Observability`：每个 Stage 至少有一个明确 `Observability Step / Checkpoint`，证明 Console、远程 Sink、Crash / Error 与其他适用观测链路真实工作。
-8. `Dry Run & Gate`：从 Entry State 机械走到 Stage Exit State；存在未解决产品 / 架构决策、观测盲区或不可验证 Sink 时不得输出 `READY`。
+> Construction Agent 执行本 Execution Contract 时应同时加载 `no-pitfall`；Blueprint 决定“怎么施工”，`no-pitfall` 约束“施工时不能踩哪些坑”。
 
-最终 Execution Contract 必须让施工 Agent 一眼知道：
+## 上游权威输入
 
-- 当前 Stage 要形成什么产品 / 系统结果；
-- 最早哪个 Slice 会出现真实 End-to-End Path；
-- 每个 Task 改什么、在哪改、怎么验证；
-- 每个 Task 六类 Observability 分别是 `ADD / CHANGE / PRESERVE / N/A`；
-- Xcode / Console 应该看到什么关键日志；
-- 哪些 Product Events 应该在什么后台出现；
-- Error / Crash 通道如何证明真实接通；
-- Metrics / Tracing / Audit 在什么触发条件下必须出现；
-- 哪个 Observability Checkpoint 证明 Stage 不存在关键黑盒；
-- 什么状态满足后才可以进入下一个 Task / Slice 与最终 `READY`。
+### 1. Current Stage Contract
 
-## C. 硬门禁
+以架构层当前 `Stage-n` Contract 为主权威。
 
-### 六类 Observability 执行地图
+至少需要：
 
-蓝图不得把“埋点”理解为单一 analytics。每个 Task 必须逐类检查以下六种能力：
-
-| 类型 | Blueprint 默认规则 | 典型验证 |
-|---|---|---|
-| `Diagnostic / Structured Logging` | **运行时 Task 必做** | 本地真实运行可实时看到；iOS / macOS 至少在 Xcode Console 看到关键 start / state / success / failure 与必要 context |
-| `Product / Business Events` | **有产品 / 业务行为时必做**，并服从 Stage Contract | SDK / Client 已真实初始化；触发真实路径后事件到达目标后台并可查询 |
-| `Error / Crash Tracking` | **存在可运行 App / Service 时必须承载并保持可验证** | Error / Crash 通道已初始化；受控 error / crash 能形成可查询 stack / build / environment 证据；不得由业务 `*.failed` event 代替 |
-| `Metrics` | **触发条件成立后必做** | 指标真实产生，可读 / 可查询，label / dimension 与 Stage Contract 一致 |
-| `Tracing` | **跨边界 / 异步链路触发后必做** | trace / span / correlation 可串起真实调用链并定位耗时 / 失败边界 |
-| `Audit / Security Events` | **敏感操作触发后必做** | 真实 Auth / Permission / Admin / Payment / 敏感变更产生符合 schema 的可授权检索记录 |
-
-Task 逐类状态使用：
-
-`ADD | CHANGE | PRESERVE | N/A`
-
-其中：
-
-- `ADD / CHANGE`：本 Task 必须包含明确 Instrumentation Actions 与真实 Observability Verification。
-- `PRESERVE`：已有能力不需要新增埋点，但本 Task 必须说明如何不破坏既有观测链路；必要时加入 Regression Evidence。
-- `N/A`：必须写明理由；不能用 `N/A` 逃避上游已经标记 `REQUIRED` / `REQUIRED WHEN APPLICABLE` 且触发条件已成立的能力。
-- 凡 Task 新增或改变运行时行为，`Diagnostic / Structured Logging` 不得为 `N/A`。
-
-### Stage / Task 硬门禁
-
-- 每个 Stage 至少存在一个非 `NONE` 的 `Observability Delta` 和一个明确、可执行、可重复的 `Observability Step / Checkpoint`。
-- 不允许“功能先做完，Stage 尾部统一补日志 / events / crash / metrics / tracing / audit”。
-- 每个运行时 Task 必须做到：`Behavior Change + Diagnostic Logging + Applicable Observability + Verification` 同 Task 闭环。
-- `logger.*`、`track()`、`capture()`、metric / span 调用写进代码，只证明 instrumentation code 存在，不证明 Observability 完成。
-- 真实完成必须验证：初始化、配置、环境、Console 输出或网络传输、接收端 / Sink、查询 / 检索路径实际成立。
-- Product Events、Diagnostic Logging、Error / Crash Tracking 是不同能力，不得互相冒充。
-- 上游 Observability Contract 缺失、六类状态不完整或要求与 Repository Reality 冲突时，蓝图不得自行降级，必须 `PLAN_BLOCKED_ARCHITECTURE`。
-
-### 合同与术语导航
-
-- 唯一合同原则：见正文 `0. 唯一合同原则` 节，不可违反。
-- 术语表（Stage / Slice / Task / Phase）：见正文 `0.1 术语表` 节，与上游全局一致、写死。
-
-## D. 文档地图（写权限白名单）
-
-| 动作 | 允许的文件 |
-|---|---|
-| 写 | `docs/blueprint/EXECUTION_CONTRACT.md`（唯一合同，只准 in-place 修改；唯一例外：施工期临时草稿只允许放仓库根 `.workbench/` 目录，文件头必须标注“临时草稿”，交付前必须合并回唯一合同或删除） |
-| 读 | `docs/product/` + `docs/architecture/` + 唯一合同本身 |
-
-白名单即全部：不得在上表之外新建或修改任何项目文档。确需新增文档类型时，停止并回报用户裁决。
-
----
-
-# 最高优先级施工原则
-
-以下原则高于后续任务拆分、依赖排序、测试组织与局部效率优化。发生冲突时，以本节为准。
-
-## 0. 唯一合同原则（Single Contract，不可违反）
-
-一个项目在任一时刻只能存在**一份权威 Execution Contract 文档**（路径由上游指定，默认 `docs/blueprint/EXECUTION_CONTRACT.md`）。
-
-- 合同的所有演进、补充、修复、增补章节，都必须**直接修改该文档本身**（in-place revision），并在文档头部维护修订记录（日期 / 修订原因 / 修订范围）。
-- **禁止**新建任何平行的补充、补丁、汇总、分片文档作为合同内容的载体（如 `*_SUPPLEMENT.md`、`*_ADDITIONS.md`、`*_SUMMARY.md`、`*_OBSERVABILITY.md`、分 Stage 的合同副本等）。合同内容只能存在于唯一合同之内。
-- 即使补充内容体量很大（例如为 61 个 Task 补六类 Observability Matrix），也必须逐节写入唯一合同；合同变长是预期结果，不是新建文件的理由。
-- 新规则使旧合同大面积失效时，仍然修订同一份文档（重写对应章节），不得另起新文件。
-- Stage Verifier 与施工 Agent 只以唯一合同为准；任何合同性内容出现在其他文件中，一律视为未生效、无约束力。
-- 发现仓库中已存在平行合同文档时，先将其有效内容合并回唯一合同并删除平行文档，再继续规划。
-- 本原则不改变权限边界：修订仍只能编译已批准决策，不得借"合并回原文"创造新产品 / 架构决策。
-
-## 0.1 术语表（与上游全局一致，写死）
-
-| 术语 | 含义 |
-|---|---|
-| **Stage** | 产品阶段（产品 ROADMAP / 架构 Stage Contract），不用于蓝图内部细分 |
-| **Slice** | 蓝图内部的施工纵向切片（Vertical Slice），蓝图 S 级细分一律称 Slice（SLICE-N），与 Stage 编号无对应关系 |
-| **Task** | 最小施工单元（T 编号） |
-| **Phase** | 仅限 skill 工作流程步骤，禁止用于交付物命名 |
-| **节** | 文档内部结构的称呼。所有层级与文档结构必须按本表规定的名称称呼，不得自创层级或结构名称 |
-
-蓝图中不得出现以 "Stage" 命名内部施工细分的表述；发现既有蓝图混用时，先改正再继续。
-
-## 1. 先让真实产品成立，再继续扩建
-
-对于包含用户界面、客户端或真实产品交互的 Stage，施工必须尽早形成最薄的真实端到端链路，并在后续施工中持续保持产品可运行、可交互、可观察。
-
-默认禁止：
-
-`Backend → Database → Services → Frontend → Final Integration`
-
-默认采用：
-
-`Thin Vertical Slice → Real Integration → Product Checkpoint → Expand → Re-integrate → Product Checkpoint → Stage Acceptance`
-
-即：
-
-`最薄纵向切片 → 真实集成 → 产品检查点 → 扩展 → 再集成 → 产品检查点 → 阶段验收`
-
-不得把跨层集成推迟到 Stage 尾部。
-
-## 2. Stage 按 Integration Slice 施工，不按技术层批量施工
-
-一个 Stage 可以包含很多 Task，但这些 Task 必须组织进一个或多个 `Integration Slice`。
-
-每个 Integration Slice 必须形成一个已经连接起来、真实可运行的产品状态，而不是一组“分别完成、以后再组装”的零件。
-
-典型 Slice 可以同时包含：
-
-- 最小 UI / Client 交互
-- 对应 API / Backend 行为
-- 对应 Data / State 变化
-- 必要 External Service
-- Error / Loading / Failure 行为
-- 真实集成验证
-
-任务数量本身不是风险；**长时间不集成才是风险**。
-
-## 3. CI PASS 不等于产品成立
-
-Unit Test / Integration Test / CI / Typecheck / Mock 测试是必要工程证据，但不能替代真实产品路径。
-
-对于用户型 Stage，至少必须证明：
-
-`真实产品入口 → 真实用户操作 → 真实调用链 → 真实后端 / 服务 → 真实状态变化 → 真实可见结果`
-
-如果主要产品路径仍依赖 Mock、stub、fake service，或者绕过真实入口，只能证明局部组件成立，不能证明 Stage Delivery 完成。
-
-## 4. UI 是产品行为的一部分，不是最后的装饰层
-
-当 Stage 的 Product Outcome 需要 UI / Client 才能被用户体验时，UI 必须进入早期 Integration Slice。
-
-不得默认把 UI 安排在所有 Backend / Data / Service 工作完成之后。
-
-以下产品问题通常只有接入真实 UI 后才能被验证：
-
-- Loading / Pending 状态
-- 错误反馈
-- 旧状态 / 刷新
-- 重复操作
-- Enabled / Disabled 条件
-- 页面跳转 / 返回状态
-- 持久化结果是否真实可见
-- Optimistic / Async 行为
-- Timeout / 长任务状态
-- Permission / Empty State
-- 用户可见恢复行为
-
-## 5. 每个 Integration Slice 都必须有 Product Checkpoint
-
-每个 Slice 必须定义一个可重复执行的 `Product Checkpoint`，至少包含：
-
-- `Product Entry`
-- `Actor / Test Identity`
-- `Preconditions`
-- `Hands-on Steps`
-- `Real Services Used`
-- `Expected Visible Result`
-- `Expected State / Persistence`
-- `Required Failure Behavior`
-- `Automated Evidence`
-- `Observability Type Coverage`
-- `Observability Evidence`
-- `Mocks Allowed`
-- `Slice Exit State`
-
-Checkpoint 必须能够从真实产品入口证明当前 Slice 已经真实集成成立。
-
-用户不必在每个 Slice 后亲自批准施工继续，但蓝图必须保证：任何 Slice 结束时，都存在一个可以直接上手验证的真实产品状态。
-
-## 6. Stage 必须有最终 Hands-on Acceptance
-
-对于用户型 Stage，Execution Contract 必须提供最终 `Hands-on Acceptance`。
-
-它必须让非技术用户知道：
-
-- 从哪里进入产品
-- 使用什么账号 / 前置条件
-- 做哪几个操作
-- 应该看到什么
-- 数据 / 状态应该如何保持
-- 关键失败时应该看到什么
-
-自动化证据不能替代最终 Hands-on Acceptance。
-
-## 7. Technical-only Stage 是例外
-
-如果 Current Stage 无法形成用户可体验的产品变化，只允许在 Stage Contract 已明确批准“纯技术前置 Stage”时继续。
-
-该 Stage 必须同时满足：
-
-- 是紧邻产品闭环的真实必要前置；
-- 有明确、可验证的 Exit State；
-- 明确下一哪个 Stage 会真实消费该能力；
-- 不把多个原本可以纵向切开的产品能力连续拆成黑盒技术 Stage。
-
-若 Current Stage 本应产生产品 Visible Delta，但真实仓库路径只能形成后端 / 数据库 / 基础设施黑盒变化，则：
-
-`REPLAN_BLUEPRINT`
-
-或：
-
-`PLAN_BLOCKED_ARCHITECTURE`
-
-不得自行把“内部完成”当成“产品完成”。
-
-## 8. 失败的 Product Checkpoint 阻断后续扩建
-
-如果某个 Slice 的真实产品路径失败：
-
-- 不继续堆叠后续 Slice；
-- 先定位当前 Slice 内的产品 / 集成 / 实现问题；
-- 属于实现错误 → `LOCAL_FIX`；
-- 属于蓝图顺序 / 落点问题 → `REPLAN_BLUEPRINT`；
-- 属于 Stage / Architecture / Product 语义问题 → 向上游升级。
-
-目标是尽早暴露真实产品问题，而不是把问题积累到 Stage 80%–90% 时一次爆发。
-
-## 9. 六类可观测性必须随 Task 同步施工
-
-Observability 不是 Stage 尾部的补充任务。Blueprint 必须把上游 Stage Observability Contract 增量化到具体 Integration Slice 与 Task，并完整承载六类能力：
-
-1. `Diagnostic / Structured Logging`
-2. `Product / Business Events`
-3. `Error / Crash Tracking`
-4. `Metrics`
-5. `Tracing`
-6. `Audit / Security Events`
-
-必须遵守：
-
-- 每个 Stage 至少包含一个明确、可验证的 `Observability Step / Checkpoint` 与非空 `Observability Delta`。
-- 每个 Task 都必须声明 `Behavior Delta`，并提供六类 `Task Observability Matrix`。
-- 六类状态只能使用 `ADD | CHANGE | PRESERVE | N/A`；`N/A` 必须说明原因。
-- 凡 Task 新增或改变运行时行为，`Diagnostic / Structured Logging` 必须在同一个 Task 内完成，不得写 `N/A`。
-- Product / Business 行为、可运行 App / Service、跨边界 / 异步链路、敏感操作等触发条件成立时，对应 Product Events、Error / Crash、Metrics、Tracing、Audit / Security 必须按 Stage Contract 在同一施工增量落实或明确 `PRESERVE` 已有基线。
-- 不得把多个前序 Task 的必要 instrumentation 集中推迟到 Stage 尾部的“统一补埋点”Task。
-- Task 完成意味着“行为完成 + 必要观测完成 + 观测链路真实可见 + 验证完成”。
-- 纯文档、纯静态配置或其他确实不产生运行时行为变化的 Task，可以让六类均为 `N/A` 或仅 `PRESERVE`，但必须逐类说明原因 / 保持义务。
-- 一个 Stage 不得所有 Task 都没有 Observability 建设或验证增量。
-
-### Diagnostic / Structured Logging 的 Task 规则
-
-对于任何新增或改变运行时行为的 Task，至少规划与该 Behavior Delta 相称的诊断日志：
-
-- 关键开始 / 入口；
-- 关键状态变化或阶段边界；
-- 成功 / 完成；
-- 失败 / exception / timeout / retry / fallback（适用时）；
-- 足够定位问题但不泄露 Secret / 未批准 PII 的 context / correlation。
-
-移动端 / Apple 平台施工必须明确本地真实运行如何在 Xcode Console / 平台 Console 看到这些日志。只写日志 API、不验证 Console 可见，不算完成。
-
-### Product / Business Events 的 Task 规则
-
-当 Task 新增或改变上游定义的产品 / 业务语义时：
-
-- 使用冻结的 event name / schema / context；
-- 明确 SDK / Client 初始化依赖和环境配置；
-- 真实触发产品路径；
-- 验证事件到达目标 Analytics Sink 并可查询；
-- 不得把本地 console print 当作 Product Event 已送达证据。
-
-### Error / Crash Tracking 的 Task 规则
-
-可运行 App / Service 必须承载上游确定的 Error / Crash Tracking 基线：
-
-- 明确 SDK / 平台通道初始化落点；
-- 保留 build / version / environment / device / stack / correlation 等必要上下文；
-- 对可捕获错误与未捕获 Crash 的责任边界写清；
-- 使用受控验证方式证明 Error / Crash 接收端真实工作；
-- Product Event 中的 `*.failed` 不能替代 Crash / Error Tracking。
-
-Task 如果不新增 Crash instrumentation，可以标 `PRESERVE`，但必须确保本 Task 不破坏全局 Crash / Error 上报和必要 context。
-
-### Metrics / Tracing / Audit 的触发规则
-
-- `Metrics`：当 Task 引入或改变后端、队列、外部依赖、性能 / 容量 / SLA / 成本敏感行为时，按 Stage Contract 同 Task 添加 / 修改或验证指标。
-- `Tracing`：当 Task 跨模块、API、Job、External Provider、异步边界或存在难以靠单点日志定位的链路时，按 Stage Contract 同 Task 添加 / 修改 trace / span / correlation。
-- `Audit / Security Events`：当 Task 涉及 Auth、Permission、Admin、Payment、Secret、敏感数据或关键权限状态变化时，按 Stage Contract 同 Task 添加 / 修改审计 / 安全记录。
-
-### Observability 真完成规则
-
-以下均不构成完成证据：
-
-- 代码里存在 `logger.*`；
-- 代码里存在 `track()`；
-- 代码里存在 `capture()`；
-- 注册了 metric / span 但没有真实数据；
-- SDK dependency 已安装但没有初始化；
-- 配置变量存在但运行时没有加载；
-- 测试只 mock 掉 telemetry client。
-
-必须证明与当前类型相匹配的真实链路：
-
-`Trigger → Instrumentation → Initialization / Runtime Config → Output / Transport → Sink / Console → Inspectable Evidence`
-
-原则：
-
-`Build a little → observe a little → verify a little.`
-
-即：
-
-`做一点，就同步获得一点可观测性；任何新增运行时行为都不得先进入黑盒状态。`
-
-# 目的
-
-把已经冻结的 Stage Contract、已批准架构决策、真实仓库状态、Scope 边界与验收要求，编译成一份确定性的 Execution Contract，使施工 Agent 可以机械执行，而不需要在施工时重新做产品或架构判断。
-
-蓝图只负责**编译已批准决策**，不创造新的产品决策或架构决策。
-
-Execution Contract 只有同时满足以下条件才算完整：
-
-- 所有施工时可能遇到的实施选择都已经解决；
-- 每个 Task 都有确定的前置条件、动作、产出、验证与退出条件；
-- 每个上游需求都可以追溯到具体施工工作与证据；
-- Preservation、Regression、Architecture 与 Scope 义务全部可验证；
-- 每种异常都有明确控制路径；
-- Dry Run 能从 Entry State 走到 Stage Exit State，且过程中不需要新增产品、架构、Scope 或 Acceptance 决策；
-- 用户型工作被组织为持续集成的纵向 Slice，而不是最后才把各组件拼起来；
-- 每个 Integration Slice 都以真实 Product Checkpoint 结束；
-- 每个用户型 Stage 都有可重复执行的 Hands-on Acceptance 路径。
-- Stage Observability Contract 的六类能力已被映射到具体 Slice、Task 与 Verification Evidence；
-- 每个 Task 都声明 Behavior Delta 与六类 Task Observability Matrix，运行时行为变更与必要观测同 Task 完成；
-- 每个运行时 Task 的 Diagnostic / Structured Logging 都有本地实时可见验证；
-- 所有 `ADD / CHANGE` 的远程观测类型都能证明初始化、传输 / 写入、Sink 与查询链路真实成立；
-- 每个 Stage 至少存在一个明确的 Stage-level `Observability Step / Checkpoint`。
-
-# 权限边界
-
-Source of Truth 顺序：
-
-`Product / Architecture → Stage Contract → Construction Blueprint → Implementation → Evidence`
-
-施工蓝图只能在已经批准的边界内决定执行机械细节，包括：
-
-- Task 拆分
-- 仓库目标位置
-- 执行顺序
-- 依赖顺序
-- 测试放置
-- Migration 顺序
-- Verification 放置
-- 已冻结 Observability Contract 的具体 instrumentation placement、六类 Task 状态映射与验证落点
-
-如果继续规划需要改变以下任何内容，蓝图无权自行决定：
-
-- Product Outcome / Product Rule
-- Accepted Requirement
-- Stage Scope
-- Stage Exit State
-- Architecture Invariant
-- Data Ownership / Lifecycle 语义
-- Interface 语义
-- Security / Permission 语义
-- Transaction / Consistency 语义
-- Acceptance 语义
-- 已批准技术方向
-- Stage Observability Contract 的六类 Type Matrix、最低覆盖范围、关键流程、必要 checkpoints、sink readiness、correlation 或 privacy / redaction 语义
-
-遇到上述情况，结束规划并输出 `PLAN_BLOCKED`，回到 Architecture Director。
-
-# 恢复与校验原则
-
-- 开始或恢复规划时重新核对 Current Stage Contract、Architecture Handoff 与真实仓库状态；聊天历史不作为唯一事实来源。
-- 仓库现实或上游 Contract 改变时，立即把受影响蓝图内容标记为失效并重新验证，不沿用旧路径推断新计划。
-- 恢复后从权威文档（Stage Contract、Architecture 文档）与真实仓库重新验证后继续。
-
-# 必需权威输入
-
-开始规划前必须收集并对齐以下内容。
-
-## Current Stage Contract
-
-- Stage ID / Name
-- Roadmap Position
-- Accepted Requirement IDs
-- Intent
+- Stage-n / Name
+- Included `Requirement-n`
+- Outcome
 - Entry State
-- Exit State
-- Visible Delta
-- Decisions
+- Exit State / Visible Delta
 - Authorized Scope
-- Architecture Delta
-- Architecture Invariants
-- Preservation Set
-- Deferred Set
+- Architecture / Platform Delta
+- Applied `Decision-n`
+- Applied `ENGINEERING_STANDARDS.md` sections
+- Operational Obligations（只包含本 Stage 触发项）
+- Verification Plan
+- Dependencies
+- Preservation / Direct Regression
 - Acceptance Criteria
-- Regression Set
+- Explicit Non-Scope
 - Escalation Triggers
 - Stop Rule
-- 上游已经定义的 Hands-on / 用户可见 Acceptance Intent
-- 如适用，Technical-only Stage 标记
-- Operational Obligations
-- `Observability Type Matrix`：六类分别为 `REQUIRED | REQUIRED WHEN APPLICABLE | NOT APPLICABLE` 与依据
-- Stage Observability Delta / Incremental Instrumentation Contract
-- Stage 至少一个明确 `Observability Step / Verification`
-- Diagnostic / Structured Logging：本地 / 开发运行时实时可见要求与关键 start / state / success / failure 覆盖
-- Product / Business Events：关键事件、schema、SDK / client 初始化、环境配置与目标 Sink
-- Error / Crash Tracking：接收端、初始化、stack / build / environment / correlation 与受控验证要求
-- Metrics：适用指标、维度、阈值 / 查询方式（适用时）
-- Tracing：trace / span / correlation 边界与传播要求（适用时）
-- Audit / Security Events：敏感动作、schema、保留 / 检索与权限要求（适用时）
-- Critical Flows / Failure Coverage
-- Sink Readiness / Initialization / Runtime Configuration requirements
-- Privacy / Redaction Rules
-- Observability Verification Evidence requirements
 
-## Architecture Inputs
+### 2. Architecture Authority
 
-- 相关 Architecture Spine
-- 相关 ADR / Decision Log
-- Architecture Director 的 Blueprint Handoff
-- 当前适用的项目工程规则
-- `OBSERVABILITY.md` 或等价 Observability Contract
-- 六类 Observability Type Matrix、Sink Readiness、Incremental Instrumentation Rule 与 Stage-level Observability Step
+按当前 Stage 实际需要读取：
 
-## Repository Inputs
+- `ARCHITECTURE.md`
+- `TECH_STACK.md`
+- `PROJECT_STRUCTURE.md`
+- `ENGINEERING_STANDARDS.md`
+- `EXTERNAL_SERVICES.md`
+- `OBSERVABILITY.md`（若项目存在或本 Stage 触发）
+- `DECISIONS.md`
+- 相关 Stage Baseline
 
-- 当前真实仓库状态
-- 相关实现、caller、schema、migration、test、configuration 与 generated artifacts
-- 当前项目已有实现模式
-- 可用的 build、test、typecheck、migration、generation 与 inspection 命令
+不要求把所有架构文档整篇复制进蓝图。
 
-已批准上游决策是权威；Repository State 是执行现实。
+### 3. Product Authority
 
-权威与现实不一致时，规划前必须分类：
+仅在解释 Requirement 或用户行为时读取：
 
-- 仓库细节与已批准决策兼容 → 吸收到蓝图；
-- 已批准边界内存在实施路径歧义 → 蓝图负责消除；
-- 存在上游产品语义或架构冲突 → `PLAN_BLOCKED`。
+- `docs/product/Product-Definition.md`
+- 当前 Stage 所引用的 `Requirement-n`
+- Product Rules
+- Actors / permissions
+- Core Product Loop
+- Product Acceptance Intent
+- 与 Current Stage 直接相关的产品结论
 
-# 规划流程
+蓝图不要求上游额外存在 `Capability Card`、`Capability-n`、`HORIZON Item`、产品 Roadmap 或 feature-level PRD。
 
-## 1. 建立 Current State
+### 4. Repository Reality
 
-确认经过验证的 Entry State：
+必须读取真实仓库中与 Current Stage 直接相关的：
 
-- 与当前 Stage 有关的既有行为；
-- 涉及的精确文件、symbol、interface、schema、test、command、generated artifact 与 convention；
-- 受影响组件依赖；
-- 当前 call / data / state / side-effect 路径；
-- 适用 Architecture Invariants；
-- Preservation Set 与 Regression Set 基线；
-- 后续 Task 所依赖的仓库事实。
-- 与本 Stage 相关的既有 `Diagnostic Logging | Product Events | Error / Crash | Metrics | Tracing | Audit / Security` 实现、初始化状态、sink / console 可见路径与 conventions；
-- 既有 telemetry / error / crash SDK 是否真的初始化、运行时配置从哪里加载、不同环境如何区分；
-- 现有 Console / Analytics / Crash / Metrics / Trace / Audit 数据如何检查；
-- 已知 observability blind spots，以及哪些属于 Current Stage 必须消除。
+- implementation
+- caller / dependency
+- route / view / handler / service
+- schema / migration
+- configuration / environment
+- tests
+- generated artifacts
+- build / test / lint / typecheck / migration / generation commands
+- 当前运行与集成方式
 
-必须使用精确 Repository Path 与 Symbol Name。
+聊天历史不能代替 Repository Reality。
 
-记录文档中的 Entry State 与真实 Repository Reality 之间的差异。
+## 命名体系
 
-## 2. 建立 Target State
+命名必须收敛，不允许 Blueprint 自行发明新的层级、前缀或状态系统。
 
-把 Stage Exit State 翻译成具体、可观察的 Repository 与 Runtime 条件：
+### 沿用上游对象
 
-- 新增或改变的能力已经成立；
-- Visible Delta 已产生；
-- 所需 Interface、Schema、State Transition 或 Artifact 已建立；
-- 既有行为被保持；
-- Architecture Delta 已实现；
-- Acceptance Criteria 已满足；
-- Regression Set 被保持；
-- Deferred Set 仍在当前施工之外；
-- Stage Stop Rule 已成立；
-- 对用户型 Stage，真实产品入口可以直接暴露本 Stage 的 Visible Delta；
-- Stage 拥有可重复执行的 Hands-on Acceptance 路径。
-- Stage Observability Delta 已真实落地并可验证；
-- 六类 Observability 已按 Stage Contract 得到明确的 `REQUIRED / REQUIRED WHEN APPLICABLE / NOT APPLICABLE` 落地结果；
-- 所有运行时 Behavior Delta 都存在同步 Diagnostic / Structured Logging，并可在本地真实运行时实时看到；
-- 所有 `ADD / CHANGE` 的远程观测能力都完成初始化 / runtime config / output or transport / sink / query 的真实链路验证；
-- 新增或改变的关键运行时行为不存在已知 Critical Observability Blind Spot；
-- 至少一个 Stage-level `Observability Step / Checkpoint` 可以重复执行。
+- **Product Definition**
+- **Requirement-n**
+- **Decision-n**
+- **Stage-n**
 
-Current Stage 完成与最终产品完成相互独立。
+不得重新编号。
 
-对于用户型 Stage：
+### 蓝图只创建两个对象
 
-**Repository 正确，但真实产品路径不工作，不是有效 Target State。**
+1. **Slice-n**
+   - Current Stage 内的纵向施工切片。
+   - 结束时形成一个真实可运行、可验证的能力状态。
+2. **Task-n**
+   - Slice 内最小、可独立施工与简单验证的改动单元。
 
-## 3. 落实 Frozen Decisions
+`Slice-n` 与 `Task-n` 只在当前 Execution Contract 内编号，从 1 开始，不要求跨 Stage 全局连续。
 
-提取所有限制施工方式的已批准决策：
+### 不创建
 
-- Architecture placement
-- Interface / Signature
-- Data ownership / lifecycle
-- Persistence behavior
-- Error semantics
-- Dependency choices
-- Compatibility behavior
-- Transaction / Concurrency / Consistency boundary
-- Security / Permission semantics
-- Migration strategy
-- Test strategy
-- Generation strategy
-- Rollout / ordering constraints
-- Observability Type Matrix：六类 required / conditional / N/A 状态
-- Diagnostic / Structured Logging naming、level、context、Console 可见要求
-- Product / Business Event naming、schema、SDK 初始化、环境与 Sink
-- Error / Crash Tracking provider / channel、初始化、context、受控验证方式
-- Metrics naming / dimensions / query requirements（适用时）
-- Tracing / Span / Correlation propagation requirements（适用时）
-- Audit / Security event schema、retention / access semantics（适用时）
-- Sink Readiness / Runtime Configuration requirements
-- Privacy / Redaction requirements
-- Stage Incremental Instrumentation requirements
+禁止创建：
 
-把这些决策转换成 Repository-level 的实施约束。
+- `Capability-n`
+- `R-n`
+- `H-n`
+- `ES-n`
+- `AC-n`
+- `EVID-n`
+- `Checkpoint-n`
+- `Observability-n`
+- `Phase-n` 作为项目对象
+- 任何仅为了流程显得完整而出现的 ID
 
-如果某个必需决策：
+Acceptance Criteria、Preservation、Regression、Operational Obligation 直接引用 Stage Contract 的原条目或章节名称。
 
-- 缺失；
-- 相互矛盾；
-- 或仍存在多个在产品 / 架构层面都合理的路径；
+### Blueprint 状态
 
-则输出 `PLAN_BLOCKED`，回到 Architecture Director。
+只使用：
 
-## 4. 建立 Scope Sets
+- `READY`
+- `BLOCKED`
 
-定义：
+阻塞时必须附：
 
-- `Change Set`：预计要修改的既有文件、目录、symbol、schema、configuration 或 test；
-- `Creation Set`：施工后应该新增的文件、symbol、schema、migration、test 或 artifact；
-- `Observability Set`：本 Stage 六类 Observability 分别必须 `ADD / CHANGE / PRESERVE / N/A` 的具体 logs、events、error / crash、metrics、traces、audit records、correlation、SDK / sink initialization、runtime config、schema、instrumentation points 与验证路径；
-- `Preservation Set`：必须继续成立的既有行为、interface、data contract、invariant、文件或 runtime guarantee；
-- `Regression Set`：必须继续通过的既有 test、journey、command 或 observable behavior；
-- `Deferred Set`：已经识别但明确不属于 Current Stage 的要求。
+```text
+Owner: Blueprint | Architecture | Product
+Gap:
+Evidence:
+Blocks:
+Required Resolution:
+```
 
-尽可能使用精确的：
+不要再建立多套 `REPLAN_* / PLAN_BLOCKED_* / PRODUCT_CHANGE` 状态名。
 
-- Path
-- Symbol
-- Acceptance ID
-- Requirement ID
-- ADR ID
-- Invariant ID
+## 权责边界
 
-每一项 Planned Change 都必须属于 Current Stage Contract。
+### 蓝图负责
 
-## 5. 建立 Requirement Traceability
+- 还原 Current Stage 真实 Entry State。
+- 把 Stage Exit State 翻译成 Repository / Runtime Target State。
+- 确定当前 Stage 的精确 Change / Creation 范围。
+- 把 `Requirement-n`、Architecture Obligation、Acceptance、Preservation、Direct Regression 映射到具体施工。
+- 把 Stage 切成尽早集成的 `Slice-n`。
+- 把 Slice 拆成 `Task-n` 并排序。
+- 决定精确 File / Symbol / Schema / Migration / Config / Test 落点。
+- 决定已批准路径内的低成本实施机械细节。
+- 把已触发 Operational Obligations 放进实际改变相关行为的 Task。
+- 为每个 Task 选择最便宜且足够的简单验证。
+- 为每个 Slice 定义能力功能测。
+- 为 Stage 定义最终模块测 / Hands-on Acceptance。
+- 建立足够的正向和反向 Traceability。
+- Dry Run 整份执行路径。
 
-Task 拆分前建立：
+### 蓝图不负责
 
-`Accepted Requirement → Stage Acceptance → Blueprint Task → Verification Evidence`
+- 改变 Product Outcome / Product Rule / Business Model。
+- 新增或删除 `Requirement-n`。
+- 改变 Stage Scope / Exit State / Acceptance。
+- 重新做技术栈、Provider 或 Foundational Decision。
+- 改变 Architecture Invariant。
+- 改变 Data Ownership、Permission、Security、Consistency、Compatibility 等架构语义。
+- 创造新的产品失败语义或不可逆行为。
+- 亲自施工代码。
+- 做 Stage Verifier 的最终验收结论。
+- 对整个历史仓库做开放式重审。
+- 为每个 Task 重跑完整真实产品链路。
+- 为每个 Task 填六类 Observability N/A 矩阵。
 
-同时建立：
+## 产品细节边界
 
-`Stage Observability Obligation → Observability Type → Blueprint Task → Observability Verification Evidence`
+新版上游不会提供完整 Feature Spec，因此蓝图必须正确区分“可以机械决定的局部细节”和“必须回产品的语义缺口”。
 
-对每个 Accepted Requirement 与 Acceptance Criterion，明确：
+### 可以在蓝图内决定
 
-- Implementation Responsibility
-- Task Coverage
-- Expected Evidence
-- Preservation / Regression dependencies
-- 六类 Observability Obligation / Status / Evidence dependencies
+前提：不改变产品语义、Stage Acceptance 或架构边界。
 
-每个 Task 至少必须向上追溯到一个：
+例如：
 
-- Current-stage Requirement
-- Acceptance Item
-- Architecture Obligation
-- Preservation Obligation
-- Regression Obligation
+- 已有设计系统内选择哪个现成组件。
+- 遵循既有模式确定局部 View / handler / service 落点。
+- 普通按钮位置或局部交互实现方式。
+- 已有产品语义下的 loading wiring。
+- 局部函数、文件拆分。
+- 测试放在哪个现有测试 target。
+- 已批准 Provider 的 SDK 调用落点。
 
-每个 Current-stage Requirement 也必须向下追溯到至少：
+优先沿用 Repository Convention，不为局部问题创造新模式。
 
-- 一个 Task
-- 一个 Verification Point
+### 产品语义缺口：先回 Product Detail
 
-## 6. 建立 Integration Slices
+如果缺失信息会改变以下任一产品语义：
 
-拆 Task 之前，先把整个 Stage 切成尽可能小、但仍能形成真实纵向产品状态的 `Integration Slice`。
+- user / actor
+- ownership / permission / visibility
+- product state / lifecycle
+- irreversible action
+- business rule
+- user-visible failure / recovery
+- commercial behavior
+- acceptance outcome
+- external product promise
+- privacy / sensitive product semantics
 
-每个 Slice 必须定义：
+蓝图不得自行猜测。
 
-- `Slice ID`
-- `Product / System Outcome`
-- `Real Product Entry`
-- `Vertical Path`
-- `Required Layers`
-- `Real Dependencies`
-- `Tasks`
-- `Product Checkpoint`
-- `Automated Evidence`
-- `Observability Type Coverage`
-- `Observability Evidence`
-- `Slice Exit State`
-- `Next Slice Dependency`
+处理顺序：
+
+1. 指向具体 `Requirement-n`。
+2. 说明缺失的产品语义为什么会改变施工结果。
+3. `Owner: Product`，回 `product-detail`。
+4. Product Detail 若只是补清原 Requirement → Chief Architect 更新 / 确认 Stage Contract 后继续 Blueprint。
+5. Product Detail 若发现需要改变 Product Definition → 回 Product Designer，再由 Chief Architect 重新裁决 Stage。
+
+如果缺口属于 architecture boundary / interface / security / consistency / Provider / technical direction，则：
+
+`Owner: Architecture`
+
+回 Chief Architect。
+
+普通 UI、代码组织和约定俗成的实现细节不得回 Product Detail。
+
+详细判定见 `references/product-detail-boundary.md`。
+
+## 最高优先级施工原则
+
+### 1. 唯一 Execution Contract
+
+默认权威文件：
+
+`docs/blueprint/EXECUTION_CONTRACT.md`
+
+Current Stage 的蓝图内容只存在这一份。
+
+- 修订直接 in-place 更新。
+- 不创建 supplement / additions / observability copy / summary contract。
+- 临时探索如果必须写文件，只允许放 `.workbench/`，交付前删除或把有效结论并回唯一合同。
+- 合同表达当前有效计划，不维护长篇 Revision Log 或废弃 Task 墓地。
+- Stage 完成后的历史事实由架构 Stage Baseline / verifier evidence 承担，不靠保留多份蓝图副本。
+
+### 2. 先让真实能力成立
+
+用户型 Stage 默认：
+
+`Thin Vertical Slice → Real Integration → Capability Verification → Expand`
+
+禁止默认：
+
+`Database → Backend → Services → UI → Final Integration`
+
+UI / Client 是产品行为的一部分；如果 Stage Outcome 需要用户操作，UI 必须进入早期 Slice。
+
+### 3. Slice 是纵向能力，不是技术批次
+
+每个 `Slice-n` 必须形成一个真实、已连接的状态。
+
+典型路径可以跨：
+
+`UI / Client → API → Domain → Data → External Service → Visible Result`
+
+不是所有 Slice 都必须跨所有层，只包含该能力实际需要的层。
+
+准备型 Task 可以存在，但必须被最近的 Slice 很快消费；不允许长期堆积“以后再集成”的组件。
+
+### 4. Task 是施工单元，不是验收单元
+
+Task 负责：
+
+- 一个清楚的改动目标。
+- 明确 Prerequisite。
+- 精确 Targets。
+- 机械 Actions。
+- 当前改动的简单测试。
+- 清楚 Done When。
+
+Task 不负责：
+
+- 重跑完整 Slice。
+- 重跑整个 Stage。
+- 每次重新验证所有 Provider / telemetry sink。
+- 重复证明已经在更低层充分证明的事实。
+
+### 5. 同一事实不重复测试
+
+验证只分三层：
+
+1. **Task Simple Test**：证明当前局部改动。
+2. **Slice Capability Test**：证明一条真实能力路径。
+3. **Stage Module Test**：证明 Stage Outcome + Direct Regression + Stop Rule。
+
+核心规则：
+
+> 同一事实原则上只在最便宜且足以证明它的层级验证一次。
+
+只有风险确实跨层时才重复，例如：
+
+- mock 与真实 Provider 行为不同。
+- async / cross-process 边界。
+- payment / permission / migration / data integrity / security。
+- public contract / multi-client compatibility。
+- 本 Stage 改动直接触达既有关键路径。
+
+详细策略见 `references/verification.md`。
+
+### 6. Mock 不是现实
+
+Mock 可以用于局部快速验证，但主产品 / 系统路径若依赖真实外部边界，则 Slice 能力功能测必须在适当 sandbox / test environment 证明真实路径。
+
+常见真实边界：
+
+- payment callback
+- auth provider
+- push / email
+- AI provider
+- object storage
+- analytics / crash sink 首次建立或重大改动
+- queue / async workflow
+- migration / compatibility
+
+不要为了“更真实”让所有低风险 dependency 都强制真环境。
+
+### 7. 运行义务按触发项同步施工
+
+Observability / Operations 很重要，但不是每 Task 六栏表。
+
+蓝图只消费 Stage Contract 已触发的 Operational Obligations，例如：
+
+- Diagnostic / Structured Logging
+- Product / Business Events
+- Error / Crash Tracking
+- Metrics
+- Tracing
+- Audit / Security Events
+- Backup / Recovery
+- Alerting
+- Feature Flag / Kill Switch
 
 规则：
 
-- 第一个真实 End-to-End Slice 必须尽可能早出现；
-- 每个 Slice 集成其 Outcome 所需的最小 Client / UI、Backend、Data 与 External Service；
-- 后续 Slice 必须在已经运行的产品路径上继续扩展，而不是等待最后统一集成；
-- 用户型 Stage 不得存在一个很晚才出现的 `FINAL INTEGRATION` Task，并且它是第一次把之前独立完成的主要技术层连接起来；
-- Component-level 的准备型 Task 只有在最近的下一 Slice 会立即消费时才允许存在；
-- 如果两个或更多主要技术层在没有真实产品路径的情况下被大量独立完成，应重新切 Slice，除非 Stage Contract 已明确批准 Technical-only Construction；
-- 每个 Slice 必须先通过 Product Checkpoint，再进入依赖它的后续扩展。
-- 每个 Slice 必须逐类汇总本 Slice Task 的 `Diagnostic Logging | Product Events | Error / Crash | Metrics | Tracing | Audit / Security` 状态，并在 Slice 结束时提供可执行 Observability Evidence；
-- 不得让一个 Slice 的必要 instrumentation 等待后续 Slice 才补齐。
+- 义务必须落到实际改变相关行为的 Task。
+- 不得先完成功能，再建立一个 Stage 尾部“统一补埋点”Task。
+- 不适用的类型不写 `N/A`。
+- 已稳定且本 Stage 未改变的 sink / SDK 不需要每 Task、每 Slice重新验证。
+- 首次建立、重大改变或 Stage 风险依赖真实 sink 时，在 Slice 或 Stage 级取得真实证据。
+- 测试与 observability 可以通过同一次真实路径同时取证，避免重复运行。
 
-Slice 只有在：
+详细见 `references/operational-obligations.md`。
 
-- 各层真正连接起来；
-- 真实产品行为真正工作；
+### 8. 中间状态必须有效
 
-时才算完成。
+每个 Task 完成后：
 
-`代码存在` ≠ `Slice 完成`
+- Repository 不应处于明显不可构建 / 不可迁移的破损状态。
+- 后续依赖所需输入已经存在。
+- 不应该需要未来 Task 来“解释当前 Task 到底算没算完成”。
 
-## 7. 建立 Dependency Graph
+必要时通过 feature flag、兼容迁移、expand-contract 等方式维持安全中间状态；但这些方式必须已被架构允许。
 
-把每个 Integration Slice 再拆成有顺序的 Task。
+## Stage 开工前产品细化门禁
 
-一个合法 Task 必须：
+在开始 Repository 级蓝图编译前，做一次快速检查：
 
-- 产生一个可独立验证的状态变化；
-- 有明确前置条件；
-- 有受控的 Change Surface；
-- 实现一个连贯 Requirement 或 Architecture Obligation；
-- 为后续依赖 Task 提供完整输入；
-- 以可观察 Verification Result 结束；
-- 让 Repository 保持在有效中间状态。
-- 声明 `Behavior Delta` 与六类 `Task Observability Matrix`；
-- 每一类只能标记 `ADD | CHANGE | PRESERVE | N/A`，并为 `N/A` 提供理由；
-- 若新增或改变运行时行为，则 `Diagnostic / Structured Logging` 不得为 `N/A`，且必须与行为实现同 Task 完成；
-- 其余五类一旦被 Stage Contract 要求或触发条件成立，必须在同一施工增量 `ADD / CHANGE`，或明确 `PRESERVE` 已有有效基线；
-- 以可执行的 Observability Verification 证明必要 signal 真实产生、Console / Sink 可见且可关联。
+> 当前 Stage 中是否存在“答案不同会导致产品行为不同”的未决语义？
 
-按真实依赖排序。
+如果没有：
 
-只有当以下内容互不依赖时，才可标记 `[parallel]`：
+继续 Blueprint，不调用 Product Detail。
+
+如果有：
+
+- 不展开完整蓝图。
+- 只报告具体 `Requirement-n` 与缺失语义。
+- 回 `product-detail`。
+- 等 Chief Architect 将结果冻结回 Stage Contract 后恢复。
+
+这不是新增强制流程。没有产品语义缺口时必须跳过。
+
+## 工作流程
+
+### 1. Restore Authority & Reality
+
+读取：
+
+- Current Stage Contract
+- 相关 architecture / decisions / standards
+- 当前唯一 Execution Contract（若恢复）
+- 真实 Repository State
+
+先确认：
+
+- Stage Contract 与仓库现实是否兼容。
+- 引用的 Requirement / Decision / module / Provider 是否仍有效。
+- 当前 Entry State 是否真实。
+- 已关闭 Stage Baseline 是否与仓库一致到足以继续。
+
+不要因仓库很大就全量扫描；从 Stage Scope、Project Structure、callers 和直接依赖逐步扩大。
+
+### 2. Compile Target State
+
+把 Stage Exit State 编译为可观察事实：
+
+- 哪些 runtime behavior 变真。
+- 哪些 file / symbol / schema / route / service 必须存在或改变。
+- 哪些状态必须持久化。
+- 哪些接口 / migration / config 必须成立。
+- 哪些既有行为必须保持。
+- 哪些 triggered Operational Obligations 必须可证明。
+- 哪些 Acceptance Criteria 成立即可停止。
+
+Target State 不等于“代码已经写完”。
+
+对用户型 Stage：
+
+**真实产品入口不能到达 Visible Delta，就不算 Target State。**
+
+### 3. Build Scope
+
+建立最小施工集合：
+
+- **Change Set**：预计修改的既有 Path / Symbol / Schema / Config / Test。
+- **Creation Set**：预计新建的 Path / Symbol / Migration / Artifact / Test。
+- **Preservation / Direct Regression**：上游已列且本次真正可能影响的既有行为。
+- **Explicit Non-Scope**：容易顺手做但明确不属于 Current Stage 的事项。
+
+不要为了完整性重复维护一套 `Observability Set`；运行义务直接映射到受影响 Task。
+
+每个 Planned Change 必须能解释它服务于哪个：
+
+- Requirement-n
+- Stage Acceptance
+- Architecture Delta / Decision-n
+- Preservation / Direct Regression
+- Operational Obligation
+
+找不到上游依据的改动，默认移除。
+
+### 4. Build Traceability
+
+建立紧凑映射：
+
+`Upstream Obligation → Slice-n / Task-n → Verification`
+
+覆盖：
+
+- 每个 Included Requirement-n。
+- 每个 Stage Acceptance Criterion。
+- Current Stage 相关 Architecture Delta / Invariant。
+- Preservation / Direct Regression。
+- Triggered Operational Obligations。
+
+同时反向检查：
+
+> 每个 Task-n 是否能回到至少一个上游义务？
+
+不能则说明 Blueprint 在自行扩 Scope。
+
+不创建 AC / Evidence 编号。
+
+### 5. Build Vertical Slices
+
+先切 Slice，再拆 Task。
+
+每个 `Slice-n` 至少定义：
+
+- Outcome
+- Upstream Basis
+- Real Entry / Caller
+- Vertical Path
+- Tasks
+- Real Dependencies
+- Capability Test
+- Pass Condition
+
+用户型 Slice 结束时应该存在可重复使用的真实产品状态。
+
+技术型 Slice 可以用真实 caller / module boundary 作为入口，但 Current Stage 必须已经被架构允许为 technical-only，或该 Slice 紧邻即将消费它的用户型能力。
+
+第一个真实 End-to-End Path 应尽可能早。
+
+详细见 `references/slice-task-design.md`。
+
+### 6. Compile Tasks
+
+每个 `Task-n` 至少包含：
+
+- Slice
+- Upstream Basis
+- Goal
+- Prerequisites
+- Targets
+- Actions
+- Operational Work（仅触发时）
+- Simple Test
+- Expected Result
+- Done When
+
+Targets 尽可能精确到：
+
+- File
+- Symbol / Type / Function
+- Route / View
+- Schema / Migration
+- Configuration
+- Test target / selector
+- Generated artifact
+
+Actions 要让施工 Agent 沿唯一已批准路径工作，但不要把代码逐行写进蓝图。
+
+Task 名称写“产生什么变化”，避免：
+
+- `Handle stuff`
+- `Update backend`
+- `Fix tests`
+- `Add observability`
+
+### 7. Build Execution Graph
+
+按真实依赖排序 Task。
+
+只有以下均互不依赖时才标可并行：
 
 - Prerequisite
 - Write Surface
-- Generated Artifact
 - Shared State
-- Verification Dependency
+- Generated Artifact
+- Migration order
+- Verification dependency
 
-## 8. 把 Task 编译成机械施工步骤
+不要为了显得快而并行会争用同一接口 / schema / state 的 Task。
 
-每个 Task 必须包含：
+### 8. Assign Verification
 
-- `Task ID`
-- `Slice ID`
-- `Requirement Coverage`
-- `Behavior Delta`
-- `Task Observability Matrix`
-- `Observability Delta`
-- `Objective`
-- `Prerequisites`
-- `Targets`
-- `References`
-- `Inputs`
-- `Actions`
-- `Instrumentation Actions`
-- `Outputs`
-- `Verification`
-- `Observability Verification`
-- `Expected Result`
-- `Exit Condition`
+对每个 Task、Slice、Stage 分配唯一主要验证职责。
 
-`Slice ID`：标明该 Task 正在推进哪个 Integration Slice 的真实产品状态。
+Task：
+- 快速、局部、失败定位直接。
+- 默认只跑相关 build / lint / unit / schema / migration / config 检查。
+- 不默认跑全仓 tests。
 
-`Requirement Coverage`：列出该 Task 服务的精确 Requirement ID、Acceptance ID、Invariant ID、Preservation ID 或 Regression ID。
+Slice：
+- 跑真实能力路径。
+- 只覆盖该 Slice 成立所必需的关键行为、失败 / permission / external boundary。
+- 不复制每个 Task 的所有 unit case。
 
-`Behavior Delta`：写明该 Task 新增或改变的运行时行为；若确实没有运行时行为变化，写 `NONE` 并说明原因。
+Stage：
+- 验证 Stage Outcome、Acceptance、Direct Regression、适用 Operational Obligations 和 Stop Rule。
+- 不是全产品 regression suite。
 
-`Task Observability Matrix`：六类逐项填写 `ADD | CHANGE | PRESERVE | N/A` 与理由。运行时行为变化时 `Diagnostic / Structured Logging` 不得为 `N/A`；不得把上游已要求或已触发的类型写成 `N/A`。
+### 9. Route Exceptions
 
-`Observability Delta`：汇总本 Task 实际 `ADD / CHANGE` 的六类观测增量，以及 `PRESERVE` 的关键既有观测义务。不得用“增加埋点”这种统称代替逐类说明。
+规划阶段发现问题时只使用 `BLOCKED`。
 
-`Targets`：写明精确 File、Symbol、Schema、Migration、Configuration、Test 或 Generated Artifact。
+#### Owner: Blueprint
 
-`References`：写明约束该 Task 的精确 Repository Artifact、ADR、Interface、Test 或 Convention。
+Stage Contract 和架构都成立，只是当前 Task 拆分、顺序、Target 或 Verification Path 不好。
 
-`Inputs`：写明施工开始前必须存在的具体 Repository State。
+蓝图自己修正后重新 Dry Run，不需要向上游创造新状态名。
 
-`Actions`：按顺序写状态改变操作。每个 Action 只描述一个操作，并提供足够细节，使施工 Agent 只能沿唯一已批准路径实施。
+#### Owner: Architecture
 
-`Instrumentation Actions`：按六类明确具体落点与动作：
+继续规划需要改变：
 
-- Diagnostic：File / Symbol / handler / boundary、log level、message / event key、context、成功 / 失败覆盖；
-- Product Events：event name / schema、调用落点、SDK initialization dependency、environment / sink；
-- Error / Crash：capture / crash channel、初始化落点、stack / build / environment / correlation；
-- Metrics：metric name、type、labels / dimensions、记录边界；
-- Tracing：span / trace boundary、parent / child、correlation propagation；
-- Audit / Security：audit event、actor / target / action / outcome、敏感字段处理与写入位置。
+- Stage Scope / Exit State
+- Decision-n
+- module / interface / data boundary
+- Provider / technology direction
+- security / permission architecture
+- consistency / compatibility / migration strategy
+- Stage Operational Obligation
+- Stage Acceptance
 
-不得用“补充日志”“增加埋点”“接入监控”等泛化描述。
+输出证据并回架构。
 
-`Outputs`：描述 Task 完成后真实产生的 Repository 与 Runtime State。
+#### Owner: Product
 
-`Verification`：写出可执行 Command、Test Selector、Inspection、State Check、Migration Check、Generation Check 或确定性 Manual Procedure。
+继续规划需要决定：
 
-`Observability Verification`：必须按本 Task 的 `ADD / CHANGE / PRESERVE` 类型分别写出真实证据：
+- Product Outcome / Product Rule
+- actor / ownership / permission 的产品语义
+- irreversible user behavior
+- business / commercial behavior
+- user-visible failure semantics
+- acceptance meaning
 
-- Diagnostic Logging：运行真实路径，明确在哪个 Console（Apple 平台至少 Xcode Console / 平台 Console）看到哪些关键日志与字段；
-- Product Events：真实初始化 SDK / client 后触发路径，确认事件到达目标后台并可查询；
-- Error / Crash：确认通道初始化，使用上游允许的受控 error / crash 验证方式取得可查询 stack / build / environment 证据；
-- Metrics：触发真实行为后确认 metric value / labels 可读或可查询；
-- Tracing：确认 trace / span 真实生成并可通过 correlation 串起调用链；
-- Audit / Security：执行真实敏感动作后按授权路径检索对应审计记录；
-- PRESERVE：运行 regression / inspection 证明既有观测链路未被破坏。
+回产品细化 / 用户。
 
-不能只证明 instrumentation 调用存在、dependency 已安装、配置变量已声明或 mock telemetry test 通过。
+### 10. Dry Run
 
-`Expected Result`：写出精确、可观察的预期判定。
+发布前，从真实 Entry State 模拟执行：
 
-`Exit Condition`：写明什么状态成立后，才能解锁依赖它的后续 Task。
+- 所有 Path / Symbol / Schema / Command 是否真实可解析。
+- Prerequisite 是否在使用前成立。
+- Task Output 是否满足后续 Input。
+- Slice 是否尽早形成真实纵向状态。
+- UI / Client 是否没有被无理由拖到最后。
+- Requirement / Acceptance / Decision / Preservation / Operational Obligation 是否有施工与验证落点。
+- 每个 Task 是否都有上游依据。
+- Direct Regression 是否克制在直接影响范围。
+- Deferred / Non-Scope 是否没有被拉进施工。
+- 高风险真实边界是否没有被全 Mock 掩盖。
+- 测试是否存在明显三层重复。
+- 运行义务是否与相关行为同步，而不是 Stage 尾部补。
+- 最终路径是否达到 Exit State。
+- Stop Rule 是否机械可判。
 
-若 Task 改变运行时行为，则其 Exit Condition 必须同时包含 Diagnostic Logging Verification PASS，以及所有 `ADD / CHANGE` / 必要 `PRESERVE` 类型的 Observability Verification PASS；否则 Task 不得解锁后续依赖。
+发现 Blueprint 自身缺口 → 修正。
 
-## 9. 定义 Acceptance Matrix
+发现 Product / Architecture 缺口 → `BLOCKED`。
 
-把完整 Stage Contract 映射到 Verification。
+## Completion Gate
 
-每一项记录：
-
-- `Acceptance ID`
-- `Type`
-- `Requirement / Obligation`
-- `Requirement Source`
-- `Blueprint Task`
-- `Evidence Source`
-- `Verification Method`
-- `Pass Condition`
-
-`Type` 只能是：
-
-- `DELIVERY`
-- `ARCHITECTURE`
-- `PRESERVATION`
-- `REGRESSION`
-- `SCOPE`
-- `USER_REALITY`
-- `OBSERVABILITY`
-
-覆盖要求：
-
-- 每个 Stage Acceptance Criterion → `DELIVERY`
-- 每个 Current-stage Architecture Invariant obligation → `ARCHITECTURE`
-- 每个 Preservation Set commitment → `PRESERVATION`
-- 每个 Regression Set item → `REGRESSION`
-- Current Authorized Scope 与 Deferred Boundary → `SCOPE`
-- 每个用户型 Slice 的 Product Checkpoint 与最终 Hands-on Acceptance → `USER_REALITY`
-- Stage Observability Delta、六类 Type Matrix、每个运行时行为变更 Task 的 Observability Obligation、Stage-level Observability Step / Checkpoint → `OBSERVABILITY`
-
-`OBSERVABILITY` Evidence 必须按类型证明真实链路：Diagnostic → Console 可见；Product Events → Analytics Sink 可查询；Error / Crash → 接收端可查询；Metrics → value 可读；Tracing → trace / span 可查且 correlation 可串联；Audit → 授权路径可检索。只证明代码存在 log / event / capture / metric / span 调用不算通过。
-
-`USER_REALITY` 的 Evidence 必须来自真实产品路径。
-
-仅有以下证据不足以证明 `USER_REALITY`：
-
-- Unit Test
-- Mock
-- 独立 API 调用
-- Database Inspection
-
-每项最终只能得到：
-
-`PASS | FAIL | BLOCKED`
-
-## 10. 定义 Exception Routing
-
-每种预期执行异常都必须映射到唯一控制路径。
-
-### `LOCAL_FIX`
-
-当前问题只是本 Task 内的实现错误，且已批准设计没有变化。
-
-### `RETURN_TO_TASK:<TXX>`
-
-当前失败证明某个更早 Task 没有真正达到它的 Exit Condition。
-
-### `REPLAN_BLUEPRINT`
-
-Stage Contract 仍然正确，但当前：
-
-- Task 拆分；
-- 顺序；
-- Repository Target；
-- Verification Path；
-
-无法到达已批准 Exit State。
-
-蓝图可以重新设计执行机械路径，但不能改变任何上游语义与边界。
-
-### `PLAN_BLOCKED_ARCHITECTURE`
-
-继续施工必须新增或改变以下架构层决策：
-
-- Architecture
-- Scope
-- Data
-- Interface
-- Security
-- Transaction
-- Compatibility
-- Acceptance
-
-向 Architecture Director 返回：
-
-- 精确 Evidence
-- 唯一未解决 Decision
-
-### `PRODUCT_CHANGE`
-
-当前 Product Outcome、Product Rule、Business Behavior、Acceptance Meaning 或用户授权 Requirement 已改变。
-
-冻结蓝图生成，先走：
-
-`Product Definition / Product Change → Architecture Director → Replan`
-
-至少必须为以下情况定义 Route：
-
-- Repository State 与 Entry State 不一致；
-- 引用 File / Symbol 不存在，或 Contract 不一致；
-- Required Tool / Dependency 不可用；
-- 当前 Task Verification 失败；
-- Verification 暴露既有外部 Failure；
-- Generated Artifact 与 Source of Truth 不一致；
-- Deferred Requirement 变成真实 Prerequisite；
-- 继续工作需要新的 Architecture / Product Decision；
-- 文档顺序无法到达某个 Acceptance Criterion；
-- Migration / Deployment 顺序不安全；
-- Preservation / Regression 与已批准路径不兼容；
-- Product Checkpoint 失败，但局部 Component Test 仍通过；
-- 当前排序把真实 Integration 推迟到 Stage 后期；
-- Primary Product Path 只能依赖 Mock 或 Bypass 才能演示。
-- Task 新增 / 改变运行时行为，但对应 Observability Delta 缺失或无法验证；
-- 必要 telemetry 被推迟到后续 Task 或 Stage 尾部；
-- Stage-level Observability Checkpoint 无法从真实运行链路获得证据；
-- 新增关键流程、状态转换、外部依赖、异步生命周期或失败路径存在上游明确禁止的 observability blind spot；
-- 运行时 Task 没有 Diagnostic / Structured Logging，或无法在本地真实运行 Console 看到关键日志；
-- Product Event 代码存在但 SDK / client 未初始化、事件无法到达 Sink；
-- 可运行 App / Service 缺少已要求的 Error / Crash Tracking，或把业务 `*.failed` event 当作 Crash 证据；
-- Metrics / Tracing / Audit 的触发条件已成立却被无依据标记为 `N/A`；
-- telemetry SDK / sink 的 runtime config、environment 或 secret / key 装载路径无法真实执行。
-
-## 11. Dry Run 整份蓝图
-
-基于当前真实 Repository，从已验证 Entry State 开始，模拟执行每个 Task，直到最终 Stage Acceptance。
-
-必须验证：
-
-- 每个引用 Path、Symbol、Interface、Schema、Command、Tool 都真实存在；
-- 每个 Task 的 Prerequisite 在使用前已经成立；
-- Integration Slice 顺序符合真实依赖；
-- 最早可行的真实 End-to-End Path 没有被无必要推迟；
-- 每个 Output 能满足后续 Task 的 Input；
-- Name、Signature、ID、Schema、State Transition 保持一致；
-- 每个 Task 都只有一条已批准实施路径；
-- 每个 Task 都声明 Behavior Delta 与六类 Task Observability Matrix；
-- 每个 `N/A` 都有有效理由，且没有违反上游 REQUIRED / trigger；
-- 每个新增 / 改变运行时行为的 Task 都在同一 Task 内完成 Diagnostic / Structured Logging；
-- 其余适用 Observability 类型在同一行为增量 `ADD / CHANGE` 或明确 `PRESERVE` 已有基线；
-- 不存在把前序 Task 必要 telemetry 统一推迟到 Stage 尾部的计划；
-- 没有 Task 在施工中创造新的 Product / Architecture Decision；
-- 每个 Accepted Requirement 都映射到 Task 与 Evidence；
-- 每个 Acceptance Criterion 都映射到确定性 Verification；
-- 每个 Stage Observability Obligation 都按六类映射到 Task、状态与 Observability Evidence；
-- 每个 Current-stage Architecture Invariant 都有 Verification 或 Preservation 路径；
-- 每个 Preservation / Regression Item 都有 Evidence；
-- 每个 Implementation Change 都能向上追溯到 Stage Obligation；
-- Deferred Item 全部保持在执行图之外；
-- 每个 Exception 都有唯一 Route；
-- 每个中间 Repository State 都保持有效；
-- 每个 Integration Slice 都能通过真实产品路径到达自己的 Product Checkpoint；
-- Primary User-facing Path 不依赖 Mock 作为“完成”证据；
-- Stage 所需 UI / Client 行为在大批后端工作全部完成之前就已经进入真实集成；
-- 某 Slice Product Checkpoint 失败后，不允许继续依赖它的后续扩建；
-- 用户型 Stage 的最终 Hands-on Acceptance 可以重复执行；
-- 每个 Slice 的六类 Observability Evidence 可以重复取得；
-- Stage 至少存在一个非 `NONE` 的 Observability Delta 与明确 Observability Step；
-- 所有运行时 Task 的 Diagnostic Logging 可在本地真实运行 Console 实时观察；
-- 所有 `ADD / CHANGE` 的远程 Observability 类型均能证明初始化 / runtime config / output or transport / sink / query 链路；
-- Stage-level Observability Step / Checkpoint 可以重复执行并证明适用观测链路真实成立；
-- Current Stage 不存在已知 Critical Observability Blind Spot；
-- 最终 Repository / Runtime State 满足 Stage Exit State；
-- Stage Stop Rule 成立。
-
-发布蓝图前先修复所有 Blueprint-level Gap。
-
-如果 Dry Run 暴露的是上游 Decision Gap，则结束为：
-
-`PLAN_BLOCKED`
-
-# 输出文档结构
-
-Execution Contract 必须严格按以下顺序生成。第 `0` 节为新增的文档导航节；原 `1`–`18` 节编号与内容保持不变（含既有 `10.1`、`14.1` 子节），以保证全文交叉引用不被破坏：
-
-0. `## 文档导航`（结构索引 + 本文档为唯一合同的权威声明 + 建议阅读顺序）
-1. `# <Stage> — Execution Contract`
-2. `## Stage Authority`
-3. `## Objective`
-4. `## Entry State`
-5. `## Exit State`
-6. `## Visible Delta`
-7. `## Fixed Decisions`
-8. `## Repository References`
-9. `## Scope`
-   - `### Change Set`
-   - `### Creation Set`
-   - `### Observability Set`
-   - `### Preservation Set`
-   - `### Regression Set`
-   - `### Deferred Set`
-10. `## Requirement Traceability`
-10.1. `## Observability Plan / Type Matrix`
-11. `## Integration Slices`
-12. `## Execution Graph`
-13. `## Tasks`
-14. `## Product Checkpoints`
-14.1. `## Observability Step / Checkpoint`
-15. `## Hands-on Acceptance`
-16. `## Acceptance Matrix`
-17. `## Exception Routing`
-18. `## Completion Protocol`
-
-# Stage Authority 格式
-
-记录：
-
-- `Stage ID`
-- `Accepted Requirement IDs`
-- `Architecture / ADR References`
-- `Stage Contract Reference`
-- `Observability Contract Reference`
-- `Stage Observability Delta`
-- `Stage Observability Step / Verification`
-- `Stop Rule`
-
-# Requirement Traceability 格式
-
-紧凑表达：
-
-```text
-REQ-01 -> AC-01 -> T01,T03 -> EVID-01
-REQ-02 -> AC-02 -> T02     -> EVID-02
-INV-03 -> AC-A03 -> T04    -> EVID-A03
-OBS-DIAG-01  -> T01,T02 -> OBS-EVID-D01
-OBS-PROD-01  -> T02     -> OBS-EVID-P01
-OBS-CRASH-01 -> T01     -> OBS-EVID-C01
-```
-
-# Integration Slice 格式
-
-每个 Slice 使用：
-
-```markdown
-### SXX — <Slice 名称>
-
-**Outcome：**
-
-**Real Product Entry：**
-
-**Vertical Path：**
-
-**Required Layers：**
-
-**Real Dependencies：**
-
-**Tasks：**
-
-**Product Checkpoint：**
-
-**Automated Evidence：**
-
-**Observability Type Coverage：**
-
-`Diagnostic Logging | Product Events | Error / Crash | Metrics | Tracing | Audit / Security`
-
-**Observability Evidence：**
-
-**Slice Exit State：**
-
-**Next Slice Dependency：**
-```
-
-# Product Checkpoint 格式
-
-```markdown
-### PC-SXX — <Checkpoint 名称>
-
-**Product Entry：**
-
-**Actor / Test Identity：**
-
-**Preconditions：**
-
-**Hands-on Steps：**
-1.
-2.
-3.
-
-**Real Services Used：**
-
-**Expected Visible Result：**
-
-**Expected State / Persistence：**
-
-**Required Failure Behavior：**
-
-**Automated Evidence：**
-
-**Observability Evidence：**
-
-按六类列出本 Checkpoint 实际应出现的 Console / Sink / Crash / Metric / Trace / Audit 证据。
-
-**Mocks Allowed：**
-
-**Pass Condition：**
-```
-
-对于 Primary Product Path：
-
-`Mocks Allowed` 默认应为 `NO`。
-
-如果必须写 `YES`，则必须明确：
-
-- 哪些真实行为仍未被证明；
-- 为什么当前允许 Mock；
-- 该 Checkpoint 不得作为最终 Stage Delivery Evidence。
-
-# Observability Plan / Type Matrix 格式
-
-必须把上游 Stage Observability Contract 编译成 Task-level instrumentation。不得把六类能力压缩成一个 `Observability Delta` 文本字段后丢失类型信息。
-
-```markdown
-## Observability Plan / Type Matrix
-
-**Stage Observability Delta：**
-
-**Stage Observability Step / Verification：**
-
-**Critical Flows：**
-
-**Sink / Console Readiness：**
-- Diagnostic Console：
-- Product Analytics Sink：
-- Error / Crash Sink：
-- Metrics Sink：
-- Trace Sink：
-- Audit Store / Query Path：
-
-**Runtime Initialization / Configuration：**
-
-**Correlation / Context：**
-
-**Privacy / Redaction：**
-
-| Task | Behavior Delta | Diagnostic Logging | Product Events | Error / Crash | Metrics | Tracing | Audit / Security | Evidence |
-|---|---|---|---|---|---|---|---|---|
-| T01 | ... | ADD | ADD | PRESERVE | N/A: ... | N/A: ... | N/A: ... | OBS-EVID-01 |
-
-**Upstream Type Requirements：**
-
-| Type | Stage Contract Status | Source / Trigger |
-|---|---|---|
-| Diagnostic / Structured Logging | REQUIRED | ... |
-| Product / Business Events | REQUIRED / REQUIRED WHEN APPLICABLE / NOT APPLICABLE | ... |
-| Error / Crash Tracking | REQUIRED / REQUIRED WHEN APPLICABLE / NOT APPLICABLE | ... |
-| Metrics | REQUIRED WHEN APPLICABLE / NOT APPLICABLE | ... |
-| Tracing | REQUIRED WHEN APPLICABLE / NOT APPLICABLE | ... |
-| Audit / Security Events | REQUIRED WHEN APPLICABLE / NOT APPLICABLE | ... |
-```
-
-状态只能使用：
-
-`ADD | CHANGE | PRESERVE | N/A`
-
-规则：
-
-- 每个 Task 必须出现在该矩阵中。
-- 每个 `N/A` 必须包含理由。
-- 凡 Task 新增 / 改变运行时行为，`Diagnostic Logging` 不得为 `N/A`。
-- Product / Business 行为存在时，Product Events 必须服从上游 Stage Contract；若 Stage Contract 要求则不得无依据 `N/A`。
-- 存在可运行 App / Service 时，Error / Crash Tracking baseline 必须已经建立或在本 Stage 建立；单个 Task 无新增时可 `PRESERVE`，不能用 Product Event 代替。
-- Metrics / Tracing / Audit / Security 一旦触发上游适用条件，不得无依据 `N/A`。
-- `ADD / CHANGE` 必须有具体 Instrumentation Actions 与真实 Observability Verification。
-- `PRESERVE` 必须说明依赖的既有观测能力，并在可能受影响时提供 regression evidence。
-- Stage 至少有一个 Task 对至少一种 Observability 类型产生 `ADD / CHANGE`，或完成上游明确要求的 Stage-level readiness / verification 增量。
-- 独立 telemetry-only Task 只允许用于共享 telemetry 底座、SDK / sink 初始化、补齐历史阻塞盲区或 Stage-level 验证；不能替代前序运行时 Task 本应同步完成的 instrumentation。
-
-# Observability Step / Checkpoint 格式
-
-每个 Stage 至少提供一个明确可识别、可重复执行的 `Observability Step / Checkpoint`。该步骤不是“检查代码”，而是实际触发运行路径并检查六类适用 signal。
-
-```markdown
-## Observability Step / Checkpoint
-
-**Stage / Slice：**
-
-**Trigger Path：**
-
-**Diagnostic / Structured Logging：**
-- Expected Console：
-- Expected start / state / success / failure logs：
-- Required Context：
-
-**Product / Business Events：**
-- Expected Events：
-- Analytics Sink：
-- Query / Inspection：
-
-**Error / Crash Tracking：**
-- Channel / Sink：
-- Initialization Evidence：
-- Controlled Error / Crash Evidence：
-
-**Metrics：**
-
-**Tracing：**
-
-**Audit / Security Events：**
-
-**Required Correlation：**
-
-**Privacy / Redaction Checks：**
-
-**Inspection / Verification Steps：**
-1.
-2.
-3.
-
-**Pass Condition：**
-```
-
-规则：
-
-- 对 Stage Contract 标为 `NOT APPLICABLE` 的类型写明 `N/A + Source`。
-- 对 `REQUIRED WHEN APPLICABLE` 的类型必须再次确认触发条件是否成立。
-- Apple 平台只要有运行时行为，Diagnostic 部分必须包含 Xcode Console / 平台 Console 的真实查看步骤。
-- Product Events 必须证明 SDK / client 初始化且远程事件真实到达目标后台；只看到本地 print 不算通过。
-- Error / Crash 必须证明独立 Error / Crash 通道真实接通；业务失败 event 不算 Crash Evidence。
-- Checkpoint 必须能够发现“调用写了但 SDK 没启动”“key / config 没加载”“网络 / sink 不通”“环境写错”等假完成状态。
-
-# Hands-on Acceptance 格式
-
-每个用户型 Stage 必须提供：
-
-```markdown
-## Hands-on Acceptance
-
-**谁可以测试：**
-
-**产品入口：**
-
-**前置条件 / 测试账号：**
-
-**操作步骤：**
-1.
-2.
-3.
-
-**预期可见结果：**
-
-**预期持久化 / 状态：**
-
-**预期失败行为：**
-
-**这证明了什么：**
-```
-
-本节是写给非技术用户的。
-
-必须做到：
-
-- 不需要阅读实现细节；
-- 按步骤即可直接执行；
-- 能真实判断本 Stage 是否在产品上成立。
-
-# Execution Graph 格式
-
-紧凑表达依赖：
-
-```text
-T01 -> T02 -> T04
-       T03 -> T04
-T04 -> T05
-```
-
-只有 Dependency-independent Task 才标 `[parallel]`。
-
-# Task 格式
-
-每个 Task 使用：
-
-```markdown
-### TXX — <Task 名称>
-
-**Slice ID：**
-
-**Requirement Coverage：**
-
-**Behavior Delta：**
-
-**Task Observability Matrix：**
-
-| Type | Upstream Requirement | Task Status | Delta / Preserve / N/A Reason | Verification Evidence |
-|---|---|---|---|---|
-| Diagnostic / Structured Logging | REQUIRED |  |  |  |
-| Product / Business Events |  |  |  |  |
-| Error / Crash Tracking |  |  |  |  |
-| Metrics |  |  |  |  |
-| Tracing |  |  |  |  |
-| Audit / Security Events |  |  |  |  |
-
-**Observability Delta：**
-
-**Objective：**
-
-**Prerequisites：**
-
-**Targets：**
-
-**References：**
-
-**Inputs：**
-
-**Actions：**
-1.
-2.
-3.
-
-**Instrumentation Actions：**
-1.
-2.
-
-**Outputs：**
-
-**Verification：**
-
-**Observability Verification：**
-
-**Expected Result：**
-
-**Exit Condition：**
-```
-
-# Acceptance Matrix 格式
-
-使用：
-
-| ID | Type | Requirement / Obligation | Source | Task | Evidence | Verification | Pass Condition |
-|---|---|---|---|---|---|---|---|
-
-# Completion Protocol
-
-Execution Contract 只有同时满足以下全部条件，才可以结束为：
+只有同时满足以下条件才输出：
 
 `READY`
 
-条件：
+- 上游 Stage Contract 有效。
+- Repository Entry State 已验证。
+- 没有未决 Product / Architecture Decision。
+- Scope 只包含 Current Stage 授权工作。
+- 每个 Requirement / Acceptance / Architecture Obligation 都有施工落点。
+- 每个 Planned Task 都有上游依据。
+- 用户型工作被组织为早期真实纵向 Slice。
+- 每个 Task 都有精确 Target、Actions、Simple Test、Done When。
+- Execution Graph 可执行。
+- 验证三层分工清楚且无明显重复。
+- 高风险真实依赖使用了足够的真实验证。
+- Triggered Operational Obligations 已落到相关施工位置。
+- Preservation / Direct Regression 有最小充分证据。
+- Explicit Non-Scope 保持在执行图外。
+- Dry Run 可从 Entry State 到 Exit State。
+- Stop Rule 可机械判断。
+- Execution Contract 内没有废弃 Task、失效占位或平行合同。
 
-- 合同内容仅存在于唯一 Execution Contract 文档中；不存在任何平行补充 / 补丁 / 汇总文档承载合同内容；
-- 所有权威输入都存在且相互兼容；
-- 所有 Repository Reference 都能解析；
-- 所有 Current-stage Implementation Decision 已冻结；
-- 用户型工作已组织成纵向 Integration Slice；
-- 没有 Task 需要新的 Product / Architecture Decision；
-- 所有 Accepted Requirement 都能追溯到 Task 与 Evidence；
-- 所有 Task 都有确定 Prerequisite、Action、Output、Verification 与 Exit Condition；
-- 所有 Task 都声明 Behavior Delta 与六类 Task Observability Matrix；
-- 所有 `N/A` 有有效理由，所有条件触发项没有被错误省略；
-- 所有新增 / 改变运行时行为的 Task 都在同 Task 完成 Diagnostic / Structured Logging 并通过本地 Console Verification；
-- 所有其他 `ADD / CHANGE` 类型都完成必要 instrumentation、初始化 / runtime config 与真实 Sink / query Verification；
-- 所有 Acceptance Criteria 都已覆盖；
-- 每个 Integration Slice 都有真实 Product Checkpoint；
-- 每个 Integration Slice 都有明确六类 Observability Type Coverage / Evidence；
-- 第一个真实 End-to-End Path 没有被无必要推迟；
-- 用户型 Stage 不依赖一个很晚的 Final Integration Task 才第一次连接主要技术层；
-- 所有 Current-stage Architecture Invariant 都被保护；
-- 所有 Preservation Commitment 都可验证；
-- 所有 Regression Obligation 都可验证；
-- 所有 Deferred Requirement 都保持在 Current Execution 之外；
-- 每个 Planned Change 都能追溯到 Current Stage Authority；
-- 每种 Exception 都有确定控制路径；
-- 每个 Slice Checkpoint 都能针对真实产品路径执行；
-- Component Test / CI / Mock 没有被用来替代真实 Product Delivery Evidence；
-- 用户型 Stage 包含可重复执行的最终 Hands-on Acceptance；
-- Stage 至少包含一个非 `NONE` 的 Observability / Instrumentation 增量；
-- Stage 包含至少一个可重复执行的 Stage-level Observability Step / Checkpoint；
-- Diagnostic Logging、Product Events、Error / Crash、Metrics、Tracing、Audit / Security 已按上游 Type Matrix 和触发条件完整处理；
-- Product Events 与 Error / Crash 等远程能力不存在“调用存在但 SDK / sink 未初始化”的假完成；
-- 必要 telemetry 没有被推迟到 Stage 尾部统一补做；
-- Current Stage 不存在已知 Critical Observability Blind Spot；
-- Dry Run 能通过持续集成的产品状态到达 Stage Exit State；
-- Stage Stop Rule 可以被机械判断。
+否则输出：
 
-否则结束为：
+`BLOCKED`
+
+并给出单一当前阻塞点；多个缺口可以一起列出，但按依赖顺序排序，不制造新的状态对象。
+
+## Execution Contract 输出结构
+
+默认只维护：
+
+`docs/blueprint/EXECUTION_CONTRACT.md`
+
+推荐结构：
 
 ```text
-PLAN_BLOCKED
+# Stage-n — Execution Contract
 
-Type: <REPLAN_BLUEPRINT | PLAN_BLOCKED_ARCHITECTURE | PRODUCT_CHANGE>
-Gap: <identifier>
-Location: <section/task>
-Evidence: <repository fact / contract conflict>
-Upstream Source: <Stage Contract / ADR / Product Rule / Requirement ID>
-Decision Required: <single unresolved decision>
-Owner: <Construction Blueprint | Architecture Director | Product / User>
+## 1. Authority
+## 2. Objective
+## 3. Entry State
+## 4. Target State
+## 5. Scope
+## 6. Traceability
+## 7. Slices
+## 8. Execution Graph
+## 9. Tasks
+## 10. Verification
+## 11. Exception Routing
+## 12. Completion
 ```
 
-# Handoff
+详细字段见 `references/docs-spec.md`。
 
-当状态为 `READY` 时，把 Execution Contract 交给施工 Agent。
+## Handoff
 
-施工 Agent 必须：
+状态为 `READY` 后交给 Construction Agent。
 
-- 按项目施工规则执行；
-- 一次完成一个 Integration Slice；
-- 返回 Implementation Changes；
-- 返回 Automated Evidence；
-- 返回 Product Checkpoint Evidence。
-- 按 Task 同步实现六类 Task Observability Matrix，不得先完成功能后补 telemetry；
-- 对每个运行时 Task 返回 Diagnostic / Structured Logging 的真实 Console Evidence；
-- 对 Product Events、Error / Crash、Metrics、Tracing、Audit / Security 的 `ADD / CHANGE` 返回真实 Sink / Query / Inspection Evidence；
-- 返回 Task-level Observability Evidence；
-- 返回 Stage-level Observability Step / Checkpoint Evidence。
+施工 Agent 应：
 
-某个 Product Checkpoint 失败时：
+- 按 `Slice-n` 顺序推进。
+- 按 `Task-n` 精确施工。
+- 遵守 Architecture / Engineering Standards。
+- Task 完成时返回本 Task 的简单证据。
+- Slice 完成时运行该 Slice 的能力功能测。
+- 已触发 Operational Obligation 随相关行为同步实现。
+- 不因某个 Task 失败自行改变产品或架构。
+- Slice 真实能力未成立时，不继续依赖该 Slice 的后续扩建。
 
-**在问题解决或正式 Replan 之前，不得进入依赖它的后续 Slice。**
+Stage Verifier 后续以：
 
-Stage Verifier 后续按照：
+`Stage Contract → Execution Contract → Implementation → Evidence`
 
-`Architecture → Stage Contract → Construction Blueprint → Implementation → Evidence`
+为主链验收。
 
-进行验收。
+Blueprint 不需要为 Verifier 预先制造大量 Evidence ID；验证位置和可重复步骤清楚即可。
 
-因此，蓝图必须保持完整的正向与反向 Traceability。
+## 按需加载 References
 
-# 质量标准
+- 文档结构与合同字段：`references/docs-spec.md`
+- Repository Intake：`references/repository-intake.md`
+- 产品细节边界：`references/product-detail-boundary.md`
+- Slice / Task 设计：`references/slice-task-design.md`
+- 验证与测试分层：`references/verification.md`
+- Observability / Operations 落位：`references/operational-obligations.md`
 
-优化目标：
+不要默认一次读完所有 reference。只在对应问题出现时加载。
 
-`执行确定性 + 信息密度 + 真实产品持续成立`
+## 最终原则
 
-使用：
+蓝图的质量不取决于：
 
-- 精确 Path
-- 精确 Symbol
-- 精确 Command
-- 精确 Selector
-- Requirement ID
-- Acceptance ID
-- State Transition
-- Dependency Edge
-- Observable Outcome
-- Behavior Delta / six-type Task Observability Matrix
-- Console / Sink Readiness
-- Correlation / Traceability
-- Telemetry Verification Evidence
+- Task 数量多。
+- 文档特别长。
+- 每个 Task 字段特别多。
+- 测试跑得特别久。
+- 每种 Observability 都有一栏。
+- 所有实现细节都提前写成代码级伪实现。
 
-优先使用 Repository-grounded Reference，而不是泛泛描述。
+而取决于：
 
-Rationale 只在以下情况保留：
+> 施工 Agent 能否基于真实仓库，从当前 Stage 的 Entry State 沿唯一已批准路径完成建设，并以最小充分证据证明每个纵向能力和最终 Stage Outcome 成立。
 
-- 它会约束执行；
-- 它用于保护上游 Decision；
-- 它用于解释必须存在的 Exception Route。
-
-蓝图只有在施工 Agent 可以从 Entry State 走到 Exit State，并且不需要重新决定以下内容时，才算完整：
-
-- 产品是什么意思；
-- 应该存在什么架构；
-- 什么属于 Current Stage；
-- 什么算完成。
-
-对于用户型工作，Execution Path 必须持续产生已经集成、真实可运行的产品状态。
-
-对于所有会改变运行时行为的工作，Execution Path 还必须持续产生同步增长、可验证的六类 observability；不得出现“功能已经存在，但 Diagnostic Logging / Product Events / Error & Crash / Metrics / Tracing / Audit 以后再补”的黑盒中间状态。
-
-尤其不得把“编译通过 + telemetry 调用存在”误判为完成。真实完成必须能看到 Console 或目标 Sink 中的实际证据。
-
-**如果一个计划做到“80% 组件完成”时，产品仍然无法被真正使用，即使 CI 全绿，这个蓝图在结构上也是无效的。**
+**准确、可执行、早集成、少重复，是本 skill 的核心。**
