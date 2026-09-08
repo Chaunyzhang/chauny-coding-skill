@@ -132,6 +132,14 @@ Operational Work (适用时)
 Simple Test
 Expected Result
 Done When
+
+# 仅并行有价值时追加
+Write Surface
+Produces
+Consumes
+Parallel With
+Commit Boundary
+Merge Before / Integration Dependency
 ```
 
 ### Upstream Basis
@@ -221,12 +229,17 @@ Task-2, Task-3 -> Task-4
 
 标 parallel 前检查：
 
-- write surface
-- schema / migration
-- shared state
-- generated artifacts
-- interface dependency
-- test environment
+- prerequisite 是否已独立满足
+- write surface 是否低冲突
+- schema / migration 是否无顺序竞争
+- shared state 是否互不干扰
+- generated source-of-truth 是否无竞争
+- interface 是否在 fan-out 前冻结
+- test environment 是否可独立使用
+- Task 是否可独立 commit
+- fan-in 后是否只需一次 Slice Capability Test
+
+详细多人协作规则见 `parallel-construction.md`。
 
 ## UI
 

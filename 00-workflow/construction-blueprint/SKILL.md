@@ -123,6 +123,9 @@ description: 接收架构总设计师冻结的 Current Stage Contract，在不�
 
 `Slice-n` 与 `Task-n` 只在当前 Execution Contract 内编号，从 1 开始，不要求跨 Stage 全局连续。
 
+`Step` 只能作为普通语言中的“操作步骤 / 验证步骤”，不能成为编号层级。Task 内部动作只使用普通有序列表。
+
+
 ### 不创建
 
 禁止创建：
@@ -136,6 +139,7 @@ description: 接收架构总设计师冻结的 Current Stage Contract，在不�
 - `Checkpoint-n`
 - `Observability-n`
 - `Phase-n` 作为项目对象
+- `Step-n` / `Step 7` / `STEP-7` 作为施工层级或可追踪对象
 - 任何仅为了流程显得完整而出现的 ID
 
 Acceptance Criteria、Preservation、Regression、Operational Obligation 直接引用 Stage Contract 的原条目或章节名称。
@@ -307,6 +311,7 @@ Task 不负责：
 - 重复证明已经在更低层充分证明的事实。
 - 推送与 CI：Task 只本地提交，不 push、不触发、不等待 CI；push 属 Slice 收口，一次性推一轮。
 - 重平台（iOS）的编译与单测运行：编译由人类在共享 DerivedData 上增量执行；单测代码照写但运行归 Stage 前 / 发版前脚本补测，不以测绿为 Task 门槛。真机操作不属于 agent，Slice 收口出清单由用户执行。
+- 验证默认复用已有构建状态与缓存；能增量就不全量。`clean build`、独立私有 build cache、真机运行、远程 CI、完整 test suite 都不得作为 Task 级默认验证，只有明确触发条件才允许升级。
 
 ### 5. 同一事实不重复测试
 
@@ -522,6 +527,17 @@ Target State 不等于“代码已经写完”。
 - Expected Result
 - Done When
 
+当 Task 存在并行价值时，再补充：
+
+- Write Surface
+- Produces
+- Consumes
+- Parallel With
+- Commit Boundary
+- Merge Before / Integration Dependency
+
+这些字段是并行施工属性，不创建新的项目对象。没有并行价值时不要为了模板完整强行填写。
+
 Targets 尽可能精确到：
 
 - File
@@ -543,18 +559,59 @@ Task 名称写“产生什么变化”，避免：
 
 ### 7. Build Execution Graph
 
-按真实依赖排序 Task。
+按真实依赖排序 Task，并主动寻找**真实可并行施工**的机会。
 
-只有以下均互不依赖时才标可并行：
+一个 Task 只有同时满足以下条件，才可标记为 `parallel-safe`：
 
-- Prerequisite
-- Write Surface
-- Shared State
-- Generated Artifact
-- Migration order
-- Verification dependency
+- Prerequisite 已独立满足，不依赖另一个并行 Task 的未完成结果。
+- Write Surface 不与并行 Task 发生高冲突重叠。
+- 不同时竞争同一 schema / migration 顺序。
+- 不同时改写同一 generated source-of-truth。
+- 不依赖共享可变状态的执行顺序。
+- 已消费的 interface / contract 在并行开始前已经稳定。
+- 各自可以完成自己的 Task Simple Test。
+- 各自可以形成独立 commit，不需要另一个 Task 的未提交代码才能成立。
+- 合并顺序不会改变已批准产品 / 架构语义。
 
-不要为了显得快而并行会争用同一接口 / schema / state 的 Task。
+优先使用：
+
+`freeze shared boundary → fan-out parallel Tasks → fan-in integration → Slice Capability Test`
+
+不要为了显得快而并行会争用同一接口、schema、migration、共享状态或高冲突文件的 Task。
+
+#### Slice 并行
+
+不同 Slice 也可以并行，但要求：
+
+- 它们依赖的共同 Architecture / interface baseline 已冻结。
+- 没有先后产品语义依赖。
+- 没有共享 migration / generated artifact / 高冲突 write surface。
+- 各自完成后可以独立形成有效仓库状态。
+- fan-in 后再执行必要的 Stage-level integration / module verification。
+
+不要为了团队利用率强行把本应顺序成立的产品链路拆成并行。
+
+#### 人类协作提示
+
+Execution Contract 必须把并行机会写到人类能直接使用的程度。
+
+如果存在可并行工作，在 `Execution Graph` 后增加简短 `Parallel Work Recommendation`，说明：
+
+- 现在最多建议同时开几个工作窗口 / Agent。
+- 每个窗口领取哪个 `Task-n` 或 `Slice-n`。
+- 每项的 Prerequisite。
+- 各自 Write Surface。
+- 是否可以独立 commit。
+- 哪些任务完成后必须回主线 fan-in。
+- fan-in 后要跑哪个 Slice Capability Test / Stage Test。
+
+如果没有值得并行的工作，明确写：
+
+`Parallel Work Recommendation: Stay sequential`
+
+人类不需要自行判断依赖图；Blueprint 负责判断并给推荐，人类只决定是否采用并行施工。
+
+详细规则见 `references/parallel-construction.md`。
 
 ### 8. Assign Verification
 
@@ -698,11 +755,13 @@ Stage Contract 和架构都成立，只是当前 Task 拆分、顺序、Target �
 
 施工 Agent 应：
 
-- 按 `Slice-n` 顺序推进。
-- 按 `Task-n` 精确施工。
+- 按 `Slice-n` / `Task-n` 的真实依赖推进，而不是机械假设全程串行。
 - 遵守 Architecture / Engineering Standards。
-- Task 完成时返回本 Task 的简单证据。
-- Slice 完成时运行该 Slice 的能力功能测。
+- 开工前读取 `Parallel Work Recommendation`。
+- 若当前存在 `parallel-safe` 工作，先用人话告诉人类：建议同时开几个窗口、各窗口领取哪些 `Task-n / Slice-n`、何时回主线合并。
+- 若人类只开一个窗口，仍可按同一 Execution Graph 顺序完成，不影响正确性。
+- parallel-safe Task 各自完成局部 Simple Test，并保持独立 commit boundary。
+- fan-in 后只在合适层级运行一次 Slice Capability Test，不让每个并行 Task 重复跑整条能力链路。
 - 已触发 Operational Obligation 随相关行为同步实现。
 - 不因某个 Task 失败自行改变产品或架构。
 - Slice 真实能力未成立时，不继续依赖该 Slice 的后续扩建。
@@ -721,6 +780,7 @@ Blueprint 不需要为 Verifier 预先制造大量 Evidence ID；验证位置和
 - Repository Intake：`references/repository-intake.md`
 - 产品细节边界：`references/product-detail-boundary.md`
 - Slice / Task 设计：`references/slice-task-design.md`
+- 多 Agent / 多人并行施工：`references/parallel-construction.md`
 - 验证与测试分层：`references/verification.md`
 - Observability / Operations 落位：`references/operational-obligations.md`
 

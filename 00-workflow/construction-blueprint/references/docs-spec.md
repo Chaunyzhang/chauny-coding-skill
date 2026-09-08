@@ -152,8 +152,8 @@ Pass Condition:
 
 ```text
 Slice-1
-Task-1 -> Task-2
-          Task-3 [parallel]
+Task-1 -> Task-2 [parallel-safe]
+       -> Task-3 [parallel-safe]
 Task-2, Task-3 -> Slice-1 Capability Test
 
 Slice-2
@@ -161,6 +161,32 @@ Task-4 -> Task-5 -> Slice-2 Capability Test
 ```
 
 并行只在真实依赖允许时标注。
+
+存在值得多人同时施工的机会时，在图后增加 `Parallel Work Recommendation`：
+
+```text
+Recommended concurrent workers: 2
+
+Window A:
+- Task-2
+- Write Surface: ...
+- Independent commit: Yes
+
+Window B:
+- Task-3
+- Write Surface: ...
+- Independent commit: Yes
+
+Fan-in:
+- merge both
+- run Slice-1 Capability Test
+```
+
+没有值得并行的机会时：
+
+`Parallel Work Recommendation: Stay sequential`
+
+Window A/B 只是人类展示标签，不是正式项目对象。
 
 ## 9. Tasks
 

@@ -200,3 +200,38 @@ Blueprint / UI 按既有设计系统解决，不回 Product Detail。
 
 正确：
 回 Product Designer 更新 Product Definition，再由 Chief Architect 重新冻结 Stage。
+
+
+## Parallel Construction
+
+### Safe fan-out
+
+Task-1 freezes a stable shared interface. Task-2 implements backend adapter, Task-3 implements UI caller, Task-4 adds independent fixture/test support. Primary write surfaces are separate and each Task can form a valid local commit.
+
+Expected:
+- Task-2 / Task-3 / Task-4 are `parallel-safe`.
+- Execution Graph fans out after Task-1.
+- Human is told they may open 3 windows.
+- Each Task only runs its Simple Test.
+- fan-in runs one Slice Capability Test.
+
+### Shared schema conflict
+
+Two Tasks both redesign the same schema / migration chain.
+
+Expected:
+Keep sequential, or first create one prerequisite Task that freezes the shared schema boundary.
+
+### Not worth parallelizing
+
+Three tiny Tasks touch nearby code and coordination cost exceeds likely savings.
+
+Expected:
+`Parallel Work Recommendation: Stay sequential`.
+
+### Step naming
+
+Agent proposes `Step-7` as a tracked construction unit.
+
+Expected:
+Reject it. Use `Task-7`, or plain numbered actions inside Task-7.
