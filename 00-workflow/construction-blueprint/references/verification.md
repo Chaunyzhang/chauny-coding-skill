@@ -36,6 +36,8 @@ Blueprint 的目标不是“测试最多”，而是把证据放在最合适的�
 - 真机
 - deploy
 - remote sink inspection
+- 本地运行 App / Xcode、iOS agent 侧编译与 `xcodebuild test`（编译归人类共享 DerivedData 增量执行；单测写而不跑，运行归 Stage 前 / 发版前脚本补测）
+- `git push` / CI 等待（Task 只本地提交；push 属 Slice 收口）
 
 ## 2. Slice Capability Test
 
@@ -177,6 +179,8 @@ Required Failure (only if Stage Acceptance requires)
 不要为四种证据重复跑四遍相同 journey。
 
 ## CI 放置
+
+推送节奏：Task 只本地提交，不 push、不等待 CI；每个 Slice 收口一次性 push，触发一轮 CI，报错在收口统一处理。
 
 按成本：
 

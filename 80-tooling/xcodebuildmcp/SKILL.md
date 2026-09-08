@@ -6,6 +6,8 @@ description: 第三方 MCP server，提供完整的 iOS/macOS 开发生命周期
 
 # XcodeBuildMCP 构建工具
 
+项目级硬规则见 `RULES.md`（工具纪律、一个 Agent 一台模拟器、一套缓存、编译边界、真机边界），必须先读。
+
 ## 触发条件
 
 - 任何 iOS、macOS、watchOS、tvOS、visionOS 项目的构建、测试、运行任务

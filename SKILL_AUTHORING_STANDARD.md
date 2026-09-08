@@ -65,6 +65,134 @@ Skill 只固化长期稳定、可验证、跨项目成立的正确规则，不�
     - 很难靠编译器自动发现
     - 是成熟行业共识
 
+## 废弃即消失原则（高于所有产出规则）
+
+**被新版取代的内容，不得再以任何形式存在于主工作区。** 包括：旧方案正文、被推翻的结论、修订历史、变更备注、"原方案是…"式解释、`SUPERSEDED` / `Deprecated` 类状态标记、删除线、被注释掉的旧实现、被删条目的占位行、指向旧版本的引用与提醒、承担演进史職能的索引（Revision Log、变更记录表、版本快照列）。
+
+**"为什么"只写正向**：解释为什么要这样，不解释曾经为什么不这样。当前结论与其依据是一套全新的东西，不依附于旧方案存在过这件事。
+
+**三类必须区分，只有第三类要消失**：
+
+| 类别 | 例子 | 处置 |
+|---|---|---|
+| 从未采纳的候选 | `Alternatives Considered` 与其否决理由、Break-Point 分析 | 保留——它是现行选型的论证组成部分 |
+| 当前有效的旧/未来信息 | API 弃用窗口、`Revisit Trigger`、Architecture Debt、Deferred Set、Preservation Set | 保留——它们是现行契约与意图，不是废弃草案 |
+| 曾写入交付物后被推翻的内容 | 旧版本文字、被替代的 `D-n` / `H-n` / `T-n` 条目、失效卡片的旧语义 | 彻底消失 |
+
+**备份只允许在主工作区之外**：主工作区（仓库根）内不得存在归档文件、`_OLD` / `_BACKUP` / `archive/` 目录或任何指向它们的引用与提醒。本仓库的归档位是 `~/Documents/chauny-coding-skill-archive/`（仓库同级、只进不出、不被加载、不被工作区文本引用）；新项目按 `<仓库路径>-archive` 建立并在此登记。
+
+**删除必须级联**：同一轮改动内清除全部指向被删内容的编号、路径、索引行与白名单条目；不留占位行。编号不得复用，也不需要留痕说明它曾存在。
+
+**落盘即终态**：权威文档、代码、配置、测试与 skill 文本只表达当前有效状态；演进过程不进正文。
+
+**验证（验收官判卷依据）**：对主工作区做文本扫描，命中下列任一项即不合格——`SUPERSEDED`、`Deprecated（指内容已废）`、`原方案`、`曾经`、`已废弃`、`修订记录`、`Revision Log`、`变更记录`、`~~删除线~~`、被注释保留的旧实现、空占位行。新 skill 与 skill 修改的 eval 必须包含诱导保留上述痕迹的场景（见原则 19、29）。
+
+**边界**：归档与版本库在外部承担历史回溯，不构成本原则的例外；本原则只约束主工作区内的内容。
+
+## 全局编号与缩写对照（所有角色 skill 共用，唯一权威落点）
+
+本表是三侧（产品 / 架构 / 施工）编号与缩写的唯一 SoT；各 skill 的 `references/docs-spec.md` 与术语表只引用本表、只补本层专有落点，不得复制本表正文。
+
+### 表一：编号 ↔ 全称
+
+| 号 | 全称 | 是什么 | 权威文档 |
+|---|---|---|---|
+| `Stage-n` | Stage | 产品阶段 / 里程碑，编号即阶段序号 | `docs/architecture/stages/Stage-<N>.md` |
+| `S-nn`（写 `S01`） | Slice（Vertical Slice） | Stage 内部的施工纵向切片 | 本 Stage 蓝图合同 |
+| `T-nn`（写 `T01`） | Task | 最小施工单元 | 本 Stage 蓝图合同 |
+| `AC-nn`（写 `AC-01`） | Acceptance Matrix row | 验收矩阵的行锚（不是层级） | 本 Stage 蓝图合同 |
+| `Requirement-n` | Candidate Requirement | 候选需求：产品提出，等待架构裁决是否进入建设 | `Product-Definition.md` §10 |
+| `Capability-n` | Capability Card | 一个能力一张验收级细节卡；能力索引行不是能力卡 | `docs/product/capabilities/Capability-n-<slug>.md` |
+| `Constraint-n` | Long-term Constraint | 会影响今天底座选择的远期产品约束，不是当前施工需求 | `Product-Definition.md` §9 |
+| `H-n` | Horizon item | 架构视野单条目（规模假设 / 能力→底座映射） | `HORIZON.md` |
+| `R-n` | Resolution | 架构对一条候选需求的裁决 | `ARCHITECTURE.md`「建设范围裁决」 |
+| `D-n` | Decision | 架构决策记录条目 | `DECISIONS.md` |
+| `ES-n` | Engineering Standard | 长期工程规则条目 | `ENGINEERING_STANDARDS.md` |
+
+规则：只有上表的号存在。表外任何前缀（含数字后缀的自创形式）一律按悬空引用处理：不得猜它指什么，退回上游用本表号或节锚重写。无编号的上游条目用节锚引用：`文档名 §n.m`（如 `Product-Definition.md §5.3`）、`Stage Contract 观测项 4`、或条目原名（如 `ARCHITECTURE.md` Architecture Invariants 某条）。施工层级只有 Stage → Slice → Task 三级；`AC-n` 是行锚，不是第四级。
+
+### 表二：术语缩写 ↔ 全称
+
+| 缩写 / 简写 | 全称 | 含义 |
+|---|---|---|
+| SoT | Source of Truth | 同一事实的唯一权威落点 |
+| ADR | Architecture Decision Record | 架构决策记录（内容落在 `DECISIONS.md` 的 `D-n`） |
+| SDK | Software Development Kit | 第三方接入包 |
+| IaC | Infrastructure as Code | 基础设施即代码 |
+| RBAC | Role-Based Access Control | 基于角色的权限控制 |
+| E2E | End-to-End | 端到端（贯穿真实链路） |
+| BFF | Backend For Frontend | 面向前端的后端聚合层 |
+| MFA | Multi-Factor Authentication | 多因素认证 |
+| Walking Skeleton | 同左（不缩写） | 最薄但贯穿全层的首条真实链路 |
+| `Diagnostic Logging` | `Diagnostic / Structured Logging` | 六类观测之一：开发与运行时诊断日志 |
+| `Product Events` | `Product / Business Events` | 六类观测之一：产品与业务事件 |
+| `Error / Crash` | `Error / Crash Tracking` | 六类观测之一：错误与崩溃追踪 |
+| `Metrics` | `Metrics` | 六类观测之一：系统指标 |
+| `Tracing` | `Tracing` | 六类观测之一：跨边界链路追踪 |
+| `Audit / Security` | `Audit / Security Events` | 六类观测之一：审计与安全事件 |
+
+### 表三：状态枚举 ↔ 含义
+
+| 取值 | 用在 | 含义 |
+|---|---|---|
+| `Assumption` / `Confirmed` | 产品结论、Candidate Requirement、Capability Card、Long-term Constraint 的来源 | Agent 推断、用户已确认；两者回答“这是谁决定的” |
+| `Open` / `Blocking` | 尚未解决的产品问题 | 可后定、不解决不能推进；两者回答“现在能否继续” |
+| `ACCEPT` / `DEFER` / `SPLIT` / `REJECT` | 架构裁决 `R-n` | 进入建设 / 需求成立但后建 / 拆成多份 / 不进路线 |
+| `EXPLICIT` / `INFERRED` / `SPECULATIVE` | 视野条目 `H-n` 证据强度 | 文档明说 / 由明示意图推出（附推导）/ 仅有憧憬（不得据以选型） |
+| `DECIDED` / `DECISION REQUIRED` / `DEFERRED` / `NOT APPLICABLE` | 架构覆盖域状态 | 已决定 / 待决定 / 延后（必须带 Revisit Trigger）/ 不适用（必须带依据） |
+| `REQUIRED` / `REQUIRED WHEN APPLICABLE` / `NOT APPLICABLE` | 观测 Type Matrix | 必做 / 触发即必做 / 不适用（不得静默遗漏） |
+| `ADD` / `CHANGE` / `PRESERVE` / `N/A` | Task 六类观测状态 | 本 Task 新增 / 本 Task 修改 / 不新增但不得破坏 / 不适用（必须写理由） |
+| `PASS` / `FAIL` / `BLOCKED` | 验收行 `AC-n` | 唯一三种判定结果 |
+| `READY` / `PLAN_BLOCKED` | 蓝图合同状态 | 可交施工 / 停工回报上游 |
+| `ACTIVE` | 视野条目、合同条目当前有效性 | 现行有效（失效内容直接删除，不设其他状态） |
+
+## 文档产出总则与防乱公共条（三侧共用，唯一权威落点）
+
+各角色 skill 的 `references/docs-spec.md` 只引用本节并补本层专有内容，不得复制以下正文。
+
+### 总则六条
+
+1. **统一骨架**：每份文档 = 文档导航（结构索引 / 本文权威声明 / 建议阅读顺序）+ 必读章节（按所属层骨架，名称与顺序不得自创）+ 可选补充节；文档导航节只描述当前结构，不含修订记录或版本历史。
+2. **单一事实单一落点**：每类事实只在所属层路由表指定位置全文写一次（SoT）；其他位置只允许「一句话摘要 + 编号或节锚引用」，禁止全文复制。
+3. **按编号或节锚引用，不按转述复制**：禁止把被引用内容改写一遍充当本层独立事实。
+4. **只写当前有效状态，废弃即消失**：见上一节。
+5. **In-place 更新**：修改 = 改对应章节或条目，不新建平行文档；骨架外确需新章节时，停止并回报用户裁决。
+6. **篇幅纪律**：同一节持续膨胀 = 内容放错了位置，先查路由表再写长文；Rationale 只在「会约束执行」「保护上游决策」「解释必需异常路径」时保留。
+
+### 防乱公共五条（验收官判卷依据，三侧一致）
+
+1. 同一内容在两份文档全文复制（无编号或节锚引用）→ 不合格。
+2. 骨架章节名称或顺序自创、骨架外新增章节未事先回报获准 → 不合格。
+3. 残留被推翻的内容——`SUPERSEDED` 类标记、废弃 ADR 与替代指针、修订记录 / Revision Log / 变更记录 / 版本快照、「原方案」「已废弃」「曾考虑后改为」类备注、被删条目的空占位行——或引用已删除的编号与节锚 → 不合格。
+4. 本层首次定义属于上游的语义、或替上游记录裁决结论 → 越权，不合格。
+5. 使用《全局编号与缩写对照》表外的前缀、引用不存在的编号或节锚 → 不合格。
+
+### 表四：验证分层（V0 / V1 / V2，唯一权威）
+
+慢的根源不是验证本身，而是把「要等很久才能完成的验证」塞进了每一步。所有 skill、施工合同与测试策略一律按本表分层：**秒级检查每步做，完整与真实环境验证按段做**。不得把 V1 的要求下沉成每个 Task 的完成条件，也不得把 V0 该做的推给 V1。
+
+| 层 | 时机 | 做什么（预算与内容） | 禁止 |
+|---|---|---|---|
+| **V0 · 秒级检查** | 每个 Task 完成、解锁下一个 Task 之前 | 单步预算 ≤10 秒：受影响目标的编译 / typecheck、lint、与本步直接相关的单元测试、生成物与结构校验（契约生成结果、迁移文件形态、配置键存在）。观测部分同样留在 V0 的只有零成本项：埋点与 SDK 初始化代码落位、运行时配置确实加载、事件 / 审计 payload 的字段与 schema 在本地或 dev 通道核对 | 以「以后 V1 会跑全量」为由跳过本步秒级检查；或在本步去跑全量测试、起真库、装模拟器、部署、查远程后台 |
+| **V1 · Slice 收口** | 每个 Slice 收尾（Product Checkpoint 与 Slice 级观测检查项）一次完成 | 全量编译与全量测试、真实数据库上的集成测试、真机 / 模拟器运行与本地 Console 实见（start / state / success / failure + correlation）、受控 error / crash、部署后远程接收端取证（事件可查询、指标可读、trace 可串、审计可检索）、真实产品路径上手验证。**一次运行覆盖本 Slice 内所有 Task 的新增部分** | 攒到下一个 Slice 或 Stage 尾部；或要求单个 Task 为拿远程证据另行部署一次 |
+| **V2 · Stage 验收** | 阶段验收前 | 六类观测整体闭环与 `PRESERVE` 回归、Preservation / Regression Set 全量、Stage 级 Hands-on 完整验收、告警与恢复路径 | 出现 Observability Delta 为空的 Stage |
+
+**三件事不许攒（必须留在 V0，即使要多写一条测试）**：
+
+1. 钱与数量算错：金额、积分、余额、时长、四舍五入、并发扣减——秒级单元测试或一次真库事务即可判定。
+2. 数据库迁移：不可回滚、破坏存量数据、默认值把旧行填错——迁移测试在 V0 就跑（本地临时库，成本数秒）。
+3. 权限与可见性判反：不该看见的人看见了、不该改的改动了——用多身份断言在 V0 测掉。
+
+理由：这三类既能秒级判定，错了又要把整段拆掉重做，攒到 V1 才发现是最贵的选择。除这三类外，凡"必须真环境、必须部署、必须等后台"才成立的证据，一律归 V1 / V2。
+
+一句话规则：**便宜的当场做，贵的攒一段做；几秒能测出来的大错属于便宜的，不许攒。**
+
+**重平台例外（iOS 等编译 / 单测运行本身超出秒级预算的平台）**：
+
+1. V0 的「编译、单测运行」不由 agent 执行：编译由人类在共享 DerivedData 上以 Debug 增量编译承担；单测代码照写但「跑测」≠「测绿」，运行只收敛到 Stage 前 / 发版前由脚本补测一次，不以单测绿作为 Task 放行门槛。此类平台 agent 的 V0 退化为代码级静态检查，Task 放行标准 = 人类增量编译通过。
+2. 真机操作不属于 agent 的任何一层：V1 收口由 agent 出「测什么 / 看到什么算过」清单，人类自己 Run 自己测。
+3. 推送节奏：Task 只本地提交，不推送、不触发 CI、不等待 CI；每个 Slice 收口（V1）一次性 push 触发一轮 CI，报错在收口统一处理。
+
 ## 推荐结构
 
 ```markdown

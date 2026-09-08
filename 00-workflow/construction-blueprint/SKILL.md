@@ -305,6 +305,8 @@ Task 不负责：
 - 重跑整个 Stage。
 - 每次重新验证所有 Provider / telemetry sink。
 - 重复证明已经在更低层充分证明的事实。
+- 推送与 CI：Task 只本地提交，不 push、不触发、不等待 CI；push 属 Slice 收口，一次性推一轮。
+- 重平台（iOS）的编译与单测运行：编译由人类在共享 DerivedData 上增量执行；单测代码照写但运行归 Stage 前 / 发版前脚本补测，不以测绿为 Task 门槛。真机操作不属于 agent，Slice 收口出清单由用户执行。
 
 ### 5. 同一事实不重复测试
 

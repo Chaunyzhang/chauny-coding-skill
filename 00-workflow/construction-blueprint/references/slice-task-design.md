@@ -200,6 +200,8 @@ Done When
 - deployment
 - 所有 remote sink 检查
 - load test
+- `git push` / CI 确认（Task 只本地提交；push 属 Slice 收口，一次性推一轮）
+- iOS agent 侧编译、`xcodebuild test`、本地运行 Xcode（编译归人类共享 DerivedData 增量执行；单测写而不跑，运行归 Stage 前 / 发版前脚本补测）
 
 ### Done When
 
