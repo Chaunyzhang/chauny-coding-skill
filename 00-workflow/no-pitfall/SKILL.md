@@ -18,15 +18,30 @@ description: 施工与日常仓库工作的行为底线。与 Construction Bluep
 
 > 已经决定要做的事情，必须在真实仓库中正确、安全、可验证地完成；不得用猜测、旁路、降级、伪造证据或擅自改设计代替正式要求。
 
-29 条雷点是长期经验资产，全部永久有效。完整正文见 `references/all-pitfalls.md`。
+34 条雷点是长期经验资产，全部永久有效。永久有效不等于每个 Task 都逐条激活；只有触发条件成立的雷点才产生额外工作。完整正文见 `references/all-pitfalls.md`。
 
-任何重构都不得删减、合并掉或静默弱化其中任意一条。
+任何重构都不得静默删减或弱化其中任意一条；强化既有问题域时优先修改原雷点，避免重复编号。
+
+## 反模型本能门禁
+
+当前模型容易把“认真”误解成更多防御、更多测试、更多自我审计。施工前与施工中优先执行以下判断：
+
+1. **先分类问题**：这是已有证据的 `Confirmed Defect`，还是只有推演的 `Hypothetical Risk`？
+2. **真缺陷修根因**：Confirmed Defect 追到 invariant / ownership / source of truth / state / boundary 的正确层级，不用 guard / fallback 掩盖。
+3. **假想风险先证明**：没有证据的风险先按 `Severity × Evidence-backed Likelihood` 评估，未达门槛不增加代码或测试。
+4. **验证需要 Live Uncertainty**：每次新增检查前，必须说清“当前不知道什么”以及“失败后会做什么不同”。
+5. **充分证据后 STOP**：Outcome 已成立且无 blocker 时，不继续 hardening、重跑测试或搜索额外工作。
+6. **不越权验收**：Agent 只宣布自己有证据能力与裁决权的事项通过；UI 审美、主观体验、真机感知等按项目规则交 Human / External Authority。
+
+这组门禁不是降低质量：
+
+> **假想问题要克制；真实问题要修彻底。**
 
 ## 两种工作模式
 
 ### Blueprint Mode
 
-当存在当前有效的 `docs/blueprint/EXECUTION_CONTRACT.md` 或等价 Execution Contract 时使用。
+当存在当前有效的 `docs/blueprint/stages/Stage-<N>.md` 或等价 Execution Contract 时使用。
 
 施工权威顺序：
 
@@ -111,8 +126,7 @@ description: 施工与日常仓库工作的行为底线。与 Construction Bluep
 
 - Blueprint 内可以解决 → 当前范围内修正。
 - 蓝图拆法 / 落点本身错误 → 回 Construction Blueprint。
-- 产品语义缺口 → `product-detail`。
-- Product Definition 改变 → `product-designer`。
+- 产品语义缺口 / Product Definition 改变 → `product`。
 - 架构 / Provider / Interface / Data / Security 决策问题 → `chief-architect`。
 
 ### 3. Inspect Reality
@@ -131,7 +145,7 @@ description: 施工与日常仓库工作的行为底线。与 Construction Bluep
 
 Task 默认只做最便宜且足以发现当前改动错误的检查。
 
-目标通常是秒级到约 10 秒：
+这些是候选手段，不是每个 Task 的固定清单：
 
 - affected target compile
 - lint / typecheck
@@ -139,9 +153,9 @@ Task 默认只做最便宜且足以发现当前改动错误的检查。
 - schema / structure validation
 - narrow deterministic command
 
-不得因为“更保险”让每个小 Task 重跑全量系统验证。
+只有存在当前改动引入的 Live Uncertainty 时才运行对应检查；已有等价证据且实现未变化时不重复。不得因为“更保险”让每个小 Task 重跑全量系统验证。
 
-重平台例外（iOS）：编译与单测运行本身超出秒级预算，不属于 agent 的 Fast Check——编译由人类在共享 DerivedData 上 Debug 增量执行；单测代码照写，但「跑测」与「测绿」是两件事，运行只在 Stage 前 / 发版前由脚本补测一次，不以测绿作为 Task 汇报或放行门槛。此类平台 agent 的 Fast Check 退化为代码级静态检查，Task 放行标准 = 人类增量编译通过。
+重平台例外（iOS）：编译与单测运行本身可能超出 Task 预算，不属于 agent 的默认 Fast Check。Agent 优先做代码级静态 / 结构检查；编译、跑测、真机按项目平台规则在最早有意义的 Slice / Stage 聚合，并复用现有增量构建状态。不得把“每个 Task 人类编译一次”重新变成固定流程税。
 
 ### 6. Record Evidence
 
@@ -255,7 +269,7 @@ No Pitfall 不重新定义 Observability 或运行体系。
 - 已冻结 Stage 在当前仓库需要重新拆 Slice / Task。
 - Execution Contract 与现场现实存在施工级冲突。
 
-### 回 Product Detail
+### 回 Product
 
 当不同答案会改变：
 
@@ -269,11 +283,9 @@ No Pitfall 不重新定义 Observability 或运行体系。
 - acceptance outcome
 - external product promise
 
-不要把按钮、文案、普通 UI 或代码组织问题回 Product Detail。
+不要把按钮、文案、普通 UI 或代码组织问题回 Product。
 
-### 回 Product Designer
-
-只有 Product Detail 发现需要改变 Product Definition 本身时。
+若发现需要改变 Product Definition 本身，同样回 Product；由 Product 更新 Product Definition / Product Atoms 后，再由 Chief Architect 重新裁决。
 
 ### 回 Chief Architect
 
@@ -290,7 +302,7 @@ No Pitfall 不重新定义 Observability 或运行体系。
 
 ## 雷点应用导航
 
-29 条始终全部有效。下面只是“当前阶段重点检查”，不是启停规则。
+34 条始终具有约束力，但不构成每个 Task 的 34 项 checklist。下面只是当前阶段高概率 Trigger 导航。
 
 ### 开工 / 恢复重点
 
@@ -298,7 +310,7 @@ No Pitfall 不重新定义 Observability 或运行体系。
 
 ### 普通 Task 施工重点
 
-`3, 5, 6, 7, 8, 9, 10, 15, 18`
+`3, 5, 6, 7, 8, 9, 10, 15, 18, 30, 31`
 
 ### 数据 / 外部副作用重点
 
@@ -306,15 +318,15 @@ No Pitfall 不重新定义 Observability 或运行体系。
 
 ### Debug / Failure 重点
 
-`2, 6, 19, 21, 22, 23, 27`
+`2, 6, 19, 21, 22, 23, 27, 30, 31, 32`
 
 ### Verification 重点
 
-`16, 17, 18, 23, 24, 29`
+`16, 17, 18, 23, 24, 29, 32, 33, 34`
 
 ### 收尾 / 交接重点
 
-`24, 25, 26, 28`
+`24, 25, 26, 28, 33, 34`
 
 完整规则始终以 `references/all-pitfalls.md` 为准。
 
@@ -337,7 +349,7 @@ Blueprint Mode 下：
 
 `Task Complete ≠ Slice Complete ≠ Stage Complete`
 
-完成当前授权范围后停止，不自行进入下一 Stage。
+完成当前授权范围并取得充分证据后必须停止；继续 hardening、测试、重构或搜索额外问题需要新的 Trigger。不得对没有证据能力或裁决权的事项自行宣布通过。
 
 ## 最终原则
 
@@ -347,4 +359,4 @@ Blueprint Mode 下：
 
 测试成本与风险匹配：小步快速检查，真实能力按 Slice 验证，Stage 做最终结果与直接回归。
 
-所有“完成”都以实际证据为依据，所有超出当前授权的决策都回到正确的规划层。
+所有“完成”都以实际证据为依据；假想风险不能冒充缺陷，真实缺陷必须修根因；所有超出当前授权或 Agent 裁决能力的结论回到正确的 Authority。

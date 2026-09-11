@@ -6,6 +6,28 @@
 
 > 运行义务随相关行为施工，但验证只在最合适层级做一次。
 
+
+## Admission Gate
+
+Operational Work 进入 Blueprint 必须来自：
+
+- Stage Contract 已触发义务；
+- Confirmed Defect；
+- 或达到处理门槛的 evidence-backed risk。
+
+不要因为“生产级通常应该有”自行增加：
+
+- fallback
+- retry
+- alert
+- metric
+- trace
+- backup
+- feature flag
+- extra recovery
+
+模型自己想到的潜在风险先走 Planning Guardrails，不直接变成 Operational Task。
+
 ## 类型
 
 可能包括：

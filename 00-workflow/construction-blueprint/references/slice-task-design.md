@@ -2,7 +2,9 @@
 
 ## Slice 的目的
 
-Slice 是 Current Stage 内最小的纵向集成成果。
+Slice 是 Current Stage 内最小的**单能力跨层集成成果**。
+
+这里的纵向指一个能力从真实入口打通到真实结果，不指完整业务流程。
 
 它不是：
 
@@ -31,9 +33,11 @@ Slice 是 Current Stage 内最小的纵向集成成果。
 
 尽量验证：
 
-- 最关键产品闭环片段。
+- Current Stage 中最重要、可独立成立的能力。
 - 最大技术风险。
 - 最可能造成重写的真实边界。
+
+不要为了形成完整用户旅程，把多个本可独立成立的能力硬串进第一个 Slice。
 
 不要先批量建：
 
@@ -41,6 +45,19 @@ Slice 是 Current Stage 内最小的纵向集成成果。
 - 所有 service。
 - 所有 backend endpoint。
 - 最后再接 UI。
+
+
+## Capability Closure，不是 Business Journey
+
+合法 Slice 要证明的是：
+
+`Real Entry → 当前能力所需各层 → Real State / Side Effect → Visible / Observable Result`
+
+如果 A、B、C 三个能力分别能独立成立，应拆成三个 Slice；产品层以后可以把它们组合成循环。
+
+只有 B 是证明 A 成立不可缺少的真实依赖时，才把 A+B 放进同一 Slice。
+
+底座 Stage 尤其优先独立能力边界，而不是完整业务剧情。
 
 ## Slice 字段
 
@@ -101,7 +118,7 @@ Task 是施工 Agent 的最小确定动作单元。
 - 有明确 prerequisite。
 - 有受控 write surface。
 - 完成后仓库保持有效。
-- 能用便宜方法直接验证。
+- 有明确 `Local Proof`；只有存在需要执行才能消除的 Live Uncertainty 时才安排测试。
 - 为后续 Task 提供完整输入。
 
 ## Task 粒度
@@ -125,11 +142,13 @@ Task-n — <结果型名称>
 Slice
 Upstream Basis
 Goal
+Reasoning: Low (0–4) | Medium (5–10)
+Criticality: Sensitive | Critical   # 仅适用时
 Prerequisites
 Targets
 Actions
 Operational Work (适用时)
-Simple Test
+Local Proof
 Expected Result
 Done When
 
@@ -188,11 +207,17 @@ Merge Before / Integration Dependency
 
 > 加 logging、metrics、tracing。
 
-### Simple Test
+### Local Proof
 
-优先目标 ≤10–30 秒的局部检查；复杂项目可能更长，但不能默认扩大。
+先说明当前 Task 有什么需要证明。
 
-适合：
+如果已有 invariant / static evidence 足够，可以写：
+
+`Existing evidence / static proof; no new executable check required.`
+
+只有执行结果能改变当前判断时才安排局部检查。执行性检查仍应优先低成本；复杂项目不能默认扩大。
+
+需要执行时可选：
 
 - targeted unit test
 - compiler / typecheck for target
@@ -201,7 +226,7 @@ Merge Before / Integration Dependency
 - generated client compile
 - local permission logic test
 
-不适合默认放 Task：
+不得默认放 Task：
 
 - 全仓 test suite
 - 真机完整 journey
@@ -216,6 +241,59 @@ Merge Before / Integration Dependency
 只写当前 Task 成立条件。
 
 真实能力由 Slice Test 证明。
+
+## Reasoning
+
+Task 编译完成后，由 Blueprint 计算一次 Reasoning Score。
+
+Construction 不负责重新评分。
+
+### Low
+
+答案基本已被冻结，施工是机械翻译。
+
+### Medium
+
+允许有限局部实现判断，但 Product / Architecture / contract / state / failure semantics 已冻结。
+
+### Invalid
+
+Score >10，或仍需施工 Agent 发明：
+
+- Product behavior
+- Architecture route
+- interface / ownership
+- state machine
+- retry / recovery semantics
+- ordering / concurrency guarantee
+- proof strategy
+
+则 Blueprint 继续设计，不得交给 Construction。
+
+不要为了降分拆坏原子正确性边界。
+
+详细见 `reasoning-policy.md`。
+
+## Defensive Work Gate
+
+Task 如果包含以下任一内容：
+
+- guard / validation
+- fallback / retry
+- compatibility shim
+- feature flag
+- recovery branch
+- extra regression / observability
+
+Upstream Basis 必须能指向：
+
+- Stage / Architecture obligation；
+- Confirmed Defect；
+- 或达到处理门槛的 evidence-backed risk。
+
+“更保险”“未来可能”“理论上”不能作为 Task Basis。
+
+Confirmed Defect 的 Task Goal 应描述根因修复，而不是“避免症状出现”。
 
 ## Execution Graph
 

@@ -159,7 +159,7 @@ Current Stage 开工前冻结。
 
 Stage 关闭后保留：最终 Contract、Exit State、关键 Architecture Delta、适用 Decision、Acceptance / Direct Regression / Operational Obligation 的最终证据摘要，以及仍有效的 Revisit Trigger。后续 Stage 从这个 Baseline 恢复现实，不重复重做已关闭决策。
 
-## Product Detail Gap
+## Product Refinement Gap
 
 当 Requirement 已 Accept，但缺少的产品细节会改变：
 
@@ -172,7 +172,7 @@ Stage 关闭后保留：最终 Contract、Exit State、关键 Architecture Delta
 
 则 `PRODUCT CLARIFICATION REQUIRED`。
 
-其他 UI / local interaction / implementation 细节不阻塞 Stage Freeze，交给后续产品细化或 Blueprint。
+其他 UI / local interaction / implementation 细节不阻塞 Stage Freeze，交给后续 Product Refinement 或 Blueprint。
 
 ## 不要做
 

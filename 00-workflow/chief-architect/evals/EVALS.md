@@ -122,7 +122,7 @@
 
 期望：建立有数值通过条件的 load test。
 
-## Eval 15 — Product Detail Gap
+## Eval 15 — Product Refinement Gap
 
 输入：分享功能未明确“复制副本还是共享同一对象”。
 

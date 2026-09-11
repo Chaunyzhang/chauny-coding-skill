@@ -1,6 +1,6 @@
 # Verification Strategy for Blueprint
 
-Blueprint 的目标不是“测试最多”，而是把证据放在最合适的层级。
+Blueprint 的目标不是“测试最多”，而是只为当前真正需要证明的事实安排足够证据。
 
 ## 核心规则
 
@@ -8,14 +8,18 @@ Blueprint 的目标不是“测试最多”，而是把证据放在最合适的�
 
 重复验证必须说明新增证据价值。
 
-## 1. Task Simple Test
+## 1. Task Local Proof
 
 证明局部改动本身。
 
-常见：
+`Local Proof` 不等于必须运行测试。先问是否存在 Live Uncertainty；没有则优先使用已有证据、静态检查或结构性证明。
 
-- unit / pure logic
-- target compile / typecheck
+可选证据：
+
+- existing invariant / existing passing evidence
+- static / structural inspection
+- unit / pure logic（需要时）
+- target compile / typecheck（需要时）
 - schema mapping
 - permission branch
 - config wiring
@@ -25,9 +29,10 @@ Blueprint 的目标不是“测试最多”，而是把证据放在最合适的�
 
 特点：
 
-- 快。
+- 成本与当前不确定性匹配。
 - 定位直接。
 - 不需要完整真实产品路径。
+- 如果没有需要执行才能证明的事实，可以不新增执行性检查。
 
 不要默认：
 
@@ -41,6 +46,8 @@ Blueprint 的目标不是“测试最多”，而是把证据放在最合适的�
 
 ## 2. Slice Capability Test
 
+只有 Slice 的真实能力尚未被等价证据证明、或 Stage Acceptance / Live Uncertainty 要求时才执行。
+
 证明一个真实能力路径工作。
 
 常见：
@@ -52,7 +59,7 @@ Blueprint 的目标不是“测试最多”，而是把证据放在最合适的�
 - queue → job → state
 - AI provider → stream / result → product state
 
-只验证关键成功路径，以及 Stage Contract 明确要求的失败 / permission / operational behavior。
+只验证关键成功路径，以及 Stage Contract、Confirmed Defect regression 或 risk gate 明确触发的失败 / permission / operational behavior。
 
 不要把 Task 的全部 unit case复制过来。
 
@@ -161,7 +168,7 @@ Required Failure (only if Stage Acceptance requires)
 - migration。
 - shared persistence。
 
-不要因为“不确定”就默认全仓 regression。
+不要因为模糊的“不确定”就默认全仓 regression；必须指出具体 Live Uncertainty 或直接影响路径。
 
 ## Observability Evidence
 
@@ -191,12 +198,58 @@ Required Failure (only if Stage Acceptance requires)
 
 Flaky test 应隔离修复，不靠无限 retry 变绿。
 
+## Verification Authority
+
+### Agent
+
+适合机械证明：
+
+- build / typecheck / lint
+- unit / integration / contract / migration test
+- schema / generated artifact
+- static rules
+- UI Token / Component / State compliance
+- machine-readable runtime evidence
+
+### Human
+
+适合主观或真人专属：
+
+- UI 审美 /质感 /视觉平衡
+- Motion 主观感受
+- 真人操作体验
+- 用户明确保留的产品主观接受
+
+### External
+
+适合 Agent 无权访问或必须由外部系统确认：
+
+- 第三方后台
+- 审核 /合规系统
+- 特定设备 /账户
+- 外部运营系统
+
+Blueprint 只准备最短验证入口，不伪造 PASS。
+
+## Live Uncertainty & Stop
+
+新增验证前：
+
+1. 具体不知道什么？
+2. 会改变什么决定？
+3. 失败后做什么不同？
+
+答不上来，不安排。
+
+证据已经充分且相关实现未变时，不重复执行。
+
 ## Blueprint 自检
 
 完成前问：
 
-1. 是否同一行为在 Task、Slice、Stage重复测试？
-2. 是否有 Task 只是为了“再跑一次测试”？
+1. 是否存在没有 Live Uncertainty / Acceptance / defect regression 依据的测试？
+2. 是否同一行为在 Task、Slice、Stage重复测试？
+3. 是否有 Task 只是为了“再跑一次测试”？
 3. 是否真边界被全 Mock 掩盖？
 4. 是否全仓 regression 没有直接影响依据？
 5. 是否 load / contract / migration testing 没有触发条件却被机械加入？

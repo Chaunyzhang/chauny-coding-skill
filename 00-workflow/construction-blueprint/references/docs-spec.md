@@ -1,10 +1,10 @@
 # Execution Contract Docs Spec
 
-本文件规定 `docs/blueprint/EXECUTION_CONTRACT.md` 的唯一结构。
+本文件规定 `docs/blueprint/stages/Stage-<N>.md` 的结构：每个 Stage 一份合同，同一 Stage 只有一份。
 
 ## 原则
 
-1. 当前 Stage 只维护一份权威 Execution Contract。
+1. 每个 Stage 只维护一份权威 Execution Contract：`docs/blueprint/stages/Stage-<N>.md`；不同 Stage 的合同互不合并。
 2. 不复制 Product Definition、Architecture、Decision 或 Engineering Standards 的长篇正文。
 3. 只写施工所需的当前有效事实。
 4. 删除失效计划，不保留 `INVALIDATED`、旧 Task 墓地或平行补丁文档。
@@ -15,11 +15,11 @@
 
 ## 文件
 
-默认：
+固定：
 
-`docs/blueprint/EXECUTION_CONTRACT.md`
+`docs/blueprint/stages/Stage-<N>.md`（`<N>` = Stage 序号）
 
-如果既有项目已经有明确等价唯一合同路径，可沿用，但同一 Current Stage 只能有一份。
+如果既有项目已有明确的等价路径，可沿用，但必须保持「一个 Stage 恰好一份」；已完成 Stage 的合同作为历史输入保留，不并入当前合同。
 
 临时研究文件只能放 `.workbench/`，交付前删除或把有效结论合并回合同。
 
@@ -36,6 +36,31 @@
 ## 6. Traceability
 ## 7. Slices
 ## 8. Execution Graph
+## Delegation Recommendation
+
+默认不写任何 Delegation 段，表示 Root 直接施工。
+
+只有 Blueprint 通过 Delegation Gate 时，才在对应 Task / Slice 附：
+
+```text
+Delegation
+
+Purpose:
+Scope:
+Deliverable:
+Read / Write Boundary:
+Expected Wall-clock Effect:
+Fan-in:
+Recursive Spawn: No
+```
+
+不要给所有 Task 填 `Delegation: No`。
+
+`Parallel Work Recommendation` 与 `Delegation` 是不同机制：
+
+- Parallel Work：给人类 / 多窗口。
+- Delegation：给单个 Root Agent 是否创建新模型上下文。
+
 ## 9. Tasks
 ## 10. Verification
 ## 11. Exception Routing
@@ -118,7 +143,7 @@ Status: DRAFT | READY | BLOCKED
 |---|---|---|
 | Requirement-3 | Slice-1 / Task-1, Task-2 | Slice-1 Capability Test |
 | Stage Acceptance: 用户可完成 X | Slice-1 | Stage Module Test |
-| Decision-2 | Task-1 | Task-1 Simple Test |
+| Decision-2 | Task-1 | Task-1 Local Proof |
 | Operational: payment audit | Task-3 | Slice-2 Capability Test |
 
 规则：
@@ -188,6 +213,31 @@ Fan-in:
 
 Window A/B 只是人类展示标签，不是正式项目对象。
 
+## Delegation Recommendation
+
+默认不写任何 Delegation 段，表示 Root 直接施工。
+
+只有 Blueprint 通过 Delegation Gate 时，才在对应 Task / Slice 附：
+
+```text
+Delegation
+
+Purpose:
+Scope:
+Deliverable:
+Read / Write Boundary:
+Expected Wall-clock Effect:
+Fan-in:
+Recursive Spawn: No
+```
+
+不要给所有 Task 填 `Delegation: No`。
+
+`Parallel Work Recommendation` 与 `Delegation` 是不同机制：
+
+- Parallel Work：给人类 / 多窗口。
+- Delegation：给单个 Root Agent 是否创建新模型上下文。
+
 ## 9. Tasks
 
 每个 Task：
@@ -198,13 +248,15 @@ Window A/B 只是人类展示标签，不是正式项目对象。
 Slice:
 Upstream Basis:
 Goal:
+Reasoning: Low (0–4) | Medium (5–10)
+Criticality: Sensitive | Critical   # 仅适用时
 Prerequisites:
 Targets:
 Actions:
 1.
 2.
 Operational Work:   # 仅适用时
-Simple Test:
+Local Proof:
 Expected Result:
 Done When:
 ```
@@ -213,14 +265,20 @@ Done When:
 
 `Actions` 是状态改变动作，不是 rationale。
 
-`Simple Test` 默认只验证本 Task。
+`Local Proof` 只证明本 Task；可以是静态 / 既有证据，不要求每个 Task 新增测试。
+
+`Reasoning` 由 Blueprint 编译期评分后写入；Construction 直接消费，不重新做 10 维打分。
+
+禁止在正式合同中出现 `High / XHigh` Task。Score >10 时先修 Blueprint，再发布。
+
+`Criticality` 只在高后果边界需要时填写，不参与 Reasoning Score。
 
 ## 10. Verification
 
 三部分：
 
-### Task Simple Tests
-只列不能从 Task 本文直接看清的共用说明。
+### Task Local Proofs
+只列不能从 Task 本文直接看清的共用 proof 说明；不要为了格式给每个 Task 添加新测试。
 
 ### Slice Capability Tests
 每个 Slice 一条真实能力测试。
@@ -229,6 +287,14 @@ Done When:
 验证 Stage Outcome、Acceptance、Direct Regression、适用 Operational Obligation、Stop Rule。
 
 用户型 Stage 可以在 Stage Module Test 内包含 Hands-on Steps；不另造 `Hands-on Acceptance-n` 对象。
+
+### Verification Authority
+只在需要时标注：
+- Agent
+- Human
+- External
+
+UI 审美 /视觉质感等 Human-only 结论不得写成 Agent PASS 条件。
 
 ## 11. Exception Routing
 
@@ -246,6 +312,9 @@ Done When:
 Status: READY | BLOCKED
 
 READY when:
+- all Tasks are Reasoning Low / Medium
+- no Task score >10
+- no unresolved design decision remains inside Construction
 - ...
 ```
 

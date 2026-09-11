@@ -15,7 +15,7 @@ Product Definition 与 Architecture 仍是更高层语义权威，但施工 Agen
 1. 读取 Task 与前置条件。
 2. 检查真实仓库。
 3. 只做 Task 授权变化。
-4. 执行快速局部验证。
+4. 只有存在当前 Live Uncertainty 时，执行最低成本的局部验证。
 5. 保存真实证据。
 6. 满足 Task Exit 后继续。
 
@@ -41,7 +41,7 @@ Stage 验证证明：
 - 适用 Operational Obligations 真正可见。
 - Hands-on Acceptance 可重复执行。
 
-不要重跑与 Stage 无关的历史全量验证，除非上游合同明确要求。
+不要重跑与 Stage 无关的历史全量验证。即使上游写了宽泛“全量验证”，也应按当前 Verification Strategy 解释为证明 Stage Outcome 与直接回归所需的充分证据；确有强制法规 / 发布门禁时除外。
 
 ## Contract Drift
 
@@ -49,8 +49,7 @@ Stage 验证证明：
 
 - 实施机械细节可局部修正 → Blueprint 范围内解决。
 - Slice / Task 结构失效 → 回 Construction Blueprint。
-- 产品语义缺失 → Product Detail。
-- 产品定义改变 → Product Designer。
+- 产品语义缺失 / 产品定义改变 → Product。
 - 架构决定改变 → Chief Architect。
 
 施工 Agent 不自行“顺手修正上游设计”。

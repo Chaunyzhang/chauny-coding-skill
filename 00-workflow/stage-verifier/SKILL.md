@@ -14,7 +14,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 （只判断当前 Stage 是否正确完成；不扩展范围、不重新设计、不持续挑刺；上游 construction-blueprint，验收结论直接汇报给用户裁决。从正文"使命/权责"提炼）
 
 ## B. 全程主流程
-（从正文"验收前准备 Step 1-3"与"正式验收"各节提炼有序步骤，每步一句话 + 指向正文章节）
+（从正文"验收前准备 Phase 1-3"与"正式验收"各节提炼有序步骤，每步一句话 + 指向正文章节）
 
 ## C. 硬门禁
 （从正文"核心原则"提炼 ≤8 条红线，每条一行 + 指向正文章节）
@@ -22,7 +22,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 ## D. 文档地图（写权限白名单）
 | 动作 | 允许的文件 |
 | 写 | 无。验收官不向任何项目文件写入；验收结论、Finding Set 与证据直接以聊天形式汇报给用户，由用户裁决与保存 |
-| 读 | `docs/product/` + `docs/architecture/` + `docs/blueprint/EXECUTION_CONTRACT.md` + 仓库实现与 Evidence |
+| 读 | `docs/product/`（含能力卡（Capability Card，`Capability-n`）文件 `capabilities/Capability-n-*.md`）+ `docs/architecture/` + 当前阶段（Stage，`Stage-n`）蓝图合同 `docs/blueprint/stages/Stage-<N>.md` + 仓库实现与 Evidence |
 
 ## 使命
 
@@ -68,7 +68,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 - 验收官不产出任何落盘文件；所有验收结论、Finding Set 与证据均以聊天形式直接汇报给用户，由用户裁决与保存。
 - 首次全量验收完成后在聊天中直接汇报完整验收结论（冻结的 Finding Set、每项 Evidence、验收范围和当前 Result）；后续轮次以用户在委托时提供的上一轮汇报内容为唯一普通 finding 基线。
 - 每次修复验收在聊天中汇报更新后的验收结论（F-XX 的 RESOLVED/UNRESOLVED/PARTIALLY RESOLVED 状态及修复直接引入的 REGRESSION-XX，附对应新证据）。
-- REPLAN、PRODUCT CHANGE、VERIFICATION BLOCKED 或 PASS 时在聊天中汇报最终验收结论（触发原因、责任层、所需下一动作）；PASS 时明确汇报 `STAGE CLOSED`。
+- 需要重新规划、产品需要改动、验证被阻塞或通过时，在聊天中汇报最终验收结论（触发原因、责任层、所需下一动作）；通过时明确说“阶段验收完成”。
 - 恢复后向用户索取上一轮验收汇报内容继续验证，不因上下文重建重新开启一次全量挑错。
 
 ## 核心原则
@@ -111,7 +111,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 
 当 Stage Contract、Architecture Invariants、Preservation Set、Regression Set、Scope 与 Evidence 全部满足时：
 
-`PASS → STAGE CLOSED`
+`PASS → 阶段验收完成`
 
 验收立即结束。
 
@@ -128,9 +128,15 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 
 下游角色可以发现上游问题，但不能修改上游决策。
 
+### 6. 废弃内容残留即 Finding
+
+验收时对当前 Stage 触及的权威文档、代码与测试做残留扫描：出现 `SUPERSEDED`、ADR 废弃标记与替代指针、`Revision Log` / 修订记录 / 变更记录表 / 版本快照、被注释保留的旧实现、`~~删除线~~`、「原方案」「已废弃」「此处曾计划」类解释、被删条目的空占位行 → 记为 Finding（属上游文档层，按第 5 条归因到 Product / Architecture / Blueprint 文档，不要求实现改动）。
+
+判据只看当前有效性与引用完整性：同一结论是否存在两个版本、被删内容是否仍被引用、编号是否指向已不存在的条目。`DEFERRED` + Revisit Trigger、Architecture Debt、Preservation Set、Explicit Exclusions、`Alternatives Considered` 属当前有效信息，不得当作残留。扫描对象是项目权威文档、代码、配置与测试；陈述本原则的 skill 文本自身提及这些 token 不算残留，但项目文档里把旧结论标注为废弃的说明句本身即残留。历史只允许存在于主工作区之外的归档位与版本库。
+
 # 验收前准备
 
-## Step 1 — 读取权威上下文
+## Phase 1 — 读取权威上下文
 
 按以下顺序读取：
 
@@ -148,7 +154,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 
 `Product / Architecture → Stage Contract → Construction Blueprint → Implementation → Evidence`
 
-## Step 2 — 建立验收模型
+## Phase 2 — 建立验收模型
 
 在输出任何 finding 前，完整回答：
 
@@ -168,7 +174,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 
 完成整体模型后再进入 findings。
 
-## Step 3 — 确认验收资料完整性
+## Phase 3 — 确认验收资料完整性
 
 资料足以判断时进入正式验收。
 
@@ -215,6 +221,7 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 - 实际修改是否对应蓝图中的批准步骤。
 - 关键实现路径是否与蓝图一致。
 - 蓝图要求的迁移、配置、测试与可观测性是否完成。
+- 本次改动触达的用户可见错误路径：有稳定错误码、文案来自客户端对照表、无内联硬编码兜底串、文案不改变语义。
 - 实现是否绕过已批准路径。
 - 施工中是否产生未批准的设计变体。
 
@@ -233,13 +240,15 @@ description: 阶段验收官。负责在完整理解架构文档、Roadmap、当
 
 对实际改动进行反向追踪：
 
-`Implementation Change → Blueprint Step → Stage Requirement`
+`Implementation Change → Blueprint Task → Stage Requirement`
 
 无法建立当前阶段依据的改动属于 Scope Drift。
 
 Deferred 与未来阶段内容保持未进入当前施工。
 
 ## 6. Evidence Quality
+
+验证按 `SKILL_AUTHORING_STANDARD.md`《表四：验证分层》判定：V0 秒级检查逐 Task 看，V1 真机 / 真库 / 部署 / 远程接收端证据按 Slice 收口看，V2 整体回归按 Stage 看。不得因为某个 Task 没有单独部署取证就判缺陷；也不得因为某个 Slice 的 V1 有证据，就免除该 Slice 内钱与数量、数据库迁移、权限可见性应在 V0 当场测的要求。缺 V1 或 V2 证据即 FAIL，不得以「V0 全绿」替代。
 
 验证所有完成声明是否由真实证据支持：
 
@@ -479,6 +488,6 @@ Finding 固定包含：
 
 满足后输出：
 
-`PASS — STAGE CLOSED`
+`PASS — 阶段验收完成`
 
 并结束当前阶段验收。

@@ -55,7 +55,7 @@ description: 接收 Product Definition，在不改变产品语义的前提下裁
 
 并明确引用相关 `Requirement-n` 或 Product Definition 章节，说明“缺什么产品事实、为什么会改变架构”。
 
-澄清按缺口层级路由：属于 Current Stage 某个 `Requirement-n` 的局部语义缺口，调用 Product Detail 补齐 `Requirement-n — Product Detail` 后继续冻结；会改变产品整体结论（Product Core、Product Rules、Business Model、`Requirement-n` 核心含义或 Current Minimum Complete Outcome）的缺口，回 Product Designer 更新 Product Definition 后再重做受影响的 Scope / Stage。
+澄清按缺口层级路由：属于 Current Stage 某个 `Requirement-n` 的局部语义缺口，调用 `product` 补齐相关 Product Atoms / Product Definition 后继续冻结；会改变产品整体结论（Product Core、Product Rules、Business Model、`Requirement-n` 核心含义或 Current Minimum Complete Outcome）的缺口，回 `product` 更新 Product Definition 后再重做受影响的 Scope / Stage。
 
 如果只是页面布局、按钮位置、普通文案、低成本局部交互等不改变上述判断的细节，不得阻塞架构。
 
@@ -301,6 +301,7 @@ Foundational Decision 必须同时检查：
 - API / Interface
 - Data：ID、时间 / 时区、金额、枚举、nullability、删除、审计字段
 - Error Handling
+- Error Code / User-facing Copy Ownership：错误码归服务端契约，用户文案归各客户端表现层
 - Security / Secrets / Input Validation
 - Observability
 - Testing

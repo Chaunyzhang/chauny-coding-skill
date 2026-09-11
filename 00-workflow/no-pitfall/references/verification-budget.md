@@ -6,18 +6,18 @@
 
 目标：快速发现当前改动的局部错误。
 
-默认：
+候选手段：
 
 - focused compile
 - lint / typecheck
 - focused unit test
 - narrow deterministic validation
 
-预算原则：通常应在秒级到约 10 秒。
+这些不是固定 checklist。只有当前仍存在会改变下一步行动的 Live Uncertainty 时才执行对应检查。已有等价证据且相关实现未变化时不重复。
 
-不是绝对超时规则；高风险正确性可以更贵。
+预算原则：优先使用当前平台最便宜、足以证明该不确定性的证据；高风险 Confirmed Defect 可以更贵。
 
-重平台例外（iOS）：编译与单测运行超出本预算，不由 agent 执行——编译归人类（共享 DerivedData、Debug 增量），单测代码照写、运行归 Stage 前 / 发版前脚本补测一次；agent 在本层只做代码级静态检查，Task 放行 = 人类增量编译通过。Task 只本地提交，不推送、不等 CI；push 属 Slice 收口。真机不属于 agent 的任何一层，由人类按 Slice 收口清单执行。
+重平台例外（iOS）：编译、跑测和真机可能天然较重，不作为每个 Task 的固定门槛。优先静态 / 结构检查并复用已有构建状态；真实运行按 Slice / Stage 或明确 Trigger 聚合。真机主观 / 感知验收按项目 Authority 交由 Human。
 
 ## Slice
 
@@ -63,3 +63,22 @@ Mock / fake / stub 的绿灯只能声称对应局部逻辑成立。
 - remote sink working
 
 除非实际验证了对应真实边界。
+
+
+## Live Uncertainty Gate
+
+新增验证前必须回答：
+
+- 当前具体未知是什么？
+- 失败会改变什么行动？
+- 是否已有等价证据？
+
+没有活的不确定性就不新增验证。
+
+## Stop Rule
+
+当授权 Outcome 已实现、对应层级证据充分、没有 blocker、diff 可解释时，验证结束。继续测试或扩大检查需要新的 Trigger。
+
+## Authority Boundary
+
+机器可证明的由 Agent 证明；主观、人类专属或 Agent 无法访问的事项交对应 Authority。Agent 不得模拟证据或自行宣布通过，也不得把可机械验证事项无理由推给 Human。

@@ -4,6 +4,20 @@
 
 ## 核心原则
 
+## 与 Subagent Delegation 的边界
+
+本文件讨论 Task / Slice 是否适合多人、多窗口或独立 worktree 并行施工。
+
+它不自动授权 Root Agent 创建 subagent。
+
+Subagent 是否值得创建，必须另过 `delegation-policy.md`。
+
+尤其：
+- 两个 Task 可以 parallel-safe，不等于 Root 应该 spawn 两个 Child。
+- 如果人类已经能开独立窗口，Root 内部再 spawn 可能只是增加 context / coordination。
+- 时间收益必须算 fan-out + fan-in 的真实 wall-clock，不只看理论并行。
+
+
 并行单位仍然只有 `Slice-n` 与 `Task-n`。禁止创建 `Worker-n`、`Lane-n`、`ParallelGroup-n` 等新对象。
 
 真正的并行不是“同时开始”，而是：
@@ -14,13 +28,15 @@
 
 只有以下条件都满足，Task 才标 `parallel-safe`：
 
+- Task 已通过 Blueprint Reasoning Gate，属于 Low / Medium；并行 Agent 不承担未决设计问题。
+
 1. Prerequisite 在 fan-out 前已经成立。
 2. Write Surface 低冲突。
 3. 不竞争同一 schema / migration 顺序。
 4. 不竞争同一 generated source-of-truth。
 5. 不依赖共享可变状态的执行顺序。
 6. 共用 interface / contract 已在并行前稳定。
-7. 各自可完成 Task Simple Test。
+7. 各自可完成 Task Local Proof。
 8. 各自可形成独立 commit。
 9. 合并顺序不会改变已批准产品 / 架构语义。
 
@@ -69,7 +85,7 @@ Blueprint 不规定 branch / worktree / chat window 名称。隔离机制属于�
 
 ## Verification
 
-每个并行 Task 只负责自己的 Simple Test。
+每个并行 Task 只负责自己的 Local Proof。
 
 ```text
 Task-2 -> targeted test -> commit
@@ -157,7 +173,8 @@ Construction Agent 开工时必须把推荐翻译成人话，例如：
 
 直接保持 sequential，当：
 
-- 并行只节省很少时间但协调成本更高。
+- 并行只节省很少时间但协调 / merge / revalidation 成本更高。
+- Root / 当前施工窗口已加载全部关键 context，重新创建模型上下文只会重复读取。
 - Task 很小。
 - 高概率修改同一文件。
 - interface 尚未冻结。
