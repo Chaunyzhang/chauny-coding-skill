@@ -92,6 +92,10 @@ Requirement | Scope Result | Why | Revisit Trigger / Accepted Stage
 - 若拆分实际改变产品语义、产生新的独立产品需求，回产品层创建新的 `Requirement-n`。
 
 ### System Context
+### Domain Ownership / Semantic Authority
+
+记录核心 Domain 的 responsibility、owned state / rules / lifecycle，以及跨模块共享产品语义的唯一 authority。
+
 ### Module Model
 ### Data Model
 ### Runtime Model
@@ -125,6 +129,8 @@ Status 只使用：
 核心能力行应明确；纯条件能力未触发时可以不创建行，不为“完整表格”扩张文档。
 
 高影响决策的完整理由引用 `Decision-n`。
+
+模块结构必须表达 Domain / Feature ownership、public/internal boundary、dependency direction 与 Shared / Common 的允许范围。
 
 ## 7. PROJECT_STRUCTURE.md
 

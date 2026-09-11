@@ -144,6 +144,7 @@ Upstream Basis
 Goal
 Reasoning: Low (0–4) | Medium (5–10)
 Criticality: Sensitive | Critical   # 仅适用时
+Implementation Constraints          # 仅触及 ownership / authority / boundary / required reuse 时
 Prerequisites
 Targets
 Actions
@@ -166,6 +167,7 @@ Merge Before / Integration Dependency
 可以引用：
 
 - Requirement-n
+- binding Atom-n
 - Stage Acceptance
 - Decision-n
 - Architecture section
@@ -173,6 +175,24 @@ Merge Before / Integration Dependency
 - Operational Obligation
 
 不要创建新 ID。
+
+### Implementation Constraints
+
+不是每个 Task 都需要。
+
+只有当前 Task 触及跨模块 owner / authority / boundary / required reuse 时，写 Stage `Implementation Shape` 的最小相关子集：
+
+```text
+Owner:
+Use / Reuse:
+Allowed Dependency:
+Do Not Bypass:
+Mutation / Side-effect Boundary:
+```
+
+不要把 Architecture 长篇复制到每个 Task。
+
+如果无法填写是因为 owner / authority 尚未决定，不是让 Construction 自己选择，而是回 Architecture。
 
 ### Targets
 
@@ -262,7 +282,8 @@ Score >10，或仍需施工 Agent 发明：
 
 - Product behavior
 - Architecture route
-- interface / ownership
+- interface / ownership / semantic authority
+- module / dependency boundary
 - state machine
 - retry / recovery semantics
 - ordering / concurrency guarantee
@@ -273,6 +294,21 @@ Score >10，或仍需施工 Agent 发明：
 不要为了降分拆坏原子正确性边界。
 
 详细见 `reasoning-policy.md`。
+
+## Implementation Shape Gate
+
+Task 编译完成后检查：
+
+- 是否复用现有 Semantic Authority。
+- 是否通过 owning domain 的 public path 合作。
+- 是否绕过 owner 直接 mutation state。
+- 是否把有明确业务归属的逻辑错误放入 Shared / Common / Utils。
+- 是否在没有 Architecture 决策时新建长期 module / manager / service / authority。
+- 是否明显超出 Stage Expected Change Boundary，却没有真实依赖依据。
+
+确认存在上述架构偏差时，Task 不得发布。
+
+仅“改了多个文件”或“出现新 helper”不是自动错误；必须能指出真实 ownership / authority / boundary 问题。
 
 ## Defensive Work Gate
 

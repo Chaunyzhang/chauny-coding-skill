@@ -11,6 +11,7 @@ Roadmap 由架构层拥有，不写回 `docs/product/`。
 输入：
 
 - Accepted `Requirement-n`
+- Binding `Atom-n` / Representative Example for Current Requirements
 - Product Outcome / Current Minimum Complete Outcome
 - Architecture-Shaping capabilities
 - Foundational Dependencies
@@ -75,6 +76,21 @@ Current Stage 开工前冻结。
 
 禁止写“完成 UserService 模块”作为 Outcome。
 
+### 3. Binding Product Semantics
+
+列出本 Stage Included Requirement 对应、不能在施工翻译中丢失的 `Atom-n`。
+
+示例：
+
+```text
+Requirement-7 → Atom-42, Atom-43, Atom-44
+Representative Example: <source reference>
+```
+
+Atom 原文仍以 `Product-Atoms.md` 为权威；Stage Contract 不重新摘要成更弱语义。
+
+技术手段（例如“传递 referenceId”）不能替代产品义务（例如“AI 必须理解被引用内容并修改原对象”）。
+
 ### 3. Entry State
 
 必须来自真实 Repository / 已关闭 Stage Baseline。
@@ -89,15 +105,28 @@ Current Stage 开工前冻结。
 
 不需要穷举每个文件。
 
-### 6. Architecture / Platform Delta
+### 6. Affected Domains / Ownership / Authorities
+
+明确：
+
+- 本 Stage 触达哪些 Domain / Module。
+- 哪个 Domain 拥有关键 state / rule / lifecycle。
+- 本 Stage 必须复用哪些 existing Semantic Authority。
+- 是否允许新增 dependency edge。
+
+如果需要新增 / 改变长期 Domain Owner、Semantic Authority、核心模块边界或 dependency direction，而上游 Architecture 尚未决定：
+
+`ARCHITECTURE DECISION REQUIRED`
+
+### 7. Architecture / Platform Delta
 
 本 Stage 新增 / 改变哪些真正的架构能力。
 
-### 7. Applied Decisions / Standards
+### 8. Applied Decisions / Standards
 
 引用相关 `Decision-n` 和 `ENGINEERING_STANDARDS.md § Section`，不复制整篇规则。
 
-### 8. Operational Obligations
+### 9. Operational Obligations
 
 只写本 Stage 触发的：
 
@@ -113,7 +142,7 @@ Current Stage 开工前冻结。
 
 未触发的不填空表。
 
-### 9. Verification Plan
+### 10. Verification Plan
 
 说明实际需要：
 
@@ -123,23 +152,23 @@ Current Stage 开工前冻结。
 
 同一事实不重复。
 
-### 10. Dependencies
+### 11. Dependencies
 
 前置 Stage / Provider / environment / migration 等。
 
-### 11. Preservation / Direct Regression
+### 12. Preservation / Direct Regression
 
 只列本 Stage 可能直接影响、必须继续成立的既有能力。
 
-### 12. Acceptance Criteria
+### 13. Acceptance Criteria
 
 写成可判断真假的结果，不写“体验良好”“代码优雅”。
 
-### 13. Explicit Non-Scope
+### 14. Explicit Non-Scope
 
 容易被顺手带入当前 Stage、但明确不做的事项。
 
-### 14. Escalation Triggers
+### 15. Escalation Triggers
 
 例如：
 
@@ -148,8 +177,9 @@ Current Stage 开工前冻结。
 - Product semantics 出现关键缺口。
 - Stage 无法在 Appetite 内完整成立。
 - 需要改变 Foundational Decision。
+- 需要新增 / 改变长期 Domain Owner、Semantic Authority、核心模块边界或 dependency direction。
 
-### 15. Stop Rule
+### 16. Stop Rule
 
 当 Acceptance + Invariants + Preservation / Direct Regression + triggered Operational Obligations 全部满足，即 Stage 完成。
 

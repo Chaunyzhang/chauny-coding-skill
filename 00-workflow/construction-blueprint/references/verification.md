@@ -59,7 +59,9 @@ Blueprint 的目标不是“测试最多”，而是只为当前真正需要证�
 - queue → job → state
 - AI provider → stream / result → product state
 
-只验证关键成功路径，以及 Stage Contract、Confirmed Defect regression 或 risk gate 明确触发的失败 / permission / operational behavior。
+只验证关键成功路径，以及 Stage Contract、binding Product Atom、Representative Example、Confirmed Defect regression 或 risk gate 明确触发的失败 / permission / operational behavior。
+
+如果某个 binding Atom 定义了“真完成”和“空壳完成”的差异，Slice Capability Test 必须证明真实产品语义，而不是只证明技术中间量存在。
 
 不要把 Task 的全部 unit case复制过来。
 
@@ -68,6 +70,7 @@ Blueprint 的目标不是“测试最多”，而是只为当前真正需要证�
 证明：
 
 - Stage Outcome。
+- Current Stage binding Product Semantics（适用时抽样 / 组合证明，避免与 Slice 重复）。
 - Acceptance Criteria。
 - Visible Delta。
 - Direct Regression。

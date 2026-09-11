@@ -34,6 +34,9 @@
 - 实际 Path。
 - Symbol / type / function / route / view / handler。
 - ownership / module boundary。
+- 现有 Domain Owner / Semantic Authority。
+- public entry / internal boundary。
+- 是否已有必须复用的 policy / repository / service / helper。
 
 ### 数据
 - schema / model。
@@ -70,6 +73,21 @@
 
 不猜不存在的脚本名。
 
+## Authority / Reuse Intake
+
+只针对 Current Stage 触及的业务事实，确认：
+
+- 当前规则由谁拥有。
+- 当前 canonical authority 在哪。
+- 哪个 public path 是外部正确入口。
+- 哪些直接访问会绕过 owner。
+- 是否已经存在相同语义的实现。
+- 正常变化应主要落在哪个 owning domain。
+
+不要为了建立“全项目知识图谱”扫描全仓。
+
+若发现两个独立位置已经在决定同一核心业务事实，这属于 Repository Reality，应报告给 Blueprint / Architecture；不要在计划中默认继续复制第三套。
+
 ## 旧实现默认继承
 
 已有项目的实现模式默认继承，除非：
@@ -92,6 +110,8 @@ Blueprint 不因为“有更漂亮写法”顺手重构。
 
 ### 回 Architecture
 - data / interface / module boundary 不同。
+- Domain Ownership / Semantic Authority 不明确或互相冲突。
+- Current Stage 需要新增长期 module / owner / authority / dependency direction。
 - Provider / platform 不同。
 - migration / compatibility 前提不同。
 - Stage Scope 无法在当前结构中成立。
@@ -120,4 +140,7 @@ Blueprint 不因为“有更漂亮写法”顺手重构。
 - 改动会触达什么。
 - 最小验证命令是什么。
 - 哪些真实边界需要 Slice 层验证。
+- 哪些现有 authority / public path 必须复用。
+- 哪些 bypass 必须禁止。
+- Expected Change Boundary 在哪里。
 - 是否存在需要上游重审的冲突。

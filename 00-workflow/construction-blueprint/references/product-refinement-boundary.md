@@ -1,6 +1,6 @@
-# Product Refinement Boundary
+# Product Focused Refinement Boundary
 
-Blueprint 只处理实施机械细节，不补产品语义。
+Blueprint 只处理实施机械细节，不补产品语义。Product Refinement 不是独立 Skill，而是统一 `product` Skill 的 Focused Refinement 模式。
 
 ## 什么时候回 Product Refinement
 
@@ -13,7 +13,7 @@ Product Refinement 是例外路径。先过四道门：
 
 四项必须全部成立。
 
-先确认 Product Definition / Product Atoms / Stage Contract 是否已有答案；已有答案则继承，不回问。
+先确认 Product Definition / Product Atoms / Stage Contract 是否已有答案；已有答案则直接继承相关 `Atom-n`，不重新摘要、不回问。
 
 Foundation / technical-only / infrastructure / migration Stage 默认不进入 Product Refinement，除非该语义会改变当前底座抽象、状态模型、权限 / 所有权或 Acceptance。
 

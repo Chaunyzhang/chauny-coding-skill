@@ -47,13 +47,142 @@
 
 明确：
 
+- Domain / Feature / Module responsibility
 - dependency direction
 - public / internal boundary
 - cross-module import rules
+- owned state / rules / lifecycle
 - generated artifacts ownership
 - migrations / schema / config / test 归属
 
-禁止通过相对路径、global singleton 或 shared util 绕开模块边界。
+模块不是目录名。必须能说明：
+
+> 它拥有什么业务知识？外部通过什么公开入口与它合作？哪些内部事实不允许被外部直接依赖？
+
+禁止：
+
+- 通过相对路径、global singleton、raw database access 或 shared util 绕开模块边界。
+- Feature A 直接 import / 调用 Feature B 的内部实现。
+- 外部直接修改另一个 Domain 拥有的 state。
+- Blueprint / Construction 在未经过 Architecture 裁决时创建新的长期模块边界。
+
+### 3. Domain Ownership & Semantic Authority
+
+对跨 Stage 稳定的核心业务规则，明确：
+
+- Domain Owner
+- Owned State / Entity / Lifecycle
+- Mutation Authority
+- Decision Authority
+- Public Capability
+
+核心原则：
+
+> 同一产品 / Domain 事实只允许一个 Semantic Authority 决定。
+
+典型 authority：
+
+- balance mutation
+- reward calculation
+- permission
+- state transition
+- public error code
+- canonical schema
+- identity mapping
+
+允许缓存、投影、展示和机械转换；不允许第二套独立规则实现。
+
+判断双权威的强信号：
+
+- 改一条业务规则必须在多个互不依赖的位置修改决定逻辑。
+- 两个模块都能独立 mutation 同一核心 state。
+- Client 与 Server 各自决定同一最终 permission / balance / eligibility。
+- 新代码绕过已有 policy / repository / domain service 重新写 `if` 判断。
+
+### 4. Reuse Before Create
+
+默认顺序：
+
+1. 找现有 owner。
+2. 找现有 public interface / policy / repository / service。
+3. 判断现有抽象是否真正承载相同语义。
+4. 只有出现真实新责任 / 新变化轴时才创建新长期抽象。
+
+禁止：
+
+- 因“不想动旧代码”复制一套等价规则。
+- 因“两处会用”就自动抽到 Shared。
+- 为假想未来创建 factory / provider / registry / strategy 层级。
+
+### 5. Shared / Common Policy
+
+`Shared / Common / Utils / Helpers` 只承载没有业务 owner 的真正通用技术能力。
+
+有明确 Domain 归属的业务逻辑，即使多个调用方使用，也仍属于该 Domain，通过 public API 复用。
+
+Shared 不得成为：
+
+- 不知道放哪的临时区。
+- 跨 Feature 私有逻辑的混合区。
+- 绕过 dependency direction 的跳板。
+
+### 6. Change Locality / Modular Health
+
+架构目标不是“所有变更只改一个文件”，而是：
+
+> 一项正常产品变化应主要局限在 owning domain；无关模块不应因为不了解该业务却被迫同步修改规则。
+
+Review sensor：
+
+- 修改一个业务规则是否需要改多个独立 authority。
+- 新 Requirement 是否触碰大量无关模块。
+- 理解一个业务是否必须全仓搜索并拼装逻辑。
+- 删除一个 Feature 是否会让大量无关区域报错。
+- 模块 public API 是否不断扩大以暴露内部细节。
+
+这些是 smell，不是单独的自动 FAIL；只有能指出真实责任泄漏 / 双权威 / 依赖腐化时才升级为 Finding。
+
+### 7. State Mutation & Side-effect Ownership
+
+核心 state 必须有明确 mutation owner。
+
+其他模块通过 owner 暴露的 capability 请求变化，不直接：
+
+- 写 owner 数据表。
+- 改内部缓存 / state container。
+- 触发 owner 私有生命周期转换。
+
+Side effect（DB write、network call、event emission、payment、notification）应在可追踪边界发生，不隐藏在名字像 pure getter / mapper 的函数里。
+
+### 8. Work Efficiency
+
+全局只规定会反复造成真实成本的规则：
+
+- 避免 N+1。
+- 避免同一 request / action 内无理由重复 DB / network / parse / serialization。
+- 可批量且语义等价时避免逐项远程调用。
+- expensive operation 在已有 canonical cache / batch / index 时不得绕开。
+- transaction / lock 不包裹无关网络调用或长耗时工作。
+
+不要为普通局部代码做 micro-optimization。
+
+### 9. Complexity & Abstraction
+
+数字阈值只能当 sensor，例如：
+
+- function length
+- nesting depth
+- parameter count
+- cyclomatic complexity
+
+除非项目明确冻结阈值，否则数字本身不能成为 FAIL。
+
+真正要审的是：
+
+- 是否承担多个独立责任。
+- 是否让控制流难以理解。
+- 是否制造 speculative abstraction。
+- 是否让一个简单产品变化需要理解不相关框架层。
 
 ### 3. Dependency Policy
 

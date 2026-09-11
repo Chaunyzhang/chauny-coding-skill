@@ -9,7 +9,7 @@
 3. 只写施工所需的当前有效事实。
 4. 删除失效计划，不保留 `INVALIDATED`、旧 Task 墓地或平行补丁文档。
 5. Blueprint 自己只编号 `Slice-n`、`Task-n`。
-6. Requirement-n、Decision-n、Stage-n 沿用上游编号。
+6. Atom-n、Requirement-n、Decision-n、Stage-n 沿用上游编号。
 7. Acceptance、Preservation、Regression、Operational Obligation 不另发号。
 8. 路径、Symbol、Command 优先于泛泛叙述。
 
@@ -79,6 +79,7 @@ Recursive Spawn: No
 Stage: Stage-2
 Stage Contract: docs/architecture/stages/Stage-2.md
 Requirements: Requirement-3, Requirement-5
+Binding Atoms: Atom-12, Atom-14, Atom-31  # 仅 Current Stage binding 语义
 Decisions: Decision-1, Decision-4
 Architecture: ARCHITECTURE.md § ...
 Engineering Standards: ENGINEERING_STANDARDS.md § API, § Testing
@@ -130,8 +131,23 @@ Status: DRAFT | READY | BLOCKED
 ### Creation Set
 ### Preservation / Direct Regression
 ### Explicit Non-Scope
+### Implementation Shape
 
-每项尽量带 Path / Symbol。
+`Implementation Shape` 不是新对象，只写本 Stage 当前施工需要的约束：
+
+```text
+Touched Domains / Modules:
+Ownership:
+Required Reuse / Existing Authorities:
+Allowed Dependencies:
+Forbidden Bypasses:
+State / Side-effect Flow:
+Expected Change Boundary:
+```
+
+不适用项省略。
+
+每项尽量带 Path / Symbol / authority reference。
 
 不要建立与 Stage Contract 重复的完整范围分类系统。
 
@@ -142,6 +158,7 @@ Status: DRAFT | READY | BLOCKED
 | Upstream basis | Construction | Verification |
 |---|---|---|
 | Requirement-3 | Slice-1 / Task-1, Task-2 | Slice-1 Capability Test |
+| Atom-12: AI 获得引用内容 | Task-2 context assembly | Slice-1 Capability Test |
 | Stage Acceptance: 用户可完成 X | Slice-1 | Stage Module Test |
 | Decision-2 | Task-1 | Task-1 Local Proof |
 | Operational: payment audit | Task-3 | Slice-2 Capability Test |
@@ -149,6 +166,7 @@ Status: DRAFT | READY | BLOCKED
 规则：
 
 - 每个当前上游义务至少有施工与验证落点。
+- 每个 binding Atom 必须有真实 construction coverage 与 verification coverage；只有 ID 引用不算覆盖。
 - 每个 Task 必须至少出现一次。
 - 不创建 AC-n / Evidence-n。
 
@@ -250,6 +268,7 @@ Upstream Basis:
 Goal:
 Reasoning: Low (0–4) | Medium (5–10)
 Criticality: Sensitive | Critical   # 仅适用时
+Implementation Constraints:          # 仅触及 owner / authority / boundary / required reuse 时
 Prerequisites:
 Targets:
 Actions:
@@ -260,6 +279,8 @@ Local Proof:
 Expected Result:
 Done When:
 ```
+
+`Implementation Constraints` 只写 Stage Implementation Shape 对当前 Task 的最小约束；不触及相关边界时省略。
 
 `Targets` 需要精确。
 
@@ -312,6 +333,8 @@ UI 审美 /视觉质感等 Human-only 结论不得写成 Agent PASS 条件。
 Status: READY | BLOCKED
 
 READY when:
+- all binding Atoms have construction + verification coverage
+- Implementation Shape is explicit where ownership / authority / dependency boundaries matter
 - all Tasks are Reasoning Low / Medium
 - no Task score >10
 - no unresolved design decision remains inside Construction

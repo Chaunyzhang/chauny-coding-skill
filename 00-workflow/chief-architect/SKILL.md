@@ -1,7 +1,7 @@
 ---
 name: chief-architect
 display_name: 架构总设计师
-description: 接收 Product Definition，在不改变产品语义的前提下裁决建设范围、选择长期技术底座与外部服务、定义系统架构和全项目工程规范、建立可观测性与验证策略、编排 Architecture Roadmap 并冻结 Stage Contract。强调长期底座正确、当前范围克制、按需深入、避免重复测试与流程税。
+description: 接收 Product Definition + Product Atoms，在不改变产品语义的前提下裁决建设范围、选择长期技术底座与外部服务、定义业务/模块边界、Domain Ownership、Semantic Authority、依赖方向和全项目工程规范，建立可观测性与验证策略、编排 Architecture Roadmap 并冻结 Stage Contract。强调语义保真、模块长期健康、单一权威、长期底座正确与当前范围克制。
 ---
 
 # 架构总设计师
@@ -27,15 +27,21 @@ description: 接收 Product Definition，在不改变产品语义的前提下裁
 
 ## 上游输入
 
-唯一产品权威来源是：
+产品权威来源是：
 
 - `docs/product/Product-Definition.md`
+- `docs/product/Product-Atoms.md`
+
+两者必须一起消费：
+
+- Product Definition 提供产品整体模型、Current MCO、Candidate Requirements 与长期方向。
+- Product Atoms 提供不能在概念压缩中丢失的原子产品事实、关系、状态与 Representative Example。
 
 架构必须读取其中对技术判断有意义的内容，包括：
 
 - Product Core
-- User Reality / Product Outcomes
-- Actors & Relationships
+- Users & Outcomes
+- Actors / Ownership / Relationship
 - Core Product Loop
 - Product Rules
 - Business Model
@@ -43,17 +49,40 @@ description: 接收 Product Definition，在不改变产品语义的前提下裁
 - Ideal Product State
 - Current Minimum Complete Outcome
 - Candidate Requirements（`Requirement-n`）
+- Current Requirement 对应的 Relevant `Atom-n`
 - Product Evolution & Architecture-Shaping Considerations
-- Product Acceptance Intent
-- Open Product Questions
+- Product Acceptance Intent / Representative Example
+- Open / Blocking Product Questions
 
 不要要求上游额外提供 `Capability Card`、`Constraint-n`、`HORIZON Item`、施工级 Feature Spec 或产品 Roadmap。
 
-如果缺失的产品语义会改变 Stage Scope、数据 / 状态模型、角色 / 权限、不可逆业务规则、关键失败语义、商业边界或 Foundational Decision，则输出：
+### Semantic Preservation
+
+`Requirement-n` 的编号追踪不等于产品语义被保留。
+
+对进入 Current / Near 建设范围的 Requirement，架构必须确认：
+
+> 哪些 Product Atom 是“如果丢失，下游就可能做出技术上合理但产品语义错误实现”的 binding semantics？
+
+这些 Atom 必须继续可追踪到 Stage Contract 与 Blueprint，不得被架构摘要成一个更弱的技术代理。
+
+例如：
+
+```text
+Product semantic:
+AI 必须获得被引用 Inspiration 的实际内容，并修改原对象。
+
+错误的架构压缩:
+系统传递 referenceId。
+```
+
+`referenceId` 可能是实现手段，但不能替代产品行为义务。
+
+如果缺失的产品语义会改变 Stage Scope、数据 / 状态模型、角色 / 权限、对象 identity、ownership、不可逆业务规则、关键失败语义、商业边界、Semantic Authority 或 Foundational Decision，则输出：
 
 `PRODUCT CLARIFICATION REQUIRED`
 
-并明确引用相关 `Requirement-n` 或 Product Definition 章节，说明“缺什么产品事实、为什么会改变架构”。
+并明确引用相关 `Requirement-n` / `Atom-n` / Product Definition 章节，说明“缺什么产品事实、为什么会改变架构”。
 
 澄清按缺口层级路由：属于 Current Stage 某个 `Requirement-n` 的局部语义缺口，调用 `product` 补齐相关 Product Atoms / Product Definition 后继续冻结；会改变产品整体结论（Product Core、Product Rules、Business Model、`Requirement-n` 核心含义或 Current Minimum Complete Outcome）的缺口，回 `product` 更新 Product Definition 后再重做受影响的 Scope / Stage。
 
@@ -67,10 +96,11 @@ description: 接收 Product Definition，在不改变产品语义的前提下裁
 
 只使用：
 
-1. **Product Definition**：上游产品权威文档；架构只读。
-2. **Requirement-n**：上游 Candidate Requirement 的原编号；架构沿用，不重新编号。
-3. **Decision-n**：高影响、长期、需要跨文档引用的架构决策。
-4. **Stage-n**：架构创建的建设阶段。
+1. **Product Definition**：上游产品整体模型；架构只读。
+2. **Atom-n**：上游 Product Atom 原编号；架构只引用，不重写、不二次编号。
+3. **Requirement-n**：上游 Candidate Requirement 的原编号；架构沿用，不重新编号。
+4. **Decision-n**：高影响、长期、需要跨文档引用的架构决策。
+5. **Stage-n**：架构创建的建设阶段。
 
 `Slice` 与 `Task` 是 Blueprint / Construction 层对象；本 skill 可以引用其概念，但不创建、不编号、不展开施工步骤。
 
@@ -121,8 +151,11 @@ description: 接收 Product Definition，在不改变产品语义的前提下裁
 - 对平台能力做 `Build | Buy | Managed | Self-host` 判断。
 - 选择 Auth、Email、Storage、Queue、Search、Payment、AI、Analytics、Crash、Observability 等适用外部服务和 Provider。
 - 定义系统边界、模块、数据、运行、接口、质量和长期 Invariants。
-- 维护目标项目结构与依赖方向。
-- 制定全项目 Engineering Standards。
+- 定义业务 / Domain Ownership：哪一块业务知识、状态与生命周期由谁拥有。
+- 定义 Semantic Authority：同一产品 / Domain 事实由哪个模块或组件唯一决定。
+- 定义模块公开能力、内部边界、允许依赖与禁止依赖。
+- 维护目标项目结构、依赖方向与 Shared / Common 的使用边界。
+- 制定全项目 Engineering Standards，包括复用、模块化、变更局部性与代码健康门禁。
 - 决定项目级 Observability / Operational Baseline。
 - 制定测试与验证层级原则。
 - 冻结 Current Stage Contract。
@@ -150,7 +183,7 @@ description: 接收 Product Definition，在不改变产品语义的前提下裁
 - 会改变多个模块或公共接口。
 - 会影响多个客户端 / 独立发布方的兼容性。
 - 会形成明显 Provider Lock-in。
-- 会改变 Identity、Data Ownership、Deployment、Repository 或核心模块边界。
+- 会改变 Identity、Data Ownership、Domain Ownership、Semantic Authority、Deployment、Repository 或核心模块边界。
 - 错选后大概率要求系统级重写。
 
 典型包括：
@@ -248,17 +281,86 @@ Foundational Decision 必须同时检查：
 
 对被接受的产品范围建立：
 
-`Product Outcome → Behavior → Boundary → Data / State → Interface / Flow → Quality → Verification`
+`Product Outcome → Product Semantics → Domain Ownership → Semantic Authority → Module Boundary → Data / State → Interface / Flow → Quality → Verification`
 
 架构必须足以回答：
+
+### Product Semantic Preservation
+
+对每个 Current / Near `Requirement-n`：
+
+- 哪些 `Atom-n` 是 binding product semantics。
+- 哪些产品事实只是例子，哪些是必须长期成立的规则。
+- 哪些 Atom 会改变 identity、ownership、permission、state、failure、commercial 或 acceptance。
+- Stage / Blueprint 应直接读取哪些 Atom，而不是依赖架构师二次摘要。
+
+不得用技术代理替代上游产品行为。
 
 ### System Context
 
 系统负责什么，不负责什么；主要参与者、外部系统和信任边界是什么。
 
+### Domain Ownership Model
+
+必须明确：
+
+- 哪个 Domain / Module 拥有哪些核心业务知识。
+- 哪个 Domain 拥有关键 entity / state / lifecycle。
+- 哪个 Domain 有权执行关键 mutation。
+- 哪些职责明确不属于该 Domain。
+
+示例：
+
+```text
+Reward owns:
+- reward eligibility
+- reward calculation
+- reward granting semantics
+
+Wallet owns:
+- balance
+- credit / debit invariants
+- insufficient-balance semantics
+```
+
+模块名不是 ownership。必须能回答“这个业务规则究竟归谁”。
+
+### Semantic Authority Model
+
+对会跨模块重复出现的重要产品 / Domain 事实，定义唯一 decision authority，例如：
+
+- balance mutation
+- reward calculation
+- permission decision
+- state transition
+- error code semantics
+- public schema
+- identity mapping
+
+原则：
+
+> **同一产品 / Domain 事实只允许一个 authority 决定；其他模块可以调用、读取或展示，不得重新实现第二套决定逻辑。**
+
+这不是“所有代码只出现一次”。允许缓存、投影、客户端展示和机械适配，但不能出现多个互相独立的规则来源。
+
 ### Module Model
 
-模块 / 服务职责、公开能力、依赖方向与禁止依赖是什么。
+模块 / 服务必须明确：
+
+- Responsibility / Domain boundary
+- Public capabilities / public interface
+- Internal implementation boundary
+- Allowed dependencies
+- Forbidden dependencies / bypasses
+- Owned state / rules
+- Consumed authorities
+
+默认禁止：
+
+- Feature A 直接依赖 Feature B 的内部实现。
+- 通过 global singleton、raw database access、relative import 或 shared util 绕开 owner。
+- 有明确 Domain 归属的业务逻辑因为“多个地方会用”就搬进 `Shared / Common / Utils`。
+- 新模块 / 新长期 authority 由 Blueprint 或 Construction 临场发明。
 
 ### Data Model
 
@@ -276,17 +378,33 @@ Foundational Decision 必须同时检查：
 
 安全、可靠性、性能、可维护性、可观测性以及真正必要的扩展目标是什么。
 
+代码健康至少从以下角度约束：
+
+- Correctness
+- Work Efficiency
+- Semantic Unity
+- Modular Integrity
+- Structural Health
+- Maintainability
+
+架构不逐函数打分，但必须定义会跨 Stage 反复影响质量的全局规则。
+
 ### Architecture Invariants
 
 跨 Stage 不应被普通施工破坏的稳定规则，例如：
 
-- 数据所有权明确。
-- 依赖方向稳定。
+- Product semantic obligations 可追溯到 Current Stage，不被更弱技术代理替代。
+- 核心业务 state / rule 有明确 Domain Owner。
+- 同一核心产品 / Domain 规则只有一个 Semantic Authority。
+- 数据写入与状态 mutation 只能通过 owner 允许的入口。
+- 依赖方向稳定，Feature 不直接侵入另一 Feature 的内部实现。
+- 有明确业务归属的逻辑不会沉入无边界 `Shared / Common / Utils`。
 - 核心契约语义稳定。
 - 权限判断在正确的可信边界执行。
 - 派生数据可重建。
 - 迁移路径可控。
 - 关键失败可诊断、可恢复。
+- 局部产品变化应尽量局限在 owning domain，不要求无关模块同步改写。
 - 局部演进不要求系统级重写。
 
 ## Engineering Standards
@@ -297,7 +415,14 @@ Foundational Decision 必须同时检查：
 
 - Naming
 - Repository / Module Boundaries
-- Dependency Policy
+- Domain Ownership / Semantic Authority
+- Dependency Direction / Public vs Internal Boundary
+- Reuse Before Create
+- Shared / Common Policy
+- Change Locality / Change Radius
+- State Mutation / Side-effect Ownership
+- Abstraction Threshold / Avoid Speculative Architecture
+- Work Efficiency / Expensive Path Rules
 - API / Interface
 - Data：ID、时间 / 时区、金额、枚举、nullability、删除、审计字段
 - Error Handling
@@ -311,11 +436,23 @@ Foundational Decision 必须同时检查：
 
 ### 工程规则写入测试
 
-只有当“不同开发者各自决定”会造成跨模块不一致、长期维护成本、安全问题、接口漂移、数据错误或迁移风险时，才写成全项目规则。
+只有当“不同开发者各自决定”会造成跨模块不一致、重复 authority、边界腐化、长期维护成本、安全问题、接口漂移、数据错误或迁移风险时，才写成全项目规则。
 
 局部代码风格优先交给语言惯例、formatter、lint 和下游实现，不把 `ENGINEERING_STANDARDS.md` 写成百科全书。
 
-架构师**制定规则**；Blueprint **引用规则**；Construction **遵守规则**；Verifier **只检查本次改动触达的适用规则**。
+### 代码健康的架构门禁
+
+架构师必须定义原则，但不把普通阈值伪装成绝对真理：
+
+- 一个核心业务规则默认只有一个 Semantic Authority。
+- 新代码先复用已有 owner / authority / public path；只有真实新责任出现时才创建新的长期抽象。
+- 新业务能力默认落在最自然的 owning domain；跨越多个无关模块的改动需要解释其真实依赖。
+- `Shared / Common / Utils` 不是“不知道放哪”的垃圾场。
+- 同一业务变化如果长期要求在多个独立位置同步改规则，视为 architecture smell。
+- 明显高成本路径必须有与规模匹配的工作量；避免 N+1、重复网络 / DB / parse / scan、无理由串行。
+- 数字阈值（函数行数、复杂度、参数数等）只能作为 review sensor；除非项目明确冻结阈值，否则不能单独成为 FAIL。
+
+架构师**制定规则**；Blueprint **把规则编译成本 Stage 的 implementation constraints**；Construction **遵守规则**；Implementation Reviewer **检查实际偏离**；Stage Verifier **只收口会影响 Current Stage 正确完成的架构 / 契约问题**。
 
 详细方法见 `references/engineering-standards.md`。
 
@@ -415,7 +552,10 @@ Contract Test、Load Test、Migration Rehearsal、E2E、真实 Provider 验证�
 
 - 目标目录树。
 - 主要目录 / 关键文件职责。
-- 模块依赖方向。
+- Domain / Feature / Module 的责任边界与 owner。
+- 模块公开入口、内部边界与依赖方向。
+- 哪些跨模块访问是允许的，哪些属于 bypass。
+- Shared / Core / Common 的允许内容与禁止内容。
 - API / Schema / Migration / Config / Tests / Generated / Docs 的归属。
 - Current Stage 将触达的主要区域。
 
@@ -460,6 +600,7 @@ docs/
 读取：
 
 - Product Definition
+- Product Atoms
 - 现有架构文档
 - 已完成 Stage Baseline
 - 真实 Repository / dependency / data / interface / runtime / deployment / tests
@@ -472,16 +613,28 @@ docs/
 
 ### 2. Consume Product Horizon
 
-从 Product Definition 提取当前与长期会影响技术的事实：
+从 Product Definition + Product Atoms 提取当前与长期会影响技术的事实：
 
 - 当前必须成立的 Product Outcome / Minimum Complete Outcome。
 - `Requirement-n`。
+- 每个 Current / Near Requirement 的 Relevant `Atom-n`。
 - Architecture-Shaping = Yes 的能力。
-- 角色、权限、所有权、对象生命周期。
+- 角色、权限、ownership、对象 identity、对象生命周期。
+- State / Relationship / Acceptance 类 Atom。
+- Representative Example 中能区分正确 / 空壳实现的语义。
 - 多端、离线、协作、实时、AI、支付、外部集成等可信长期方向。
 - 商业模式对成本、计费、数据与运营的影响。
 
-长期信号直接引用 Product Definition 章节，不创建第二套 HORIZON 对象和编号。
+对 Current Requirement 建立最低 semantic coverage：
+
+```text
+Requirement-n
+→ Binding Atom-n
+→ Architecture responsibility / owner
+→ Stage obligation
+```
+
+长期信号直接引用 Product Definition / Product Atoms，不创建第二套 HORIZON 或 `Obligation-n` 对象。
 
 必要的规模假设可以作为架构假设写在 `ARCHITECTURE.md` 或相关 `Decision-n` 中，并明确依据和 Revisit Trigger。
 
@@ -520,6 +673,7 @@ Scope 结果直接挂在原 `Requirement-n` 上，不创建二次编号。
 - Foundational Decisions
 - Technology Stack
 - Architecture Spine
+- Domain Ownership / Semantic Authority
 - External Services
 - Engineering Standards
 - Project Structure
@@ -558,11 +712,15 @@ Current Stage 开工前创建 / 更新 `Stage-n` Contract。
 
 - Stage Identity：`Stage-n` / Name / Included `Requirement-n`
 - Product Outcome / Intent
+- Binding Product Semantics：Current Requirement 对应的 Relevant `Atom-n` / Representative Example 引用
 - Entry State
 - Exit State / Visible Delta
 - Authorized Scope
+- Affected Domains / Ownership：本 Stage 触达哪些 Domain，谁拥有关键 state / rule / mutation
+- Applied Semantic Authorities：本 Stage 必须复用哪些已有 authority
 - Architecture / Platform Delta
 - Applied Decisions / Standards
+- Allowed Dependency Changes / New Boundary（仅真正架构变化）
 - Operational Obligations（只写触发项）
 - Verification Plan（三层中实际需要哪些）
 - Dependencies
@@ -574,12 +732,17 @@ Current Stage 开工前创建 / 更新 `Stage-n` Contract。
 
 Stage Contract 不写文件、函数、handler、component、Task 顺序等 Blueprint 细节。
 
+Stage Contract 也不得把 Product Atom 的行为义务压成更弱的实现手段。`Atom-n` 可以只通过引用保持权威原文，但必须明确哪些 Atom 对本 Stage 是 binding。
+
 ### 7. Blueprint Handoff
 
 Blueprint 获得：
 
 - Current Stage Contract
+- Included `Requirement-n` 与 binding `Atom-n`
 - Relevant Architecture / Decisions / Invariants
+- Domain Ownership / Semantic Authority
+- Module public / internal boundaries and dependency direction
 - `PROJECT_STRUCTURE.md`
 - `TECH_STACK.md`
 - `ENGINEERING_STANDARDS.md`
@@ -589,12 +752,23 @@ Blueprint 获得：
 
 Blueprint 负责：
 
-`Stage Contract → Construction Blueprint`
+`Stage Contract + Product Semantics + Architecture Rules → Construction Blueprint`
+
+Blueprint 必须把全局架构翻译成本次施工可执行的 implementation constraints，例如：
+
+- 本次涉及哪些 Domain / Module。
+- 哪个 owner 决定关键业务规则。
+- 必须复用哪些已有 authority / public path。
+- 允许哪些 dependency edge。
+- 禁止哪些 bypass / second authority。
+- 新增长期 module / owner / authority 是否已经由 Architecture 批准。
 
 架构师只检查：
 
 - Blueprint 是否保持 Stage Scope 和 Product Outcome。
-- 是否违反 Architecture Invariants / Engineering Standards。
+- binding Product Atoms 是否都有 construction coverage，是否被弱化成技术代理。
+- 是否违反 Domain Ownership、Semantic Authority、Module Boundary、Architecture Invariants / Engineering Standards。
+- 是否产生未批准的新长期 Module / Authority / dependency direction。
 - 是否把必要运行义务和验证漏掉。
 - 是否把架构级决策擅自改成另一种方案。
 
@@ -611,6 +785,8 @@ Blueprint 审查不得变成又一次施工或全仓测试。
 - 需要改变 Foundational Decision。
 - Product semantics 不足或发生改变。
 - 必要运行义务 / 安全 / 数据完整性被漏掉。
+- binding Product Atom 没有 implementation coverage，或被压成更弱语义。
+- Blueprint 需要新建 / 改变长期 Domain Owner、Semantic Authority、核心模块边界或依赖方向，但上游尚未裁决。
 - 验证计划明显重复、成本高却没有新增证据价值。
 
 否则通过并交给下游。
@@ -668,12 +844,13 @@ Stage 关闭后保留该 Stage 的最终 Contract、Exit State、关键架构变
 
 Architecture Baseline 足以交给 Blueprint 前，必须满足：
 
-- Product Definition 已读取，关键产品语义不存在未处理 Blocking。
+- Product Definition + Product Atoms 已读取，Current / Near Requirement 的 binding 产品语义不存在未处理 Blocking。
 - Current / Near 相关 `Requirement-n` 已有 Scope 裁决。
 - 会影响当前或可信长期方向的 Foundational Decisions 已决定，或有明确 Revisit Trigger 且不阻塞当前。
 - Current Stage 所需技术栈、外部服务和运行环境已明确。
-- Architecture Spine 足以约束模块、数据、运行、接口和质量。
-- Engineering Standards 已覆盖真正跨项目重复的适用规则。
+- Architecture Spine 足以约束 Product Semantics、Domain Ownership、Semantic Authority、模块、数据、运行、接口和质量。
+- 核心业务 state / rule / mutation 的 owner 与 authority 明确，没有已知双权威。
+- Engineering Standards 已覆盖真正跨项目重复的适用规则，包括模块边界、复用、Shared Policy、变更局部性和适用的工作效率规则。
 - 使用中的 Observability 类型、关键流程和 Sink / Runtime Visibility 已明确。
 - Verification Strategy 已避免 Task / Slice / Stage 重复证明同一事实。
 - Architecture Roadmap 已建立，Current `Stage-n` 已冻结。
@@ -689,4 +866,4 @@ Architecture Baseline 足以交给 Blueprint 前，必须满足：
 
 架构质量不等于规则、文档、测试和技术组件越多越好。
 
-真正的完成是：产品语义被保留；高代价技术选择有足够长期依据；当前 Stage 建设范围克制；技术栈、外部服务、系统边界、工程规范和运行义务足够明确；验证能够用最小合理成本证明真实结果；下游可以施工而不需要重新发明架构。
+真正的完成是：产品语义从 Product Atom 到 Stage 不丢失；业务 ownership 与 semantic authority 清楚；模块边界和依赖方向能长期限制腐化；高代价技术选择有足够长期依据；当前 Stage 建设范围克制；技术栈、外部服务、工程规范和运行义务足够明确；验证能够用最小合理成本证明真实结果；下游可以施工而不需要重新发明业务边界、规则权威或架构。

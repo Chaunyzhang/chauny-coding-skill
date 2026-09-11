@@ -14,7 +14,7 @@ Reasoning Score 衡量的是**剩余需要施工 Agent 自己寻找答案的空�
 |---|---|---|---|
 | Goal certainty | 结果 / 行为完全明确 | 少量局部解释 | 还需推导到底要做什么 |
 | Implementation choice | 唯一路径 /成熟项目模式 | 有限局部选择 | 多条实质不同路线都合理 |
-| Contract / ownership | input/output/interface/owner 已冻结 | 少量适配 | contract / ownership 还需设计 |
+| Contract / ownership / authority | input/output/interface/owner 已冻结 | 少量适配 | contract / ownership 还需设计 |
 | State semantics | 无复杂状态或状态已冻结 | 有限局部状态判断 | 状态机 / lifecycle 还需发明 |
 | Failure / recovery | 失败语义已冻结 | 有限局部判断 | retry/recovery/unknown side effect 还需设计 |
 | Ordering / concurrency | 无或顺序已冻结 | 有限局部协调 | ordering/replay/concurrency 语义未决 |
@@ -34,7 +34,7 @@ Reasoning Score 衡量的是**剩余需要施工 Agent 自己寻找答案的空�
 即使总分 ≤10，以下情况仍不得发布：
 
 - Goal certainty = 2
-- Contract / ownership = 2
+- Contract / ownership / authority = 2
 - Repository consistency = 2
 - Proof certainty = 2
 
@@ -87,7 +87,8 @@ Medium 可以做局部工程判断，但不能改变：
 
 - Product semantics
 - Architecture
-- ownership
+- ownership / semantic authority
+- module / dependency boundary
 - contract
 - state machine
 - failure / recovery semantics

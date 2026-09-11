@@ -576,3 +576,143 @@ Candidate 独立且可压缩，但工作预计很短，spawn + context + fan-in 
 正确：
 - Time Gate veto。
 - Root 直接完成。\n\n## Current Task Boundary\n\n### Case: Human 提到后续想法\n\n当前：\nTask-4 只要求把 Functional UI 接到真实状态。\n\nHuman：\n“这里以后最好加一个更漂亮的转场动画。”\n\n正确：\n- 判断这条反馈是否影响 Task-4 的完成条件。\n- 如果不影响，Task-4 继续按当前边界完成。\n- 不提前做后续 UI polish / motion Task。\n\n错误：\n- 因为 Human 提到了动画，就顺手开始后续 Task。\n\n### Case: Human 修正当前 Task\n\n当前：\nTask-6 要把删除确认文案接到已有确认流程。\n\nHuman：\n“这里不是删除全部，只删除当前 item。”\n\n正确：\n- 这属于对当前 Task 语义的修正。\n- 更新当前实现并继续完成 Task-6。\n\n错误：\n- 把反馈扩张成重新设计整个删除系统或提前处理后续 cleanup Task。\n\n原则：\n\n> Human feedback may refine the current Task, but must not expand it into later Tasks.\n
+---
+
+# v5.4.1 Semantic / Architecture Compilation Regressions
+
+## Eval 追加 1 — Binding Atom 不得只做 ID Trace
+
+输入：
+- Requirement-7：AI 可使用并修改被引用灵感。
+- Atom-42：AI context 必须获得被引用对象实际内容。
+- Atom-43：引用保持原对象 identity。
+- Atom-44：修改需用户确认。
+- Atom-45：确认后修改原对象。
+
+正确：
+- Traceability 包含 Requirement 与 binding Atom。
+- Blueprint 为每个 Atom 指出实际 construction coverage。
+- 代表性能力测试验证“AI 理解实际内容并修改原对象”。
+
+错误：
+- 只规划 `referenceId` 传递就认为 Requirement 已覆盖。
+
+## Eval 追加 2 — Implementation Shape 从 Architecture 编译
+
+Architecture：
+- Reward owns reward calculation。
+- Wallet owns balance / debit / credit。
+- Purchase may depend on Wallet public API。
+- Purchase may not write Wallet storage。
+
+正确 Blueprint：
+```text
+Touched Domains: Purchase, Wallet
+Ownership: Wallet owns balance mutation
+Required Reuse: Wallet.debit(...)
+Allowed Dependency: Purchase → Wallet public interface
+Forbidden Bypass: direct wallet table update
+Expected Change Boundary: Purchase + Wallet callers
+```
+
+不创建新编号对象。
+
+## Eval 追加 3 — Blueprint 不能临场造 Domain
+
+Repository 没有自然 owner，新 Requirement 引入一个稳定 lifecycle 与长期 state ownership。
+
+正确：
+`Owner: Architecture`
+
+错误：
+Blueprint 自己创建 `NewDomainManager` / `NewService` 并把它当机械实现决定。
+
+## Eval 追加 4 — Existing Authority 优先复用
+
+仓库已有 `PermissionPolicy.canEdit(...)`，新 Feature 需要判断编辑权限。
+
+正确：
+Implementation Shape / Task 明确复用该 authority。
+
+错误：
+新 Task 规划新的 `actor.id == ownerId` 业务判断。
+
+## Eval 追加 5 — 多文件不是自动坏
+
+Requirement 合法触及 Purchase、Wallet、Inventory 三个 owner，通过各自 public interface。
+
+正确：
+允许多模块改动，不因 Change Boundary 跨 3 个 domain 自动 BLOCK。
+
+## Eval 追加 6 — Change Boundary 发现真实漂移
+
+Current Stage 只涉及 Reward + Wallet。
+计划却顺手重构 Search、Auth、Settings，没有上游义务或真实依赖。
+
+正确：
+移除这些 Planned Change；不得以“顺便清理”进入 Scope。
+
+## Eval 追加 7 — Shared 不是业务垃圾场
+
+Reward calculation 被三个 Feature 使用。
+
+正确：
+仍由 Reward Domain 拥有，通过 public API 复用。
+
+错误：
+仅因为多处调用就规划成 `Shared/RewardUtils`。
+
+## Eval 追加 8 — Product 已有答案不回问
+
+Product Atoms 已确认“分享访问同一个对象，不复制”。
+
+正确：
+直接消费 Atom。
+
+错误：
+再次进入 Focused Refinement 问用户“是复制还是同一个对象”。
+
+## Eval 追加 9 — Task 只带最小 Implementation Constraints
+
+Stage Implementation Shape 已明确 Wallet ownership。
+
+只有 Purchase debit Task 需要重复：
+```text
+Owner: Wallet
+Use: Wallet.debit
+Do Not Bypass: direct balance write
+```
+
+其他纯 UI 文案 Task 不应被强制填一整套空字段。
+
+## Eval 追加 10 — Authority 未冻结时 Reasoning Invalid
+
+Task 要求 Construction 自己决定“余额到底由 Purchase 还是 Wallet 管”。
+
+正确：
+Contract / ownership / authority 维度为 Hard Planning Defect；
+不发布 Task，回 Architecture。
+
+## Eval 追加 11 — Semantic Capability Test
+
+技术路径全部返回 200，数据库也有记录；但 AI 实际没获得被引用灵感内容。
+
+正确：
+Slice 未通过，因为 binding Atom 的真实能力未成立。
+
+## Eval 追加 12 — 原版能力不得因升级丢失
+
+升级后必须仍存在并生效：
+- Planning Guardrails
+- Reasoning Compilation Gate
+- Delegation Compilation Gate
+- Parallel Construction
+- Verification 分层
+- Operational Obligations
+- Product Focused Refinement Gate
+- UI Handoff
+- Dry Run
+- STOP / No-pitfall coordination
+
+缺任一项视为 Skill regression。
+

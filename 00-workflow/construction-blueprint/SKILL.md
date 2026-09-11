@@ -1,7 +1,7 @@
 ---
 name: construction-blueprint
 display_name: 施工蓝图
-description: 接收架构总设计师冻结的 Current Stage Contract，在不创造产品或架构决策的前提下，基于真实仓库把 Stage 编译成可机械施工的纵向 Slice 与精确 Task；从规划源头抑制模型自发的防御性扩张、重复验证和假想风险工作，只把真实义务、已确认缺陷与达到处理门槛的证据化风险编译进施工合同。
+description: 接收 Chief Architect 冻结的 Current Stage Contract，并消费 Product Definition / Product Atoms、Domain Ownership、Semantic Authority 与 Engineering Standards；在不创造产品或架构决策的前提下，基于真实仓库把 Stage 编译成可机械施工的纵向 Slice、Implementation Shape 与精确 Task；从规划源头抑制语义丢失、边界绕过、重复 authority、防御性扩张、重复验证和假想风险工作。
 ---
 
 # 施工蓝图
@@ -12,8 +12,8 @@ description: 接收架构总设计师冻结的 Current Stage Contract，在不�
 
 蓝图必须同时做到：
 
-1. **不重新设计产品**：产品语义来自 Product Definition 与 Stage Contract。
-2. **不重新设计架构**：技术方向、模块边界、数据 / 接口 /权限 / Provider 等来自架构权威文档。
+1. **不重新设计产品**：产品语义来自 Product Definition、Product Atoms 与 Stage Contract；Binding Atom 不得在蓝图翻译中丢失。
+2. **不重新设计架构**：技术方向、Domain Ownership、Semantic Authority、模块边界、依赖方向、数据 / 接口 / 权限 / Provider 等来自架构权威文档。
 3. **真实仓库落地**：所有计划必须建立在真实 Path、Symbol、Schema、Command 和现有实现上。
 4. **尽早形成真实纵向能力**：优先让最薄的真实产品 / 系统路径跑起来，而不是先批量完成技术层。
 5. **施工步骤确定**：施工 Agent 不需要在 Task 中重新决定“做什么、放哪里、怎么验证”。
@@ -40,10 +40,13 @@ description: 接收架构总设计师冻结的 Current Stage Contract，在不�
 
 - Stage-n / Name
 - Included `Requirement-n`
+- Binding `Atom-n` / Representative Example（适用时）
 - Outcome
 - Entry State
 - Exit State / Visible Delta
 - Authorized Scope
+- Affected Domains / Ownership / Applied Semantic Authorities（若 Stage Contract 已冻结）
+- Allowed Dependency Changes / New Boundary（仅真正架构变化时）
 - Architecture / Platform Delta
 - Applied `Decision-n`
 - Applied `ENGINEERING_STANDARDS.md` sections
@@ -64,6 +67,7 @@ description: 接收架构总设计师冻结的 Current Stage Contract，在不�
 - `TECH_STACK.md`
 - `PROJECT_STRUCTURE.md`
 - `ENGINEERING_STANDARDS.md`
+- Domain Ownership / Semantic Authority / Module public-internal boundary（位于 ARCHITECTURE / Standards / Decision 中的权威位置）
 - `EXTERNAL_SERVICES.md`
 - `OBSERVABILITY.md`（若项目存在或本 Stage 触发）
 - `DECISIONS.md`
@@ -73,15 +77,24 @@ description: 接收架构总设计师冻结的 Current Stage Contract，在不�
 
 ### 3. Product Authority
 
-仅在解释 Requirement 或用户行为时读取：
+只读取 Current Stage 真正相关的产品权威事实：
 
 - `docs/product/Product-Definition.md`
+- `docs/product/Product-Atoms.md`
 - 当前 Stage 所引用的 `Requirement-n`
+- Stage Contract 标记为 binding 的 `Atom-n`
+- 与 Current Requirement 直接相关的 Representative Example
 - Product Rules
-- Actors / permissions
+- Actors / ownership / permissions
 - Core Product Loop
 - Product Acceptance Intent
 - 与 Current Stage 直接相关的产品结论
+
+原则：
+
+> `Requirement-n` 的编号追踪不等于产品语义已被保留。Blueprint 必须直接读取 binding Atom 原文，并把每条会改变正确实现的产品义务映射到施工与验证。
+
+例如，“传递 `referenceId`”只能是技术手段，不能替代“AI 必须获得被引用对象实际内容并操作原对象”这一产品义务。
 
 蓝图不要求上游额外存在 `Capability Card`、`Capability-n`、`HORIZON Item`、产品 Roadmap 或 feature-level PRD。
 
@@ -124,6 +137,7 @@ UI 的机械一致性可由 Agent 规划验证；审美、质感、视觉平衡�
 ### 沿用上游对象
 
 - **Product Definition**
+- **Atom-n**（上游 Product Atom；只引用，不重新编号）
 - **Requirement-n**
 - **Decision-n**
 - **Stage-n**
@@ -187,7 +201,9 @@ Required Resolution:
 - 还原 Current Stage 真实 Entry State。
 - 把 Stage Exit State 翻译成 Repository / Runtime Target State。
 - 确定当前 Stage 的精确 Change / Creation 范围。
-- 把 `Requirement-n`、Architecture Obligation、Acceptance、Preservation、Direct Regression 映射到具体施工。
+- 把 `Requirement-n`、binding `Atom-n`、Architecture Obligation、Acceptance、Preservation、Direct Regression 映射到具体施工。
+- 把 Chief Architect 冻结的 Domain Ownership、Semantic Authority、Module Boundary 与依赖规则编译成当前 Stage 的 `Implementation Shape`。
+- 在施工前识别必须复用的现有 owner / authority / public path，以及明确禁止的 bypass。
 - 把 Stage 切成尽早集成的 `Slice-n`。
 - 把 Slice 拆成 `Task-n` 并排序。
 - 决定精确 File / Symbol / Schema / Migration / Config / Test 落点。
@@ -206,6 +222,7 @@ Required Resolution:
 - 改变 Stage Scope / Exit State / Acceptance。
 - 重新做技术栈、Provider 或 Foundational Decision。
 - 改变 Architecture Invariant。
+- 新建或改变长期 Domain Owner、Semantic Authority、核心模块边界或依赖方向。
 - 改变 Data Ownership、Permission、Security、Consistency、Compatibility 等架构语义。
 - 创造新的产品失败语义或不可逆行为。
 - 亲自施工代码。
@@ -873,7 +890,8 @@ Foundation / technical-only / infrastructure / migration 等特殊 Stage 默认�
 读取：
 
 - Current Stage Contract
-- 相关 architecture / decisions / standards
+- Product Definition / Current binding Product Atoms（只读当前 Stage 相关部分）
+- 相关 architecture / decisions / standards，包括 Domain Ownership / Semantic Authority
 - 当前 Stage 的 Execution Contract（若恢复）
 - 真实 Repository State
 
@@ -897,6 +915,7 @@ Foundation / technical-only / infrastructure / migration 等特殊 Stage 默认�
 - 哪些既有行为必须保持。
 - 哪些 triggered Operational Obligations 必须可证明。
 - 哪些 Acceptance Criteria 成立即可停止。
+- 哪些 binding Atom 的真实行为必须在 Target State 中可观察地成立；不得用更弱的技术代理替代。
 
 Target State 不等于“代码已经写完”。
 
@@ -912,6 +931,24 @@ Target State 不等于“代码已经写完”。
 - **Creation Set**：预计新建的 Path / Symbol / Migration / Artifact / Test。
 - **Preservation / Direct Regression**：上游已列且本次真正可能影响的既有行为。
 - **Explicit Non-Scope**：容易顺手做但明确不属于 Current Stage 的事项。
+
+同时编译一份轻量 `Implementation Shape`。它不是新项目对象，只是 Execution Contract `Scope` 内的施工约束视图：
+
+- **Touched Domains / Modules**：这次真正涉及哪些业务 / 技术边界。
+- **Ownership**：关键 rule / state / lifecycle / mutation 归谁。
+- **Required Reuse / Existing Authorities**：必须走哪些现有 public path / policy / repository / domain service。
+- **Allowed Dependencies**：当前 Stage 允许的跨模块依赖边。
+- **Forbidden Bypasses**：明确不能直接访问 / 重新实现的内部路径。
+- **State / Side-effect Flow**：关键状态变化与 DB / network / event / external side effect 应沿什么边界发生。
+- **Expected Change Boundary**：正常情况下改动应主要落在哪些模块 / 路径；超出时需要给出真实依赖依据。
+
+只写 Current Stage 真正需要约束的项，不为模板完整强行填空。
+
+如果编译 Implementation Shape 时发现需要**新建或改变长期 Domain Owner、Semantic Authority、核心模块边界、依赖方向或 public contract**，Blueprint 不自行决定：
+
+`Owner: Architecture`
+
+回 Chief Architect。
 
 不要为了完整性重复维护一套 `Observability Set`；运行义务直接映射到受影响 Task。
 
@@ -938,13 +975,34 @@ Target State 不等于“代码已经写完”。
 
 `Upstream Obligation → Slice-n / Task-n → Verification`
 
+产品语义必须额外建立：
+
+`Requirement-n → binding Atom-n → Construction Coverage → Verification`
+
 覆盖：
 
 - 每个 Included Requirement-n。
+- 每个 binding Atom-n。
 - 每个 Stage Acceptance Criterion。
 - Current Stage 相关 Architecture Delta / Invariant。
+- Domain Ownership / Semantic Authority / dependency constraints（本 Stage 触及时）。
 - Preservation / Direct Regression。
 - Triggered Operational Obligations。
+
+对 binding Atom 的目标不是“有一个 Task 引用了 ID”，而是实际产品义务有实现覆盖。例如：
+
+| Product obligation | Construction coverage |
+|---|---|
+| AI 获得被引用对象实际内容 | context assembly Task |
+| 修改原对象 | mutation Task |
+| 确认后才写入 | confirmation / state transition Task |
+| 结果持久化 | persistence Task |
+
+任何 binding Atom 没有施工落点或验证落点：
+
+`BLOCKED`
+
+不得 READY。
 
 同时反向检查：
 
@@ -989,6 +1047,7 @@ Target State 不等于“代码已经写完”。
 - Upstream Basis
 - Goal
 - Reasoning：`Low (0–4) | Medium (5–10)`
+- Implementation Constraints（仅当该 Task 触及 ownership / authority / boundary / required reuse 时）
 - Prerequisites
 - Targets
 - Actions
@@ -1034,6 +1093,15 @@ Targets 尽可能精确到：
 - Configuration
 - Test target / selector
 - Generated artifact
+
+`Implementation Constraints` 只重复 Stage Implementation Shape 中真正约束该 Task 的最小子集，例如：
+
+- `Use: Wallet.debit(...)`
+- `Owner: Wallet`
+- `Do not bypass: direct balance table update`
+- `Allowed dependency: Purchase → Wallet public interface`
+
+不触及这些边界时省略该字段。
 
 Actions 要让施工 Agent 沿唯一已批准路径工作，但不要把代码逐行写进蓝图。
 
@@ -1175,7 +1243,9 @@ Stage Contract 和架构都成立，只是当前 Task 拆分、顺序、Target�
 
 - Stage Scope / Exit State
 - Decision-n
-- module / interface / data boundary
+- Domain Ownership / Semantic Authority
+- core module / interface / data boundary
+- dependency direction / public-internal boundary
 - Provider / technology direction
 - security / permission architecture
 - consistency / compatibility / migration strategy
@@ -1209,6 +1279,9 @@ Dry Run 只检查**合同是否可执行**，不是新的开放式风险审计�
 - Slice 是否形成真实纵向状态。
 - UI / Client 是否没有被无理由拖到最后。
 - Requirement / Acceptance / Decision / Preservation / Operational Obligation 是否有施工与 proof 落点。
+- 每个 binding Atom 是否有真实施工覆盖与验证覆盖，且没有被弱化成技术代理。
+- Implementation Shape 是否明确到施工 Agent 不需要重新决定 owner / authority / dependency / bypass。
+- 所有 Task 是否复用已冻结 authority，而不是创建第二套等价逻辑。
 - 每个 Task 是否都有合法 Upstream Basis。
 - 每个 Task 的 Reasoning Score 是否 ≤10，且没有把未决设计问题留给 Construction。
 - 每个 Delegation 是否通过 Independence / Workload / Compressibility / State Isolation / Added Value 与 Time Gate。
@@ -1241,6 +1314,9 @@ Dry Run 期间新想到的“万一”不能自动扩 Scope；必须重新经过
 - 没有未决 Product / Architecture Decision。
 - Scope 只包含 Current Stage 授权工作。
 - 每个 Requirement / Acceptance / Architecture Obligation 都有施工落点。
+- Current binding Atom 施工覆盖与验证覆盖为 100%。
+- Implementation Shape 已明确 Current Stage 的 Ownership、Required Reuse、Allowed Dependency、Forbidden Bypass 与 Expected Change Boundary（适用项）。
+- 没有未批准的新长期 Domain / Module / Semantic Authority / dependency direction。
 - 每个 Planned Task 都有上游依据。
 - 用户型工作被组织为早期真实纵向 Slice。
 - 每个 Task 都有精确 Target、Actions、Local Proof、Done When；Local Proof 不强制等于新测试。
@@ -1280,7 +1356,7 @@ Dry Run 期间新想到的“万一”不能自动扩 Scope；必须重新经过
 ## 2. Objective
 ## 3. Entry State
 ## 4. Target State
-## 5. Scope
+## 5. Scope  # 含 Implementation Shape
 ## 6. Traceability
 ## 7. Slices
 ## 8. Execution Graph
@@ -1322,6 +1398,8 @@ Dry Run 期间新想到的“万一”不能自动扩 Scope；必须重新经过
 - **Stay within the current Task**：Human feedback 可以修正、澄清当前 Task，但不得扩张当前 Task 边界，也不得因此提前施工后续 Task。
 - 能用确定性工具完成的工作直接用工具，不创建 Agent。
 - 遵守 Architecture / Engineering Standards。
+- 遵守 Execution Contract 的 Implementation Shape：复用指定 owner / authority / public path，不绕过边界，不创建第二套等价业务规则。
+- 未经 Architecture 明确授权，不自行新建长期 Domain / Module / Semantic Authority 或改变 dependency direction。
 - 开工前读取 `Parallel Work Recommendation`。
 - 若当前存在 `parallel-safe` 工作，先用人话告诉人类：建议同时开几个窗口、各窗口领取哪些 `Task-n / Slice-n`、何时回主线合并。
 - 若人类只开一个窗口，仍可按同一 Execution Graph 顺序完成，不影响正确性。
@@ -1333,7 +1411,7 @@ Dry Run 期间新想到的“万一”不能自动扩 Scope；必须重新经过
 
 Stage Verifier 后续以：
 
-`Stage Contract → Execution Contract → Implementation → Evidence`
+`Product binding Atoms → Architecture Ownership / Authority → Stage Contract → Execution Contract / Implementation Shape → Implementation → Evidence`
 
 为主链验收。
 
@@ -1355,6 +1433,8 @@ Blueprint 不需要为 Verifier 预先制造大量 Evidence ID；验证位置和
 不要默认一次读完所有 reference。只在对应问题出现时加载。
 
 ## 最终原则
+
+蓝图的质量还取决于：产品语义是否无损传递、已有 authority 是否被正确复用、模块边界是否在施工前已经明确、Builder 是否无需临场发明新的长期结构。
 
 蓝图的质量不取决于：
 

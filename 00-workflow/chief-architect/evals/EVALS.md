@@ -4,12 +4,13 @@
 
 ## Eval 1 — 上游接口
 
-输入：Product Definition 有 Product Core、Capability Map、Ideal Product State、Requirement-1/2，但没有 Capability Cards 或 Product ROADMAP。
+输入：Product Definition 有 Product Core、Capability Map、Ideal Product State、Requirement-1/2；Product Atoms 有 Current Requirement 的关键细节；没有 Capability Cards 或 Product ROADMAP。
 
 期望：
 
 - 架构师直接工作，不要求 Capability Card / HORIZON / 产品 Roadmap。
-- 长期依据直接引用 Product Definition。
+- 同时消费 Product Definition + Product Atoms。
+- 长期依据直接引用 Product Definition / Product Atoms。
 - 只有影响架构的产品语义缺失才 `PRODUCT CLARIFICATION REQUIRED`。
 
 失败：要求用户补旧版对象或自行创建 H-n。
@@ -185,3 +186,135 @@
 期望：聊天只报告结论、关键技术选择、风险、Stage 和需要用户决定的问题；完整内容写文档。
 
 失败：把完整架构长文直接倾倒在聊天。
+
+## Eval 23 — Product Atom 语义保真
+
+输入：
+Requirement-7 表示“AI 可以使用并修改被引用灵感”。
+Atoms 明确：
+- AI context 必须包含实际内容。
+- 引用保持原对象 identity。
+- 修改需确认。
+- 修改原对象。
+
+期望：
+- Stage Contract 标记这些 Atom 为 binding。
+- Architecture 不把语义压成“传 referenceId”。
+- Blueprint Handoff 要求直接读取这些 Atom。
+
+失败：
+ID traceability 存在，但实际产品义务丢失。
+
+## Eval 24 — Domain Ownership
+
+输入：
+Reward 负责奖励 eligibility / calculation，Wallet 负责 balance / credit / debit。
+
+期望：
+- Architecture 明确两个 Domain 的 ownership。
+- Reward 通过 Wallet public capability 增加余额。
+- 不允许 Reward 直接写 Wallet storage。
+
+失败：
+两个模块都能独立 mutation balance。
+
+## Eval 25 — Semantic Authority
+
+输入：
+已有 `PermissionPolicy.canEdit(project, actor)` 是唯一权限 authority。
+新 Requirement 需要在另一个 Feature 判断编辑权限。
+
+期望：
+要求复用现有 authority。
+
+失败：
+新 Feature 自己再写 `actor.id == ownerId` 形成第二套规则。
+
+## Eval 26 — Shared 不是垃圾场
+
+输入：
+Reward calculation 被三个 Feature 使用。
+
+期望：
+仍归 Reward Domain，通过 public interface 复用。
+
+失败：
+仅因为多处调用就移动到 `Shared/RewardUtils`。
+
+## Eval 27 — Change Locality
+
+输入：
+修改一条奖励规则需要同时修改 UI helper、API handler、job、database trigger 中四套独立判断。
+
+期望：
+识别为多 authority / ownership 泄漏，需要收敛权威。
+
+失败：
+只因为“四处都改完了”认为结构健康。
+
+## Eval 28 — 新业务边界需要 Architecture 裁决
+
+输入：
+Blueprint 发现现有模块都不自然承载一个新的稳定 lifecycle / owner。
+
+期望：
+若这意味着新长期 Domain / Module / Semantic Authority，要求 `ARCHITECTURE DECISION REQUIRED`。
+
+失败：
+Blueprint / Builder 临场创建 `NewManager` / `NewService` / `NewModule`。
+
+## Eval 29 — 复用优先但不过度 DRY
+
+输入：
+两段语法相似代码表达不同 Domain 语义。
+
+期望：
+不强行抽象。
+
+输入变化：
+两处独立代码实际决定同一 reward rule。
+
+期望：
+收敛到同一 Semantic Authority。
+
+## Eval 30 — Work Efficiency
+
+输入：
+一个用户动作对同一资源重复 DB 查询 12 次，且已有可复用查询结果。
+
+期望：
+Engineering Standards / Architecture 允许 Reviewer 将其视为明确 work-efficiency defect。
+
+失败：
+因为每次查询都是 O(1) 就认为性能健康。
+
+## Eval 31 — 数字复杂度只是 Sensor
+
+输入：
+某函数 55 行，但单一职责清楚、控制流简单。
+
+期望：
+仅因超过 50 行不判 FAIL。
+
+输入变化：
+函数同时 validation + remote fetch + business calculation + persistence + event emission，并有深层分支。
+
+期望：
+识别真实职责 / complexity 问题。
+
+## Eval 32 — Stage Contract 不越权到 Blueprint
+
+输入：
+Current Stage 触及 Purchase、Wallet、Inventory。
+
+期望：
+Stage Contract 可以冻结：
+- owning domains
+- binding product atoms
+- existing semantic authorities
+- allowed architecture dependency changes
+
+但不写具体文件 / function / Task 顺序。
+
+失败：
+为了模块化开始替 Blueprint 设计逐文件施工。

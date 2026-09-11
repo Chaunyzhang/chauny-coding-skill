@@ -2,7 +2,7 @@
 
 用途：防止重要技术域被静默遗漏，同时避免每个项目都跑一遍百科式问卷。
 
-使用方式：先根据 Product Definition、Current / Near Stage、Repository Reality 和风险判断哪些域被触发；只读取 / 展开被触发域。未触发域不创建空章节，不逐项写 `Not Applicable`。
+使用方式：先根据 Product Definition + Product Atoms、Current / Near Stage、Repository Reality 和风险判断哪些域被触发；只读取 / 展开被触发域。未触发域不创建空章节，不逐项写 `Not Applicable`。
 
 ## 1. Client / Offline / Cross-device
 
