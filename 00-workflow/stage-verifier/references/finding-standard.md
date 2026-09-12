@@ -99,3 +99,28 @@ Finding Evidence 必须是可定位事实：
 差：
 
 > 必须新建 `RewardRuleEngineV2Factory`。
+
+## Finding 与 Repair Blueprint 的边界
+
+Finding 只回答：
+
+- 哪里错。
+- 违反什么。
+- 为什么重要。
+- 修完必须达到什么状态。
+- 如何确认它修好了。
+
+Finding 不负责给出完整施工路径。
+
+所有 Findings 冻结后，再由 Repair Planning Pass 统一回答：
+
+- 共同根因是什么。
+- 哪些 Findings 应一起修。
+- 改哪些 Path / Symbol。
+- 哪些旧 path 必须删除。
+- Task 如何排序。
+- 哪些 authority / owner 必须复用。
+- 用哪些局部 / Slice proof 收口。
+
+这样避免 reviewer 在发现第一个问题时过早锁定修法。
+

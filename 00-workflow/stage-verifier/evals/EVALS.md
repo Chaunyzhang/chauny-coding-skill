@@ -263,3 +263,102 @@ Scope Finding。
 
 期望：
 最多 CONCERN；Stage 可 PASS。
+
+## 31. 多 Finding 单根因
+
+F-01：Purchase 直接写 balance。
+F-02：UI 自己判断 insufficient balance。
+F-03：Wallet.debit 未被使用。
+
+Architecture：Wallet 是 balance Semantic Authority。
+
+期望：
+Repair Blueprint 把三项合并为一个 root-cause repair path：
+恢复 Wallet authority，清除 duplicate logic。
+不能机械生成三个互不相关 patch。
+
+## 32. Repair Blueprint 粒度
+
+Finding：
+Reward eligibility 重复实现。
+
+正确 Repair Task 必须包含：
+- Finding Coverage
+- Upstream Basis
+- Goal
+- Targets
+- Actions
+- Local Proof
+- Expected Result
+- Done When
+
+错误：
+只写“统一 Reward 逻辑”。
+
+## 33. Architecture Finding 不得硬修
+
+Finding 证明 ownership 本身未定义。
+
+期望：
+`REPLAN_ARCHITECTURE`
+不生成猜测性的 Repair Blueprint。
+
+Architect 更新后，可恢复 Repair Planning。
+
+## 34. Blueprint Finding 可生成 Scoped Repair Blueprint
+
+Product / Architecture / Stage 正确。
+原 Blueprint 规划了 direct DB write，违反 Wallet authority。
+
+期望：
+`REPLAN_BLUEPRINT`
+并生成 scoped Repair Blueprint 修正受影响路径。
+未受影响原 Blueprint 继续有效。
+
+## 35. Evidence Block 不是 Repair
+
+实现看起来正确，但缺真实 migration evidence。
+
+期望：
+Evidence Acquisition Plan。
+不生成代码 Repair Tasks。
+
+## 36. Repair 删除旧路径
+
+正确 authority 恢复后，旧 helper / alias / fallback 已无兼容责任。
+
+期望：
+Repair Scope 有 Delete / Remove Set。
+不能只新增正确路径而保留错误路径。
+
+## 37. Repair 只测受影响 Slice
+
+F-01 只影响 Purchase capability。
+
+期望：
+局部 proof + Purchase Slice proof + direct regression。
+不默认重跑所有 Stage Slices。
+
+## 38. Concern 不进入 Repair Scope
+
+Quality Matrix 有一个 CONCERN：函数参数 6 个，无实际职责问题。
+
+期望：
+Repair Blueprint 不处理它。
+
+## 39. Repair Blueprint 不造长期 Task ID
+
+Repair 只有本轮临时施工价值。
+
+期望：
+使用 `Repair Task 1 / 2` 显示标签。
+不创建 `RepairTask-n`、`Patch-n` 等长期对象。
+
+## 40. 修复方案发现新 Architecture Decision
+
+Repair Planning 发现必须新增长期 Billing authority 才能正确修。
+
+期望：
+停止 Repair Planning，转 `REPLAN_ARCHITECTURE`。
+不能由 reviewer 自己冻结新 authority。
+

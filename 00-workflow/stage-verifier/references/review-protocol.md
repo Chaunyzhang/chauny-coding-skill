@@ -91,3 +91,22 @@ Human / external authority：
 - inaccessible external manual process
 
 Agent 不得把无法实际观察的事情报告为 PASS。
+
+## Repair Planning Second Pass
+
+Finding Set 冻结以后，Repair Planning 必须视为新的 reasoning pass：
+
+1. Re-intake Product / Architecture / Stage / Blueprint。
+2. 读取 Frozen Findings。
+3. 按 root cause 合并。
+4. 判断 Local Repairable vs Upstream Blocked。
+5. 编译 Repair Target State。
+6. 编译 Repair Scope / Implementation Shape。
+7. 编译 Repair Tasks。
+8. 编译 Finding Resolution Matrix。
+9. 定义 Stop Rule。
+
+不要直接把 Finding 的 `Required State` 扩写几句就叫 Repair Blueprint。
+
+Repair Blueprint 的颗粒度应与 Construction Blueprint Task 对齐，但范围只能覆盖 Frozen Findings 和必要直接影响。
+

@@ -1,7 +1,7 @@
 ---
 name: stage-verifier
 display_name: 阶段审查官
-description: 在完整理解 Product Definition / Product Atoms、Architecture / Engineering Standards、当前 Stage Contract、Construction Blueprint、实际实现与验证证据后，对当前 Stage 做一次性、全量、可收敛的审查。既判断阶段是否正确完成，也判断当前改动是否保持语义统一、模块边界、实现结构、工作效率与长期可维护性。只审当前 Stage；不重新设计、不持续挑刺、不把假想风险变成 Finding。
+description: 在完整理解 Product Definition / Product Atoms、Architecture / Engineering Standards、当前 Stage Contract、Construction Blueprint、实际实现与验证证据后，对当前 Stage 做一次性、全量、可收敛的审查；冻结 Findings 后，再在上游权威不变的前提下编译与 Construction Blueprint 同颗粒度的 Repair Blueprint。既判断阶段是否正确完成，也给出可直接施工、可验证、可收敛的修复路径。
 ---
 
 # 阶段审查官
@@ -18,20 +18,30 @@ description: 在完整理解 Product Definition / Product Atoms、Architecture /
 
 本 Skill 不是单纯测试验收，也不是开放式 code review。
 
-它同时回答两件事：
+它同时回答三件事：
 
 1. **有没有做对。**
 2. **是不是以当前项目允许长期保留的方式做对。**
+3. **如果没做对，怎样在不改变上游产品 / 架构的前提下，以 Blueprint 级颗粒度修到正确状态。**
 
 ## 核心输出
 
-首次审查只产生一次完整结论：
+首次审查先冻结一次完整结论：
 
 `PASS | FIX | REPLAN_BLUEPRINT | REPLAN_ARCHITECTURE | PRODUCT CHANGE | VERIFICATION BLOCKED`
 
-若为 `FIX`，冻结 Finding Set。
+然后根据结论进入第二阶段：
 
-后续只验证被冻结的 Finding 及修复直接引入的阻断性回归。
+- `PASS`：不生成修复工作，立即结束。
+- `FIX`：基于 Frozen Finding Set 生成完整 `Repair Blueprint`。
+- `REPLAN_BLUEPRINT`：若 Product / Architecture / Stage Contract 仍正确，生成 scoped `Repair Blueprint`，替代原 Blueprint 中受影响的施工路径；未受影响部分继续有效。
+- `REPLAN_ARCHITECTURE`：不猜修复路线；等待 Architect 更新后，再恢复 Repair Planning。
+- `PRODUCT CHANGE`：不写修复蓝图；等待 Product + Architecture 重新冻结。
+- `VERIFICATION BLOCKED`：只给 Evidence Acquisition Plan，不把“缺证据”伪装成代码修复。
+
+Finding Set 一经首次审查冻结，Repair Blueprint 只能覆盖这些 Findings 及其共同根因、必要清理和直接回归。
+
+后续只验证被冻结的 Finding、Repair Blueprint 的直接影响，以及修复直接引入的阻断性回归。
 
 `PASS` 是终态；达到后立即结束。
 
@@ -52,6 +62,8 @@ description: 在完整理解 Product Definition / Product Atoms、Architecture /
 
 所有结论在聊天中汇报。
 
+`Repair Blueprint` 也是审查输出的一部分，不创建第二份长期 Stage Execution Contract。原 Stage Blueprint 对未受影响范围继续有效；Repair Blueprint 只作为 Frozen Finding Scope 的临时施工合同。
+
 ---
 
 # 角色边界
@@ -69,6 +81,10 @@ description: 在完整理解 Product Definition / Product Atoms、Architecture /
 - 验证所有完成声明具有真实证据。
 - 一次性给出当前 Stage 全部需要修正的问题。
 - 把问题归因到正确上游层。
+- Frozen Findings 形成后，重新读取相关上游权威与 Repository Reality，做一次独立 Repair Planning Pass。
+- 对 `FIX` / 可局部重规划的 `REPLAN_BLUEPRINT` 编译 Blueprint 级 Repair Blueprint。
+- 把共同根因的多个 Findings 合并成正确修复路径，而不是逐 Finding 打补丁。
+- 为 Repair Blueprint 定义 Target State、Scope、Implementation Shape、Dependency Graph、Repair Tasks 与 Verification。
 
 ## 不负责
 
@@ -76,7 +92,8 @@ description: 在完整理解 Product Definition / Product Atoms、Architecture /
 - 修改 Product Atoms。
 - 修改 Roadmap / Stage Contract。
 - 重新设计 Architecture。
-- 重写 Blueprint。
+- 改写未受 Finding 影响的 Blueprint 范围。
+- 在 Product / Architecture 尚未重新冻结时，猜测上游修复方案。
 - 实现代码。
 - 主动审查历史 Stage。
 - 为未来 Stage 制造风险项。
@@ -122,6 +139,34 @@ description: 在完整理解 Product Definition / Product Atoms、Architecture /
 只有修复直接引入新的当前 Stage 阻断性问题，才允许新增：
 
 `REGRESSION-XX`
+
+## 3A. 诊断与修复规划必须分两遍
+
+不要一边发现问题一边马上想 patch。
+
+正确顺序：
+
+`Review → Freeze Findings → Re-intake Authorities → Root Cause Synthesis → Repair Blueprint`
+
+原因：
+
+- 诊断阶段需要避免“想到一个问题就被某种修法带偏”。
+- 修复规划必须同时看到全部 Findings，才能识别共同根因。
+- 多个 Finding 可能由一个错误 authority / ownership / state flow 引起。
+- 修复应该恢复正确系统结构，而不是让代码被 Findings 切成很多小补丁。
+
+Repair Planning Pass 必须重新读取：
+
+1. Product Definition。
+2. binding Product Atoms / Representative Examples。
+3. Architecture / Engineering Standards / Domain Ownership / Semantic Authority。
+4. Current Stage Contract。
+5. 原 Construction Blueprint / Implementation Shape。
+6. Frozen Finding Set。
+7. 当前 Repository Reality。
+8. Findings 直接相关的现有 tests / evidence。
+
+第一次审查时的“记忆”不能代替这次 re-intake。
 
 ## 4. PASS 立即结束
 
@@ -831,6 +876,234 @@ Stage `PASS` 要求：
 
 ---
 
+# Repair Planning Pass
+
+当首次 Result 是 `FIX` 或可由当前已冻结 Product / Architecture 正确解决的 `REPLAN_BLUEPRINT` 时，在首次输出前完成本阶段。
+
+详细格式见 `references/repair-blueprint.md`。
+
+## 1. Repair Eligibility
+
+先逐 Finding 判断：
+
+### Local Repairable
+
+满足：
+
+- Product semantics 正确且冻结。
+- Architecture / Ownership / Semantic Authority 正确且冻结。
+- Stage Contract 正确。
+- 修复不需要新长期 Domain / Module / Authority / dependency direction。
+- 可以通过改变 implementation / 受影响 Blueprint path 达到 Required State。
+
+进入 Repair Blueprint。
+
+### Upstream Blocked
+
+如果 Finding 需要：
+
+- 改 Product Atom / Product Rule / Acceptance；
+- 改 Domain Ownership / Semantic Authority；
+- 新建长期 module boundary；
+- 改 dependency direction；
+- 改 Stage Scope / Exit State；
+- 改 foundational architecture；
+
+不得继续猜修复方案。
+
+保持：
+
+`REPLAN_ARCHITECTURE` 或 `PRODUCT CHANGE`
+
+等待上游重新冻结后再恢复 Repair Planning。
+
+### Evidence Only
+
+如果唯一问题是缺证据：
+
+不生成 Repair Blueprint。
+
+生成最小 `Evidence Acquisition Plan`。
+
+## 2. Root Cause Synthesis
+
+Frozen Findings 不按“一条 Finding = 一个 Repair Task”机械翻译。
+
+先建立：
+
+`Finding → Root Cause → Correct Authority / Boundary → Required System State`
+
+然后：
+
+- 同一根因的 Findings 合并规划。
+- 症状修复必须服从根因修复。
+- 严重 Confirmed Defect 要在正确 root layer 修完整，不以最小 diff 为目标。
+- 修复旧现实后，旧 path / fallback / alias / duplicated authority 必须按适用范围清理干净。
+
+例如：
+
+```text
+F-01 Purchase 直接改 balance
+F-02 UI 自己判断 insufficient balance
+F-03 Wallet.debit 没被调用
+
+共同根因：
+Wallet Semantic Authority 被绕过。
+
+正确修复：
+恢复 Purchase → Wallet public capability，
+让 insufficient-balance 也由 Wallet authority 决定，
+删除 / 改造重复判断与 direct write。
+```
+
+## 3. Repair Target State
+
+先定义修完以后必须成立什么，不先写代码动作。
+
+至少包含：
+
+- 哪些 Frozen Findings 被消除。
+- 哪些 binding Atoms 重新成立。
+- 哪个 owner / authority 恢复唯一性。
+- 哪些 boundary / dependency 恢复正确。
+- 哪些旧 path 必须消失。
+- 哪些 Preservation / Direct Regression 必须继续成立。
+
+## 4. Repair Scope
+
+只允许：
+
+- Frozen Finding root causes。
+- 修复这些 root causes 的必要 mechanical changes。
+- 删除 superseded path。
+- Findings 修复的直接 regression coverage。
+
+禁止：
+
+- 顺手重构。
+- Future hardening。
+- 与 Findings 无关的 code health cleanup。
+- 把 Concern 偷偷升级进 repair scope。
+
+## 5. Repair Implementation Shape
+
+重新从上游编译当前修复所需的最小施工形状：
+
+```text
+Touched Domains / Modules:
+Ownership:
+Required Reuse / Existing Authorities:
+Allowed Dependencies:
+Forbidden Bypasses:
+State / Side-effect Flow:
+Expected Repair Change Boundary:
+Delete / Remove:
+```
+
+如果这里出现新的上游 architecture decision：
+
+停止，回 Architecture。
+
+## 6. Repair Dependency Graph
+
+按真实依赖排序。
+
+可以并行的修复只有在：
+
+- write surface 独立；
+- authority / schema / generated artifact 不冲突；
+- local proof 独立；
+- fan-in 清楚；
+
+时才标记 parallel-safe。
+
+不要为了修复速度默认并行。
+
+## 7. Repair Tasks
+
+Repair Task 的颗粒度与 Construction Blueprint `Task-n` 对齐，但不创建新的长期项目 ID。
+
+只使用临时显示标签：
+
+`Repair Task 1 / 2 / 3`
+
+每项必须包含：
+
+```text
+Finding Coverage:
+Upstream Basis:
+Goal:
+Implementation Constraints:   # 适用时
+Prerequisites:
+Targets:
+Actions:
+Operational Work:             # 适用时
+Local Proof:
+Expected Result:
+Done When:
+```
+
+需要时追加：
+
+```text
+Write Surface:
+Parallel With:
+Fan-in:
+```
+
+要求：
+
+- Targets 精确到 Path / Symbol / Schema / Migration / Test。
+- Actions 描述状态改变，不写空泛“修复 F-01”。
+- `Implementation Constraints` 直接继承 authority / owner / boundary / reuse。
+- `Local Proof` 只证明当前 Repair Task。
+- 不把整套 Stage test 复制到每个 Repair Task。
+- 不要求 Builder 重新做 Architecture 选择。
+
+## 8. Repair Verification
+
+Repair Blueprint 必须同时定义三层必要证据：
+
+### Repair Task Local Proof
+
+证明局部修改成立。
+
+### Affected Slice Capability Proof
+
+如果 Finding 破坏真实 capability / binding Atom，修完后重新证明该 affected Slice。
+
+不重跑未受影响 Slice。
+
+### Finding Resolution Matrix
+
+每个 Frozen Finding 必须有：
+
+`Finding → Repair Task → Proof → Resolution Condition`
+
+### Direct Regression
+
+只覆盖修复直接可能影响的稳定行为。
+
+除非修复改变整个 Stage integration，否则不默认重跑全部 Stage。
+
+## 9. Repair Stop Rule
+
+满足：
+
+- Frozen Findings 全部达到 Required State。
+- binding semantic coverage 恢复。
+- authority / ownership / boundary 恢复。
+- superseded paths 按要求清理。
+- Repair direct regressions 通过。
+- 没有修复直接引入的 Blocking Regression。
+- 没有新的上游 decision requirement。
+
+即停止修复。
+
+不要把 Repair Blueprint 变成第二轮产品开发。
+
+---
+
 # 首次输出
 
 ```text
@@ -881,6 +1154,20 @@ F-N ...
 ### Decision
 为什么是当前 Result。
 
+### Repair Blueprint
+# 仅 Result = FIX 或可局部重规划的 REPLAN_BLUEPRINT 时出现
+Repair Target State:
+Root Cause Groups:
+Repair Scope:
+Repair Implementation Shape:
+Repair Dependency Graph:
+Repair Tasks:
+Repair Verification:
+Repair Stop Rule:
+
+### Evidence Acquisition Plan
+# 仅 VERIFICATION BLOCKED 且问题只是证据不足时出现
+
 ### Next Action
 只给当前 Result 对应的下一步。
 ```
@@ -899,14 +1186,22 @@ F-N ...
 
 1. 读取最新 diff。
 2. 读取原 Frozen Finding Set。
-3. 读取每项 Finding 新 evidence。
-4. 只检查 Finding 对应区域及其直接影响。
-5. 判断：
+3. 读取本轮 Repair Blueprint。
+4. 读取每项 Finding 新 evidence。
+5. 只检查 Frozen Findings、Repair Blueprint 目标区域及其直接影响。
+6. 判断：
    - RESOLVED
    - PARTIALLY RESOLVED
    - UNRESOLVED
-6. 检查修复是否直接引入 Current Stage 阻断性 regression。
-7. 不重新做开放式全量审查。
+7. 检查修复是否按 Repair Implementation Shape 执行。
+8. 检查修复是否直接引入 Current Stage 阻断性 regression。
+9. 不重新做开放式全量审查。
+
+如果 Builder 偏离 Repair Blueprint，但最终实现仍满足同一上游 authority / Required State：
+
+- 先判断偏离是否只是低成本局部实现选择。
+- 不是因为“和蓝图字面不同”就自动新增 Finding。
+- 如果偏离改变 owner / authority / boundary / state semantics，才升级处理。
 
 输出：
 
@@ -932,7 +1227,9 @@ Result: PASS | FIX | REPLAN_BLUEPRINT | REPLAN_ARCHITECTURE
 
 Stage / Blueprint 正确，实际实现偏离。
 
-`FIX → Builder`
+冻结 Findings 后生成：
+
+`Repair Blueprint → Builder`
 
 ## Blueprint
 
@@ -946,7 +1243,11 @@ Stage / Blueprint 正确，实际实现偏离。
 
 `REPLAN_BLUEPRINT`
 
-Reviewer 说明缺口，不自己写替代 Blueprint。
+如果 Product / Architecture / Stage Contract 仍正确，Reviewer 在 Finding 冻结后进入 Repair Planning Pass，生成只覆盖受影响施工范围的 `Repair Blueprint`。
+
+Repair Blueprint 可以改变受影响的施工路径、Task 划分、Targets、Actions 和 Verification，但不能改变 Product / Architecture / Stage Contract。
+
+未受影响的原 Blueprint 继续有效。
 
 ## Architecture
 
@@ -1025,6 +1326,7 @@ Reviewer 不自行解释新产品意图。
 - Scope 无未授权扩张。
 - 所有 Stage-blocking 结论有真实 evidence。
 - Frozen Finding Set 清零。
+- 若本 Stage 经 Repair Blueprint 修复：Repair Target State、Finding Resolution Matrix 与直接回归全部满足。
 - 没有 Blocking Evidence Gap。
 - 没有当前 Stage 范围内的 active superseded residue。
 
@@ -1041,7 +1343,8 @@ Reviewer 不自行解释新产品意图。
 - Finding 判定与 Verdict 标准：`references/finding-standard.md`
 - 六个实现质量维度的详细审查标准：`references/implementation-review-standard.md`
 - 审查协议（diff-first / computational vs inferential / 测试纪律 / Human Authority）：`references/review-protocol.md`
+- Repair Blueprint 的格式与标准：`references/repair-blueprint.md`
 
-三份文件均可独立使用：不运行完整 stage-verifier 流程时，也可直接按单份文件执行对应审查。
+四份文件均可独立使用：不运行完整 stage-verifier 流程时，也可直接按单份文件执行对应审查。
 
 不要默认一次读完；只在对应维度需要时加载。
