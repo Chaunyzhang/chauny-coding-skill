@@ -2,25 +2,14 @@
 
 ## Canonical Sources
 
-只有：
+产品域只有两份长期权威事实：
 
 ```text
 docs/product/Product-Definition.md
 docs/product/Product-Atoms.md
 ```
 
-两份都属于产品当前权威事实。
-
-不得创建平行的：
-
-- Product Detail
-- Feature Spec
-- Capability Card
-- Interview Notes
-- Product Thoughts
-- Decision Log
-- Stage Product Detail
-- 其他重复产品事实文件
+不得创建 Product Detail、Feature Spec、Capability Card、Interview Notes、Product Thoughts、Decision Log、Stage Product Detail 或其他平行产品事实源。
 
 ## Product Definition Structure
 
@@ -45,18 +34,7 @@ docs/product/Product-Atoms.md
 
 ### 9. Current Minimum Complete Outcome
 
-必须包括：
-
-- Outcome
-- Primary Actors
-- Core Journey
-- Must-Have Capabilities
-- Current Requirements
-- Required Product Rules / Failure Semantics
-- Visible Result
-- Completion Boundary
-- Explicitly Not Current
-- Product Priority / Relationships（需要时）
+包括：Outcome、Primary Actors、Core Journey、Must-Have Capabilities、Current Requirements、Required Product Rules / Failure Semantics、Visible Result、Completion Boundary、Explicitly Not Current，以及需要时的 Product Priority / Relationships。
 
 ### 10. Candidate Requirements
 
@@ -73,7 +51,7 @@ Architecture-Shaping: Yes | No
 
 ### 14. Handoff to Architecture
 
-只做 consumer-aware index：
+只做 consumer-aware index，不复制 Atom Statement：
 
 ```text
 Current Minimum Complete Outcome:
@@ -98,8 +76,6 @@ Open Product Questions:
 - ...
 ```
 
-不要复制 Atom Statement。
-
 ## Product Atoms Structure
 
 推荐：
@@ -110,73 +86,27 @@ Open Product Questions:
 ## Product-wide Rules
 
 ### Atom-1
-
-Statement:
-Kind:
-Belongs To:
-Status:
+...
 
 ## Requirement-7 — <name>
 
 ### Atom-42
 ...
 
-### Atom-43
-...
-
 Representative Example:
 ...
 ```
 
-按产品语义归类，不按聊天时间顺序归类。
+按稳定产品语义归类，不按聊天时间顺序。
 
-## Single Source Rule
+## Ownership & Write Routing
 
-同一个事实如果是 Definition-level conclusion，Definition 是权威表达；Atoms 只保存其更具体、不可丢失的子事实。
+同一事实只有一个权威表达：Definition-level conclusion 由 Definition 拥有；Atoms 只保存更具体、不可丢失且不能从 Definition 稳定重建的子事实。不要在两处复制同一句话。
 
-不要在 Definition 和 Atoms 复制完全相同的一句话。
-
-## Write Routing
-
-### Route to Definition
-
-内容改变：
-
-- Product Core
-- Users & Outcomes
-- Product Loop
-- Product Rule
-- Business Model
-- Capability Map
-- Ideal State
-- Current MCO
-- Requirement
-- Product Evolution
-- Acceptance Intent
-- Architecture Handoff
-
-### Route to Atoms
-
-内容：
-
-- 太具体不适合 Definition；
-- 但丢失会让后续语义、实施或验收出现歧义。
-
-### Discard
-
-- 思考过程。
-- 被否定路线。
-- 研究流水账。
-- 临时脑暴。
-- 普通实现 / UI 参数。
-- 可由现有规则稳定重建的信息。
+- **Definition**：Product Core、Users & Outcomes、Product Loop、Product Rule、Business Model、Capability Map、Ideal State、Current MCO、Requirement、Product Evolution、Acceptance Intent、Architecture Handoff。
+- **Atoms**：过于具体而不适合 Definition，但丢失会让后续语义、实施或验收出现歧义的信息。
+- **Discard**：思考过程、被否定路线、研究流水账、临时脑暴、普通实现 / UI 参数、可由现有规则稳定重建的信息。
 
 ## Deletion
 
-被推翻的事实：
-
-- 直接删除旧 Statement / Example。
-- 更新关系引用。
-- 不追加 superseded / old version / revision history。
-
-产品历史依赖版本库，不依赖当前事实文档。
+事实被推翻时，直接删除 / 改写旧 Statement、Example 和关系引用；不追加 superseded、old version 或 revision history。历史由版本库承担，不由当前事实文档承担。

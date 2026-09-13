@@ -258,23 +258,9 @@ Smart Home 之类产品语义由 Product Definition，接入机制归本域。
 
 ## 14. Observability
 
-触发：所有可运行系统；具体类型按实际风险。
+触发：所有可运行系统；具体类型按风险。
 
-检查：
-
-- Diagnostic Logging
-- Product / Business Events
-- Error / Crash
-- Metrics
-- Tracing
-- Audit / Security Events
-- correlation
-- runtime visibility
-- sink readiness
-- telemetry privacy
-- alerts / incident diagnosis
-
-细则见 `observability.md`。
+本域只负责确认项目是否需要 Diagnostic Logging、Product Events、Crash/Error、Metrics、Tracing、Audit，以及 correlation、runtime visibility、sink readiness、privacy、alert / incident diagnosis。详细能力定义、Baseline 和验证证据以 `observability.md` 为唯一 owner。
 
 ## 15. Analytics / BI / Experimentation / Cost
 
@@ -312,67 +298,29 @@ Redis 不得成为资金 / 订单 / 核心内容唯一真相。
 
 ## 17. Quality / Verification
 
-触发：每个 Stage；Contract / Load 按风险触发。
+触发：每个 Stage；Contract / Load / Migration / Real Provider 按风险触发。
 
-检查：
-
-- Task / Slice / Stage 三层是否分工。
-- 是否重复测试同一事实。
-- 哪些外部依赖必须真实 sandbox。
-- 多独立消费方是否需要 contract testing。
-- client compatibility window。
-- migration rehearsal。
-- load test 是否有量级和通过标准。
-- test data isolation / redaction。
-- CI 分层和 flaky handling。
-
-细则见 `verification.md`。
+这里只检查三层验证是否分工、是否重复证明、真实边界是否被 mock 掩盖、兼容 / migration / load / CI 风险是否触发；详细规则以 `verification.md` 为唯一 owner。
 
 ## 18. Conventions
 
-触发：全项目工程规范建立或重大跨模块契约出现。
+触发：建立全项目工程规范或出现重大跨模块契约。
 
-检查：
-
-- dependency policy / license / security / lockfile。
-- time storage / timezone / occurred vs persisted semantics。
-- ID generation / exposure / index characteristics。
-- money / currency numeric rules。
-- event naming / event versioning。
-- API / schema / event 共用 breaking-change / deprecation discipline。
-
-这些结论最终进入 `ENGINEERING_STANDARDS.md`，不另建规则对象编号。
+检查 dependency policy、time/timezone、ID、money/currency、event naming/versioning、breaking-change/deprecation。最终结论进入 `ENGINEERING_STANDARDS.md`，不另建规则对象；详细规范以 `engineering-standards.md` 为唯一 owner。
 
 ## Coverage Inventory
 
-以下能力必须能在主 skill 或上述条件域中找到归属；这是一张内部防丢对账表，不要求项目逐项填写：
+内部防丢对账，不要求项目逐项填写。主 skill 或上述条件域必须能覆盖：
 
-- Architecture goal / system architecture / delivery surfaces
-- iOS / Android / Web consumer / Admin control plane
-- Backend language / backend architecture / HTTP
-- Database access / API contract / API versioning
-- Authentication / Authorization / Admin RBAC
-- Primary DB / System of Record / Offline / Client Cache
-- Realtime / Realtime Channel / AI Streaming
-- AI Gateway / Model Routing / AI Memory / Search / Agent Architecture / Agent Permissions
-- Background Jobs / Domain Events / Idempotency
-- Economy / Inventory / Payments / Webhooks / Reconciliation
-- Storage / Media Processing / CDN
-- Edge / WAF / DDoS / Rate Limiting / Abuse / Anti-Fraud / Moderation mechanism
-- User Blocking technical implications
-- Notification Platform / Push / Email / SMS
-- Product Analytics / Error Monitoring / Logs / Metrics / Tracing / Audit / Security Events
-- AI Usage / Cost Accounting
-- Feature Flags / Configuration / Secrets / Sensitive Credentials / Environments
-- Database Migration / Zero-Downtime Schema
-- Backup / Disaster Recovery
-- Data Retention / Account Deletion / Data Export / Privacy Classification / Telemetry Privacy / Support Access / Location Privacy
-- Social Graph / Feed / Ranking / Redis / Location / Maps
-- Smart Home integration mechanism / Third-party Integrations
-- Content / AI Safety mechanism / Prompt Management / AI Evaluation
-- Testing / Contract Testing / Load Testing
-- CI/CD / Deployment / Release Strategy / Infrastructure as Code
-- Observability Alerts / Incident Response / Status / Kill Switch
-- Business Intelligence / Data Warehouse Boundary / Product Experimentation / Cost Management
-- Dependency Policy / Time / IDs / Money / Currency / Event Naming
-- Final provider choices / explicit non-route decisions / Stage verification intent / product clarification / final architecture readiness
+- Delivery surfaces / mobile / web / admin / backend / HTTP / API contract / versioning
+- Auth / authorization / admin / identity / offline / cache / System of Record / realtime / AI streaming
+- AI gateway / model routing / memory / search / agents / permissions / prompt / eval / safety / cost
+- Jobs / domain events / idempotency / payment / inventory / webhook / reconciliation
+- Storage / media / CDN / edge / WAF / DDoS / rate limit / abuse / moderation / blocking
+- Notifications / analytics / crash / logs / metrics / tracing / audit / security events
+- Config / secrets / environments / migration / backup / DR / CI/CD / deployment / release / IaC
+- Retention / deletion / export / privacy / telemetry / support access / location
+- Social / feed / ranking / Redis / maps / smart-home / third-party integrations
+- Contract / load testing / BI / warehouse / experimentation / cost management
+- Dependencies / time / IDs / money / event naming / provider decisions / Stage verification / product clarification / architecture readiness
+

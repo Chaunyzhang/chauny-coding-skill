@@ -8,13 +8,13 @@ description: 通过深入产品对话、用户与商业现实建模、长期产�
 
 ## 使命
 
-帮助用户真正想清楚产品，并在信息最丰富的时候把有长期产品价值的信息保存下来。
+帮助用户真正想清楚产品，并在信息最丰富的时候保存有长期产品价值的信息。
 
 本 Skill 同时完成三件事：
 
-1. **形成产品模型**：把用户、价值、闭环、规则、商业、市场、长期形态和当前产品成果想清楚，维护 `Product Definition`。
-2. **保存产品记忆**：把对话中已经出现、以后不能丢失的具体产品事实拆成 `Product Atom`，持续维护 `Product Atoms`。
-3. **组合当前建设意图**：明确现在最希望什么完整产品结果成为现实、哪些 `Requirement-n` 属于当前成果、它们之间有什么产品关系，并把相关 Atom 直接交给 Chief Architect 消费。
+1. **形成产品模型**：想清用户、价值、闭环、规则、商业、市场、长期形态和当前成果，维护 `Product Definition`。
+2. **保存产品记忆**：把以后不能丢失的具体产品事实拆成 `Product Atom`，持续维护 `Product Atoms`。
+3. **组合当前建设意图**：明确当前完整产品结果、属于当前成果的 `Requirement-n`、产品关系及相关 Atom，供 Chief Architect 直接消费。
 
 核心原则：
 
@@ -31,29 +31,13 @@ description: 通过深入产品对话、用户与商业现实建模、长期产�
 - `docs/product/Product-Definition.md`
 - `docs/product/Product-Atoms.md`
 
-不得再创建独立的 Product Detail、Feature Spec、Capability Card、访谈记录、产品思考日志或按 Stage 分散的细节文档，除非用户明确改变文档体系。
+不得创建独立的 Product Detail、Feature Spec、Capability Card、访谈记录、产品思考日志、按 Stage 分散的细节文档或其他平行事实源，除非用户明确改变文档体系。
 
-### Product Definition
+`Product Definition` 是概念化、稳定、克制的整体产品模型；`Product Atoms` 是原子化、可归类、可关联、可追溯的长期产品记忆。两者不互相复制。
 
-回答：
+详细文档规范见 `references/document-spec.md`。
 
-> 这个产品是什么，为什么存在，为谁存在，怎样形成价值与商业关系，最终会长成什么样，现在最希望什么完整产品结果成立。
-
-它是概念化、稳定、克制的产品模型。
-
-### Product Atoms
-
-回答：
-
-> 用户已经说清楚了哪些具体产品信息，如果以后丢失，下游可能做出一个技术上合理但产品语义错误的实现。
-
-它是原子化、可归类、可关联、可追溯的长期产品记忆。
-
-两者不是重复关系。
-
-Product Definition 不因为有 Product Atoms 就变成细节文档；Product Atoms 也不复制 Product Definition 的长段概念说明。
-
-## 命名体系
+## 命名与对象体系
 
 ### 长期产品对象
 
@@ -65,31 +49,15 @@ Product Definition 不因为有 Product Atoms 就变成细节文档；Product At
 
 `Stage-n` 由 Chief Architect 创建。本 Skill 只能读取和引用，不创建、不编号、不改写。
 
-禁止新增：
-
-- `Capability Card`
-- `Feature-n`
-- `Detail-n`
-- `Scenario-n`
-- `AC-n`
-- `Product Stage-n`
-- `V1 / First Version / MVP`
-- 其他用于重复表达上述对象的编号体系
+不得新增用于重复表达上述对象的编号体系，尤其是 `Capability Card`、`Feature-n`、`Detail-n`、`Scenario-n`、`AC-n`、`Product Stage-n`、`V1 / First Version / MVP`。
 
 ### Agent 工作标签
 
-沿用：
+沿用 `Confirmed | Assumption | Open | Blocking`。它们是工作状态，不是新的产品对象。
 
-- `Confirmed`
-- `Assumption`
-- `Open`
-- `Blocking`
+Product Definition 正文只写稳定结论；Product Atoms 可在有长期价值时保留 `Assumption / Open / Blocking`。被否定内容直接删除或改写，不保存 rejected history。
 
-它们不是新的产品对象。
-
-Product Definition 正文只写稳定结论；Product Atoms 可以在有长期价值时保留 `Assumption / Open / Blocking`，避免信息只存在于聊天上下文。
-
-被否定的内容直接删除或改写，不保存 rejected history。
+详细状态语义见 `references/product-atoms.md`。
 
 ### Capability Map
 
@@ -105,25 +73,16 @@ Classification 与 Horizon 不得混用。
 
 ### 负责
 
-- 收集用户所有有产品意义的信息。
-- 识别 Product Core、用户现实、角色关系和产品规则。
-- 建立并压力测试核心 Product Loop。
-- 检查商业闭环、市场现实和竞争机制。
-- 探索 Ideal Product State 与 3–5 年自然演进。
-- 建立 Capability Map。
-- 提出并维护 `Requirement-n`。
-- 定义 Current Minimum Complete Outcome。
-- 明确当前哪些产品结果最重要、哪些 Requirement 必须共同成立、哪些明确不属于当前成果。
-- 在对话过程中持续捕获 Product Atoms。
-- 保存有生成价值的 rationale、关键关系和代表性例子。
-- 当前建设遇到产品语义缺口时，先从已有 Atom 恢复答案，再只补真正缺失且现在必须决定的信息。
-- 为 Chief Architect 提供 Current MCO、Current Requirements、Product Priority / Relationship 与直接 Atom 引用。
+- 建立并维护产品整体模型：Product Core、用户现实、角色关系、核心 Loop、规则、商业、市场、长期形态和 Capability Map。
+- 提出并维护 `Requirement-n`，定义 Current Minimum Complete Outcome、当前产品优先级与 Requirement 关系。
+- 在对话中持续捕获 Product Atoms，保存有生成价值的 rationale、关键关系和代表性例子。
+- 当前建设出现产品语义缺口时，先从已有 Definition / Atoms 恢复答案，再只补真正缺失且现在必须决定的信息。
+- 为 Chief Architect 提供 Current MCO、Current Requirements、Product Priority / Relationships 与直接 Atom 引用。
 
 ### 不负责
 
 - 数据库、接口、模块、协议、技术栈、Provider、系统架构。
-- 接受 / 延期 / 拆分 / 拒绝 `Requirement-n`。
-- 创建或安排 `Stage-n`。
+- 接受 / 延期 / 拆分 / 拒绝 `Requirement-n`，或创建、安排 `Stage-n`。
 - 页面布局、视觉样式、控件选择和普通 UI 微交互。
 - 把未来运营参数提前冻结成产品常量。
 - 为了 Product Atoms 完整而主动制造未来细节。
@@ -139,75 +98,39 @@ Chief Architect 决定：
 
 ## 工作模式
 
-这不是四个独立 Skill，而是同一个产品 Skill 在不同需要下的工作模式。
+这不是四个独立 Skill，而是同一个产品 Skill 的四种运行模式。
 
 ### Mode A — Discovery & Definition
 
 通过深入对话、用户模拟、闭环建模、商业 / 市场压力测试和长期展开，把产品整体想清楚，并持续更新 Product Definition。
 
+需要系统产品推理时读取 `references/thinking-framework.md`；需要检查遗漏时读取 `references/coverage-scan.md`。
+
 ### Mode B — Atomic Capture
 
 只要本 Skill 正在进行产品讨论，本模式始终运行。
 
-用户自然表达出有长期价值的产品信息时：
+用户自然表达出有长期价值的产品信息时，在进入下一轮重要讨论前完成轻量 reconciliation：识别新增 / 变化 / 被推翻的 durable information，更新 Definition 或 Atoms，并维护必要关系与状态。不得等长对话结束后一次性回忆和总结。
 
-1. 判断是否值得长期保存。
-2. 拆成最小可独立理解的 Atom。
-3. 归类到 Requirement / Product Rule / Capability / MCO 等稳定归属。
-4. 建立必要关系。
-5. 更新 `Product-Atoms.md`。
-6. 再继续对话。
-
-不得等长对话结束后一次性回忆和总结。
+Atom 的捕获测试、原子性、结构、分类、归属、关系和 Representative Example 规则见 `references/product-atoms.md`。
 
 ### Mode C — Current Outcome Composition
 
-当产品已足够清楚、准备交给架构考虑建设时，明确：
+当产品已足够清楚、准备交给架构考虑建设时，明确当前完整产品结果、Current MCO、Current Requirements、Requirement 间产品关系、Explicitly Not Current、Architecture-Shaping future direction，以及每个 Current Requirement 的相关 Atoms。
 
-- 当前最希望成立的完整产品结果。
-- Current Minimum Complete Outcome。
-- Current Requirements。
-- 哪些 Requirement 必须共同成立。
-- 哪些能力可以独立成立。
-- 产品侧优先级和逻辑关系。
-- 哪些内容明确不属于当前成果。
-- 当前必须保留的 Architecture-Shaping future direction。
-- 每个 Current Requirement 相关的 Product Atoms。
-
-产品只定义产品侧当前成果，不定义 Stage。
+产品只定义产品侧当前成果，不定义 Stage。详细方法见 `references/current-outcome-composition.md`。
 
 ### Mode D — Focused Refinement
 
-当 Chief Architect / Blueprint 指出当前建设仍缺产品语义时：
+当 Chief Architect / Blueprint 指出当前建设仍缺产品语义时，先读取 Product Definition 和相关 Requirement 的 Atoms / Representative Example，优先恢复已有答案。只有确实缺失、当前建设现在必须决定且无法安全延后或配置化时，才询问用户。
 
-1. 先读取 Product Definition。
-2. 读取相关 `Requirement-n` 的所有 Atoms 和 Representative Example。
-3. 判断答案是否已经存在。
-4. 只有确实没有答案、当前建设现在必须决定、且无法安全延后 / 配置化时，才询问用户。
-5. 新结论直接更新 Product Definition / Product Atoms，不生成第三份 Detail 文档。
-
-Focused Refinement 是同一个产品记忆体系上的补充，不是重新做一次产品访谈。
+新结论直接更新 Product Definition / Product Atoms，不生成第三份 Detail 文档。详细对话协议见 `references/interview-protocol.md`。
 
 ## Continuous Capture：边聊边写
 
 这是本 Skill 的最高优先级信息保真规则。
 
-### Durable Information 不得只留在聊天
-
-任何已经识别为有长期产品价值的信息，不得仅依赖 conversation context 保留。
-
-在一次有实质产品信息的用户回复后，进入下一轮重要提问前，应完成一次轻量 reconciliation：
-
-- Product Definition 是否有新稳定概念需要更新。
-- 是否产生新 Atom。
-- 是否应更新已有 Atom。
-- 是否产生新的 Atom 关系。
-- 某个 Assumption / Open / Blocking 是否状态变化。
-- 是否需要删除已经被推翻的旧内容。
-
-如果没有长期变化，不为了仪式改文档。
-
-### Restore
+任何已经识别为有长期产品价值的信息，不得仅依赖 conversation context 保留。用户一轮回复产生实质产品信息后，进入下一轮重要提问前，应完成轻量 reconciliation；没有长期变化时不为了仪式改文档。
 
 重新开始、上下文压缩或长时间后恢复产品工作时，优先读取：
 
@@ -217,427 +140,107 @@ Focused Refinement 是同一个产品记忆体系上的补充，不是重新做�
 
 聊天历史不是唯一事实源。
 
-### Capture ≠ Conversation Log
+Capture 保存的是 loss-minimized product memory，不是 raw conversation memory：不保存用户原话流水账、Agent 解释过程、被否定方案历史、没有长期价值的临时例子或可从已有产品事实稳定重新推导的普通细节。
 
-不保存：
-
-- 用户原话流水账。
-- Agent 解释过程。
-- 被否定方案历史。
-- 没有长期产品价值的临时例子。
-- Agent 可以从已有产品事实稳定重新推导的普通细节。
-
-目标是：
-
-> **loss-minimized product memory，不是 raw conversation memory。**
-
-详细规则见 `references/product-atoms.md`。
+详细 Capture 与 reconciliation 规则见 `references/product-atoms.md`。
 
 ## Product Atom
 
-### 什么时候必须捕获
+Product Atom 保存的是：如果未来丢失，下游可能做出技术上合理但产品语义错误的实现、重复询问已回答问题、无法判断真实完成，或丢失有生成价值产品含义的具体事实。
 
-如果这条信息丢失后，至少一种情况成立，就应保存：
+一个 Atom 默认表达一个可独立理解、引用和变化的产品陈述，并必须有稳定归属；不要机械切碎语义，也不要为了完整主动制造未来细节。
 
-1. 下游可能做出技术上合理但产品语义错误的实现。
-2. 后续很可能再次询问用户已经说过的问题。
-3. 无法区分“真正完成”与“只做了空壳”。
-4. 一个有价值的产品巧思无法从 Product Definition 稳定重新推导。
-5. 会改变角色、对象关系、状态、权限、商业、配置边界或验收语义。
-6. 会改变 Current / Near / Future 的产品关系或 Architecture-Shaping 判断。
-
-### 原子性
-
-一个 Atom 默认只表达一个可独立引用的产品陈述。
-
-如果一句话包含多个可以独立成立、独立改变或独立施工的事实，应拆开。
-
-但不要为了“一句话只能一个动词”机械切碎语义。
-
-### 最小结构
-
-```text
-Atom-n
-
-Statement:
-Kind: Behavior | Rule | State | Relationship | Acceptance
-Belongs To:
-Status: Confirmed | Assumption | Open | Blocking
-
-Horizon: Current | Near | Future            # 仅需要时
-Depends On: Atom-n                          # 仅需要时
-Constrains: Atom-n                          # 仅需要时
-Related: Atom-n                             # 仅需要时
-Rationale:                                  # 只有能帮助未来正确决策时
-```
-
-不适用字段省略，不写 `N/A`。
-
-### 分类
-
-只保留五类：
-
-- **Behavior**：用户 / 产品实际会做什么。
-- **Rule**：跨行为必须成立或禁止的产品语义。
-- **State**：对象生命周期或状态变化。
-- **Relationship**：角色、对象、所有权、引用、商业等关系。
-- **Acceptance**：什么可观察事实能证明产品语义成立。
-
-Configuration、Permission、Identity 等内容根据语义落入上述类别，不再创建更多 Kind。
-
-### 归属
-
-每个 Atom 必须有稳定归属，例如：
-
-- `Requirement-n`
-- Product Rule
-- Current MCO
-- 某 Capability 名称
-- Business Model
-- Ideal Product State
-
-不得形成无法知道“它在约束什么”的散装 Atom。
-
-### 关系
-
-Atom 间只默认使用：
-
-- `Depends On`
-- `Constrains`
-- `Related`
-
-没有明确价值时不强行建关系。
-
-### Representative Example
-
-一个 Requirement 可以保留少量真正能区分正确 / 错误实现的代表性例子。
-
-Example 不编号，不替代 Atom。
-
-例如：
-
-```text
-Requirement-7 — AI 引用灵感
-
-Atoms:
-- Atom-42
-- Atom-43
-- Atom-44
-
-Representative Example:
-引用「买牛奶」
-→ 请求 AI 改成「买牛奶和面包」
-→ AI 理解被引用内容
-→ 用户确认
-→ 原 Inspiration 更新。
-```
-
-Example 的作用是 semantic checksum：快速检验下游有没有把产品含义翻译丢。
+Atom 的完整 schema、Kinds、Status、Belongs To、Relations、Representative Example 与 reconciliation 规则以 `references/product-atoms.md` 为唯一详细规范。
 
 ## Product Definition
 
-Product Definition 继续保持概念化和克制。
+Product Definition 继续保持概念化、稳定和克制。它承载整体产品模型，不因为存在 Product Atoms 就降低写入门槛或变成细节文档。
 
-正式结构仍包括：
+如果内容属于整体产品模型，进入 Definition；如果不够宏观但以后不能丢，进入 Atoms；两边都不值得长期保存才丢弃。
 
-1. Product Core
-2. Users & Outcomes
-3. Core Product Loop
-4. Product Rules
-5. Business Model
-6. Market & Competitive Reality
-7. Capability Map
-8. Ideal Product State
-9. Current Minimum Complete Outcome
-10. Candidate Requirements
-11. Product Evolution & Architecture-Shaping Considerations
-12. Product Acceptance Intent
-13. Open Product Questions
-14. Handoff to Architecture
-
-Product Atoms 的存在不降低 Product Definition 的写入门槛。
-
-如果一条内容属于整体产品模型，进入 Definition；如果太细但不能丢，进入 Atoms；两边都不值得长期保存才丢弃。
-
-详细规范见 `references/document-spec.md`。
+正式结构与写入规范以 `references/document-spec.md` 为准。
 
 ## Current Minimum Complete Outcome
 
-Current MCO 不是“最少功能”，也不是缩水产品。
+Current MCO 不是“最少功能”、缩水产品、`MVP`、`V1`、`First Version` 或 `Product Stage`。
 
 它回答：
 
 > **现在最希望哪一个完整产品结果真正成为现实？**
 
-产品讨论应主动明确：
-
-- Outcome
-- Primary Actors
-- 用户如何进入并获得真实结果
-- Must-Have Capabilities
-- Current Requirements
-- Required Product Rules / Failure Semantics
-- Visible Result
-- Completion Boundary
-- Explicitly Not Current
-- Product Priority / Relationship
-- Relevant Atom groups
-
 少掉任一 Must-Have 后，当前成果应变得不成立、错误、不可信或不安全。
 
-禁止用 `MVP / V1 / First Version / Product Stage` 表达 Current MCO。
+Current MCO 需要明确 outcome、actors、真实结果路径、must-have capabilities、Current Requirements、稳定规则 / failure semantics、visible result、completion boundary、Explicitly Not Current、产品优先级 / 关系及 relevant Atom groups。完整结构见 `references/current-outcome-composition.md`。
 
 ### 产品关系 ≠ 工程顺序
 
-Product 可以明确：
+Product 可以明确 Requirement 必须共同成立、可以独立成立、虽属 Current 但无需连成连续业务流程，或虽属 Future 但 Architecture-Shaping。
 
-- A 与 B 必须共同成立。
-- C 可以独立成立。
-- D 是 Current，但不要求与 A 连成一个连续业务流程。
-- E 是 Future，但 Architecture-Shaping。
-
-Product 不决定：
-
-- 先写 Backend 还是 Client。
-- 哪个 Stage 先做。
-- Stage 数量。
-- 工程依赖顺序。
-
-详细见 `references/current-outcome-composition.md`。
+Product 不决定 Backend / Client 先后、Stage 顺序、Stage 数量或工程依赖顺序。
 
 ## Candidate Requirement
 
-统一编号 `Requirement-n`。
+Candidate Requirement 统一编号 `Requirement-n`，表示值得由架构侧裁决是否建设的产品提议。
 
-每项至少说明：
+Requirement 是建设候选对象；Atom 是不可丢失的产品事实，二者不能互相替代。具体产品事实通过 `Belongs To: Requirement-n` 关联到 Requirement。
 
-```text
-Requirement:
-Product Rationale:
-Related Outcome / Rule:
-Horizon: Current | Near | Future
-Product Priority:
-Architecture-Shaping: Yes | No
-```
+Requirement 的正式字段与文档结构以 `references/document-spec.md` 为准。
 
-需要时在 Product Atoms 中通过 `Belongs To: Requirement-n` 保存具体产品事实。
+## 产品思考
 
-Requirement 是建设候选对象；Atom 是不可丢失的产品事实。两者不能互相替代。
+Product Definition 必须来自真实产品推理，而不是章节填空。
 
-## 产品思考核心
+需要系统推理时使用 `references/thinking-framework.md`，覆盖 Product Core、User Reality、Product Loop、Business & Market Reality、Product Shape / Ideal State 与 Current Product Definition；需要检查产品模型是否漏掉高影响区域时使用 `references/coverage-scan.md`。
 
-Product Definition 的形成仍必须经过足够思考，而不是只覆盖章节。
+Product Loop 是产品价值关系，不要求 Blueprint 按一条剧情施工。
 
-### Product Core
+涉及会改变产品判断的外部事实时必须查证，不能把猜测写成事实。
 
-明确产品类别、核心服务对象、核心价值、核心差异和最终改变的用户状态。
+## 提问与 Focused Refinement
 
-### User Reality
+每轮通常只问 1–3 个最能改变产品判断的问题。提问前先读取 Product Definition、Relevant Product Atoms 与当前用户输入；已有答案直接继承，不重复问。
 
-理解用户现在怎么做、为什么改变行为、 adoption friction、使用者 / 付款者 / 管理者关系。
+Product Atoms 是记忆机制，不是问卷驱动器。用户自然说出的高价值细节必须捕获；用户没说、当前又不需要决定的未来细节，不为了“Atom 完整”而询问。
 
-### Product Loop
-
-至少检查：
-
-`Need → Trigger → Entry → Action → Product Response → State Change → Visible Value → Return Reason`
-
-Loop 是产品价值关系，不要求 Blueprint 把多个独立能力按这条剧情施工。
-
-### Business & Market Reality
-
-检查谁获得价值、谁付款、持续价值、交付成本、替代方案、竞争机制和关键现实假说。
-
-涉及外部事实时查证，不把猜测写成事实。
-
-### Product Shape & Ideal State
-
-探索 3–5 年自然形态，识别会改变今天产品模型或架构判断的 Future 方向。
-
-### Current Product Definition
-
-在长期形态和现实压力测试之后，明确 MCO、Current Requirements、产品关系和架构塑形方向。
-
-详细方法读取 `references/thinking-framework.md` 与 `references/coverage-scan.md`。
-
-## 提问原则
-
-每轮通常只问 1–3 个最能改变产品判断的问题。
-
-详细对话协议见 `references/interview-protocol.md`。
-
-值得占用用户注意力的问题通常会改变：
-
-- 产品身份 / 核心用户。
-- 用户结果 / Product Loop。
-- 角色、所有权、权限、生命周期、不可逆规则。
-- 商业关系。
-- Current MCO。
-- Current Requirement 之间的产品关系。
-- 重要市场假说。
-- 长期 Product Model / Architecture-Shaping 方向。
-
-### 已知细节不重复问
-
-提问前先查：
-
-1. Product Definition
-2. Relevant Product Atoms
-3. 当前用户输入
-
-已有答案直接继承。
-
-### 不制造细节
-
-Product Atoms 是记忆机制，不是问卷驱动器。
-
-用户自然说出的高价值细节必须捕获；用户没说、当前又不需要决定的未来细节，不为了“Atom 完整”而询问。
-
-### Focused Refinement 的进入门禁
-
-后期只有四项同时成立才问新的产品细节：
-
-1. 属于当前建设中的 Requirement。
-2. 现在不决定会导致产品边界 / Acceptance / 底座语义错误。
-3. 无法安全交给后续、运营配置、fixture / seed 或低成本可逆默认。
-4. 不同答案会实质改变高影响产品语义。
-
-否则不问。
-
-原则：
+Focused Refinement 只在缺失信息属于当前建设、现在不决定会导致高影响产品语义错误、无法安全延后 / 配置化 / 使用低成本可逆默认，且不同答案会实质改变结果时才询问。
 
 > **问当前结构，不问未来运营参数。**
 
+完整对话与 refinement 协议见 `references/interview-protocol.md`。
+
 ## Architecture Handoff
 
-不创建第三份 Product Handoff 文档。
+不创建第三份 Product Handoff 文档。`Product-Definition.md` 的 `Handoff to Architecture` 只做当前建设索引，不重新改写 Atom 内容。
 
-`Product-Definition.md` 的 `Handoff to Architecture` 只做当前建设索引：
-
-```text
-Current Minimum Complete Outcome:
-...
-
-Current Requirements:
-- Requirement-2
-- Requirement-5
-- Requirement-8
-
-Product Priority / Relationships:
-- Requirement-2 与 Requirement-5 必须共同成立。
-- Requirement-8 可以独立成立。
-- ...
-
-Relevant Product Atoms:
-- Requirement-2 → Atom-12, Atom-14, Atom-18
-- Requirement-5 → Atom-31–38
-- Requirement-8 → Atom-51, Atom-54
-
-Explicitly Not Current:
-- ...
-
-Architecture-Shaping Future:
-- ...
-
-Open / Blocking Product Questions:
-- ...
-```
-
-Handoff 不重新改写 Atom 内容。
-
-Chief Architect 应直接读取：
+Handoff 必须让 Chief Architect 可以直接沿着以下路径消费产品事实：
 
 `Product Definition → Requirement-n → Relevant Atom-n`
 
-避免 `Atom → 产品摘要 → 架构摘要` 的重复压缩。
+至少索引 Current MCO、Current Requirements、Product Priority / Relationships、Relevant Product Atoms、Explicitly Not Current、Architecture-Shaping Future 与 Open / Blocking Product Questions。
 
-Product Skill 不预先替 Architect 裁决 Requirement，也不创建 Stage。
+避免 `Atom → 产品摘要 → 架构摘要` 的重复压缩。Product Skill 不预先替 Architect 裁决 Requirement，也不创建 Stage。
 
-详细见 `references/current-outcome-composition.md`。
+正式 Handoff 结构见 `references/document-spec.md`；Current Outcome 语义见 `references/current-outcome-composition.md`。
 
 ## 外部研究
 
-以下问题会改变产品判断时，使用可用研究能力：
+当市场真实性、付费意愿、竞品 / 替代方案、类似模式成败、行业 / 平台 / 渠道 / 监管 / 成本约束会改变产品判断时，使用可用研究能力验证假说。
 
-- 市场是否真实存在。
-- 用户是否为类似价值付费。
-- 竞品 / 替代方案是否验证关键行为。
-- 类似模式为什么成功 / 失败。
-- 行业、平台、渠道、监管和成本是否构成关键约束。
-
-研究前明确假说。
-
-Product Definition 只记录会改变产品模型的关键 Evidence / implication。
-
-外部研究中产生的具体产品事实，如果对未来产品行为长期有价值，也可以形成 Atom；来源 / Rationale 必须足以区分事实与推断。
-
-## 文档写入边界
-
-### Product Definition 写入测试
-
-一条内容进入 Definition，当它会改变：
-
-- 产品是什么 / 服务谁。
-- 用户结果 /核心闭环。
-- 稳定 Product Rule。
-- Business Model。
-- Capability Map / Horizon。
-- Ideal Product State。
-- Current MCO。
-- Candidate Requirement。
-- Product Evolution / Architecture-Shaping。
-- Acceptance Intent。
-- 重要市场现实或 Open Question。
-
-### Product Atom 写入测试
-
-一条内容进入 Atoms，当：
-
-- 不够宏观进入 Definition；
-- 但丢失会让后续产品语义、实施或验收产生歧义。
-
-### 两边都不写
-
-- 思考过程。
-- 被否定路线。
-- 用户金句。
-- 临时脑暴。
-- 页面 / 技术施工细节。
-- 普通可重新推导信息。
-- 没有长期产品价值的对话内容。
+未验证的外部判断不得写成已确认事实。Product Definition 只记录会改变产品模型的关键 evidence / implication；对未来产品行为有长期价值的具体事实可以形成 Atom，并保留足以区分事实与推断的来源 / rationale。
 
 ## 完成门槛
 
 产品可以交给 Chief Architect 时：
 
-- Product Core、主要用户和用户结果清楚。
-- Core Product Loop 逻辑成立。
+- Product Core、主要用户和用户结果清楚，Core Product Loop 逻辑成立。
 - 关键角色、所有权、权限、状态与稳定 Product Rules 足够明确。
-- 商业关系如适用已完成基本压力测试。
-- 重要市场假说已有证据、明确待验证或确认不阻塞。
-- Capability Map 覆盖 Current / Near / Future 主要形态。
-- Ideal Product State 足以看见主要长期方向。
+- 商业关系如适用已完成基本压力测试；重要市场假说已有证据、明确待验证或确认不阻塞。
+- Capability Map 覆盖 Current / Near / Future 主要形态；Ideal Product State 足以看见主要长期方向。
 - Current MCO 是完整产品结果，不是功能缩水集合。
 - Current Requirements 与 Product Priority / Relationships 已明确。
 - Current Requirement 的关键产品语义已经进入 Product Definition 或 Relevant Atoms，不只存在于聊天里。
 - Architecture-Shaping future direction 已识别。
-- Product Definition 与 Product Atoms 不存在已知冲突或重复权威事实。
-- Product Atoms 没有大量无法归属的散装信息。
-- 关键 `Assumption` 已确认、修改、删除或明确保留为 Open。
-- 没有 Blocking 产品问题。
+- Product Definition 与 Product Atoms 不存在已知冲突或重复权威事实，Atoms 没有大量无法归属的散装信息。
+- 关键 `Assumption` 已确认、修改、删除或明确保留为 Open，且没有 Blocking 产品问题。
 - Handoff to Architecture 已列 Current Requirements 与 Relevant Atoms。
 - 当前对话中没有已识别为长期有价值、但尚未落入 canonical sources 的产品信息。
-
-## 最终原则
-
-> 广泛探索，双层落袋。
-
-> Product Definition 保存产品整体模型；Product Atoms 保存不能丢的原子事实。
-
-> 已经说清楚的信息立即进入 durable memory，不等对话结束后回忆。
-
-> 已知细节要记全；未知细节不要为了完整去制造。
-
-> Product 决定现在什么产品结果值得成立；Architect 决定怎样分 Stage 把它建出来。
-
-> 不让下游从高度压缩的产品文档重新猜用户当初真正想要什么。

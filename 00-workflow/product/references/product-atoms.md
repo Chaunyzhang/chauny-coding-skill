@@ -2,31 +2,23 @@
 
 ## Purpose
 
-Product Atoms 是产品长期细节记忆。
-
-它解决的问题不是“把所有产品信息写得更详细”，而是：
-
-> 防止高带宽产品对话里的关键事实因为 Product Definition 的概念压缩而永久消失。
+Product Atoms 是产品长期细节记忆，用来防止高带宽产品对话中的关键事实因 Product Definition 的概念压缩而永久消失。它不是“把所有产品信息写得更详细”。
 
 ## Capture Test
 
-出现新信息时，依次判断：
+出现新信息时判断：丢失后是否可能导致以下任一结果？
 
-1. 丢失后，下游是否可能实现出技术上合理但产品语义错误的结果？
-2. 丢失后，未来是否很可能重新问用户已经回答过的问题？
-3. 丢失后，是否无法区分真完成与空壳完成？
-4. 丢失后，某个重要产品巧思是否无法从 Definition 稳定重建？
-5. 是否会改变角色、对象关系、状态、权限、商业、配置边界、失败语义或 Acceptance？
+1. 下游实现技术上合理但产品语义错误。
+2. 未来重复询问用户已回答的问题。
+3. 无法区分真实完成与空壳完成。
+4. 重要产品巧思无法从 Definition 稳定重建。
+5. 角色、对象关系、状态、权限、商业、配置边界、失败语义或 Acceptance 被改变。
 
-任一 YES：捕获。
-
-全部 NO：通常不进入 Atom Store。
+任一 YES：捕获；全部 NO：通常不进入 Atom Store。
 
 ## Atomicity
 
-Atom 应是“最小可独立理解和引用的产品陈述”。
-
-例如：
+Atom 是最小可独立理解、引用和变化的产品陈述。不要把多个可独立变化的事实压成一句，也不要机械按逗号 / 动词切分。
 
 差：
 
@@ -53,8 +45,6 @@ Atom-46
 引用关系必须跨会话恢复。
 ```
 
-但不要机械按逗号 / 动词切分。两个无法独立理解的半句应保持一起。
-
 ## Schema
 
 默认：
@@ -80,110 +70,36 @@ Rationale:
 
 ## Kinds
 
-### Behavior
-
-真实产品行为：
-
-- 用户做什么。
-- 产品响应什么。
-- AI / automation 能做什么。
-- 外部参与方得到什么。
-
-### Rule
-
-长期必须成立 / 禁止的产品语义：
-
-- 操作必须确认。
-- 奖励规则可配置。
-- 某对象不能被某角色修改。
-
-### State
-
-状态与生命周期：
-
-- Pending → Active。
-- 删除后进入可恢复状态。
-- 完成后不可再次编辑。
-
-### Relationship
-
-角色 / 对象之间的关系：
-
-- 引用指向原对象。
-- Team owns shared project。
-- Payer 与 user 是不同角色。
-
-### Acceptance
-
-可观察的成立事实：
-
-- 引用「买牛奶」后 AI 能正确复述其内容。
-- 确认修改后重新进入仍看到更新结果。
+- **Behavior**：用户、产品、AI / automation 或外部参与方发生的真实产品行为。
+- **Rule**：长期必须成立或禁止的产品语义。
+- **State**：状态、转换与生命周期。
+- **Relationship**：角色 / 对象间关系，如 identity、ownership、payer/user。
+- **Acceptance**：可观察、可区分真完成与空壳完成的成立事实。
 
 ## Status
 
-### Confirmed
+- **Confirmed**：用户明确决定或可靠产品事实。
+- **Assumption**：Agent 准备据此继续建模但用户未确认；应说明依据和猜错影响。
+- **Open**：值得长期保留，但当前无需决定。
+- **Blocking**：不解决会使 Product Definition、Current MCO 或高影响 Architecture-Shaping 判断错误；交 Architecture 前不得保留。
 
-用户明确决定或可靠产品事实。
+没有 `Rejected` 状态。被否定内容从当前 Atom Store 删除；如有替代结论，直接更新当前事实。
 
-### Assumption
+## Belongs To & Relations
 
-Agent 准备作为产品判断使用，但用户尚未确认。
+Atom 必须有一个主要稳定归属，优先使用：Requirement-n、Product Rule、Current MCO、Capability、Business Model、Ideal Product State。
 
-必须说明依据和猜错影响。
+关系只在有生成价值时使用：
 
-### Open
+- **Depends On**：本 Atom 的产品语义依赖另一 Atom。
+- **Constrains**：本 Atom 限制另一 Atom 的允许空间。
+- **Related**：存在重要关系，但无明显单向依赖 / 约束。
 
-值得长期保留，但当前不需要决定。
-
-### Blocking
-
-不解决会使当前 Product Definition / Current MCO / 高影响架构塑形判断错误。
-
-最终交给 Architecture 前不得保留 Blocking。
-
-### Rejected
-
-没有 Rejected 状态。
-
-被否定内容从当前 Atom Store 删除；如果用户给出替代结论，直接更新事实。
-
-## Belongs To
-
-Atom 不得散装存在。
-
-优先归属：
-
-- Requirement-n
-- Product Rule
-- Current MCO
-- Capability 名称
-- Business Model
-- Ideal Product State
-
-一个 Atom 可以与其他部分有关，但应有一个主要 Belongs To。
-
-## Relations
-
-默认只用三种：
-
-### Depends On
-
-本 Atom 的产品语义依赖另一 Atom 成立。
-
-### Constrains
-
-本 Atom 限制另一 Atom 的允许空间。
-
-### Related
-
-有重要产品关系，但无明显单向依赖 / 约束。
-
-不要为了构建知识图谱而给每条 Atom 连接一切。
+不要为了构建知识图谱连接所有 Atom。
 
 ## Grouping
 
-`Product-Atoms.md` 优先按稳定归属分组，例如：
+`Product-Atoms.md` 按稳定产品语义归组，不按聊天时间顺序，例如：
 
 ```text
 # Product Atoms
@@ -203,31 +119,15 @@ Atom 不得散装存在。
 
 Representative Example:
 ...
-
-## Requirement-8 — ...
 ```
-
-不要按时间顺序保存。
-
-时间顺序不能表达产品语义。
 
 ## Representative Example
 
-Example 不编号。
-
-保留条件：
-
-- 能同时锁住多条 Atom。
-- 能快速区分“看起来完成”和“真正完成”。
-- 是用户真实表达的典型行为，或用户明确认可的等价例子。
-
-一个 Requirement 通常 0–2 个足够。
-
-不要把所有测试 case 搬进产品文档。
+Example 不编号。只在它能同时锁住多条 Atom、快速区分真完成与空壳完成，且来自用户真实表达或明确认可的等价行为时保留。一个 Requirement 通常 0–2 个足够；不要把测试用例库搬进产品文档。
 
 ## Rationale
 
-只保存“生成正确未来决策”所必需的 Why。
+只保存生成正确未来决策所需的 Why，不保存讨论历史。
 
 保留：
 
@@ -237,66 +137,30 @@ Example 不编号。
 
 > 我们当时讨论了 A、B、C，最后觉得这个更好。
 
-Rationale 是决策生成信息，不是历史记录。
-
 ## Continuous Reconciliation
 
-每次有实质新产品信息后：
+每次出现实质新产品信息后：
 
-1. New → 新 Atom。
-2. Same → 不新增。
-3. More precise → 更新原 Atom。
-4. Conflict → 标记 Blocking / 让用户裁决。
-5. Rejected → 删除旧 Atom。
-6. New relation → 加最少必要 relation。
-7. Definition-level change → 同步更新 Product Definition。
+1. **New** → 新 Atom。
+2. **Same** → 不新增。
+3. **More precise** → 更新原 Atom。
+4. **Conflict** → 标记 Blocking / 让用户裁决。
+5. **Rejected** → 删除旧 Atom。
+6. **New relation** → 加最少必要 relation。
+7. **Definition-level change** → 同步更新 Product Definition。
 
-禁止：
-
-- 同义 Atom 重复增长。
-- 为同一产品事实维护两份权威措辞。
-- 旧事实被替换后继续作为“历史参考”留在当前文档。
+禁止同义 Atom 重复增长、为同一事实维护两份权威措辞、旧事实被替换后仍作为历史参考留在当前文档。
 
 ## Current vs Future
 
-Atom 可以保存 Future 巧思，只要它确实有产品价值。
+Future 巧思只要有长期产品价值也可以形成 Atom，并用 Horizon 表达时间层；这不代表现在建设。
 
-例如：
-
-```text
-Atom-71
-Statement: Reward amount is controlled by configurable product rule.
-Kind: Rule
-Belongs To: Reward Capability
-Status: Confirmed
-Horizon: Current
-```
-
-```text
-Atom-72
-Statement: Operations UI can change reward amount without app release.
-Kind: Behavior
-Belongs To: Operations Capability
-Status: Confirmed
-Horizon: Near
-```
-
-这样 Current 可以正确建立“可配置结构”，但不会提前建设 Near 的运营后台。
+例如 Current 可以确认“reward amount 可配置”，Near 可以确认“运营 UI 可在不发版时修改 reward amount”。这样当前建立正确的可配置结构，又不提前建设运营后台。
 
 ## Conversation Memory Rule
 
-任何已经通过 Capture Test 的内容：
-
-> 不得仅存在于聊天历史。
-
-在进入下一轮重要产品讨论前，先写入 / reconcile canonical docs。
-
-如果当前环境不能实际写文件，应明确产出待写入的 Atom 更新，而不是假装“我记住了”。
+通过 Capture Test 的信息不得只存在于聊天历史。进入下一轮重要产品讨论前，先写入 / reconcile canonical docs；若环境不能实际写文件，应明确产出待写入更新，而不是假装“已记住”。
 
 ## Atom Store 不是 Question Generator
 
-不得因为 Atom schema 有字段就追问用户。
-
-Product Atoms 记录自然产生的高价值产品信息。
-
-只有 Focused Refinement 的进入门禁成立时，才为缺失产品语义主动提问。
+不得因为 schema 缺字段就追问用户。Atoms 记录自然产生的高价值信息；只有 Focused Refinement 门槛成立时，才为缺失产品语义主动提问。

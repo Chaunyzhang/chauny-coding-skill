@@ -4,7 +4,15 @@
 
 ## Start
 
-明确：
+先恢复：
+
+```text
+Authorized Objective:
+Autonomy Mode:
+Stop / Pause Boundary:
+```
+
+再明确：
 
 - 用户当前要求。
 - 修改边界。
@@ -14,7 +22,7 @@
 
 ## Work
 
-仍然受全部 34 条雷点约束；只激活与当前任务 Trigger 相关的额外检查。
+仍然受全部 38 条雷点约束；只激活与当前任务 Trigger 相关的额外检查。
 
 普通工作尤其常见：
 
@@ -28,8 +36,15 @@
 
 这些只是导航，不表示其他规则失效。
 
-## Stop
+## Continue / Stop
 
-完成用户当前授权任务、取得充分证据且没有 blocker 后停止。
+局部任务完成后先判断 Authorized Objective：
 
-发现新的改进项、假想风险或“还能更保险”的方向，不自动扩大工作；继续需要新的 Confirmed Defect、Live Uncertainty 或明确授权。
+- Objective 完成 → STOP。
+- Objective 未完成且有合法下一步 → CONTINUE。
+- Objective 未完成且可通过已有 Skill / planning 能力解除 → ROUTE + CONTINUE。
+- Objective 未完成但必须 Human / External Authority → PAUSE。
+
+FULL AUTO 下，默认寻找自主推进路径；不能因为一个子任务完成就把控制权交回用户。
+
+发现新的改进项、假想风险或“还能更保险”的方向，不自动扩大工作；超出 Active User Directive 才需要新的 Confirmed Defect、Live Uncertainty 或明确授权。同一 Objective 内尚未完成的工作不需要重复索取 Trigger。

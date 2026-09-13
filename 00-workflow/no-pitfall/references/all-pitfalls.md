@@ -4,7 +4,7 @@
 
 规则：
 
-- 1–34 条全部永久有效。永久有效表示规则始终具有约束力，不表示每个 Task 都要逐条执行检查；只有 Trigger 成立的雷点才产生额外工作。
+- 1–38 条全部永久有效。永久有效表示规则始终具有约束力，不表示每个 Task 都要逐条执行检查；只有 Trigger 成立的雷点才产生额外工作。
 - 不得因为结构优化、去重、精简或“最佳实践”而删除任何一条。
 - 可以在 `SKILL.md` 中建立阶段导航，但不得替代本文件。
 - 后续新增雷点继续追加编号；已有编号含义不得静默改写。被强化的既有雷点应保留原问题域，不另造重复规则。
@@ -163,11 +163,30 @@ Mock、stub、fixture 和 fake 只证明其覆盖范围内的逻辑。
 
 完成报告区分已验证事实、未验证项、失败项和阻塞项。
 
-### 25. 完成当前任务后自行开启下一阶段
+### 25. 把内部 Execution Horizon 当成比用户命令更高的授权
 
-当前授权任务达到完成条件后停止。
+当前局部 Task / Slice / Stage 完成，不等于用户命令结束。
 
-后续阶段、相关优化和新发现需求进入规划流程，由 Stage Contract 或新的明确授权启动。
+Execution Horizon 只是 Agent 对 Active User Directive 的内部解释：
+
+- `TASK` / `SLICE` / `STAGE` / `CONTINUOUS` 都必须服务于用户真正的 Authorized Objective。
+- 用户明确要求更高层目标 / FULL AUTO 时，不得保守收缩成 `TASK`。
+- 如果用户目标不是“完成一个 Stage”，Stage Gate 也不能擅自终止命令。
+
+禁止的是：
+
+- 越过 Horizon 自行开启未来 Scope。
+- 没有冻结 Stage / Blueprint 就自行施工。
+- 因为发现顺手优化而扩张。
+
+不禁止：
+
+- 在同一 Standing Authorization 内，从已完成 Task 自动进入下一 Ready Task。
+- Stage 完成后，在 `CONTINUOUS` 授权下进入已经冻结且 READY 的下一 Stage。
+
+原则：
+
+> **局部 Exit 不消耗仍然有效的上层 Standing Authorization。**
 
 ### 26. 留下不可继续工作的半成品
 
@@ -300,16 +319,11 @@ Likelihood 必须有证据支撑：
 
 ### 33. 已有充分证据后仍继续 hardening、testing 或自我审计
 
-施工必须有停止条件。
+施工必须有停止条件，但停止条件属于**当前 Execution Horizon**，不是天然属于单个 Task。
 
-当以下同时成立：
+当某个 Task / Slice / Stage Outcome 已实现且对应层级证据充分：
 
-- 当前授权 Outcome 已实现。
-- 对应层级的充分证据已通过。
-- 没有当前范围未解决 blocker。
-- 当前 diff 都能由任务解释。
-
-则当前工作完成，必须停止继续：
+必须停止这个已完成层级上的：
 
 - 找更多 edge case。
 - 增加防御分支。
@@ -319,11 +333,16 @@ Likelihood 必须有证据支撑：
 - 继续搜索“还有没有问题”。
 - 为提高主观信心增加检查。
 
-如果想继续，必须先指出新的 Confirmed Defect、Live Uncertainty、Current Blocker 或 Explicit Requirement。
+然后判断：
 
-原则：
+- Standing Authorization 仍有效且有 Ready Work → 继续下一合法工作。
+- Horizon 已完成 → STOP。
+- 无 Ready Work 且存在 Global Blocker → 暂停并报告 blocker。
+- 继续需要越过 Scope / Authority → 路由上游。
 
-> 已经证明完成，就停止。继续工作也需要 Trigger。
+“继续工作也需要 Trigger”的正确含义是：
+
+> **继续新的、超出当前授权 Horizon 的工作需要 Trigger；同一 Standing Authorization 内尚未完成的下一 Task 不需要新的 Trigger。**
 
 ### 34. 越过验证与裁决边界，替自己没有证据能力的事项宣布通过
 
@@ -346,6 +365,108 @@ Agent 没有证据能力或裁决权的事项不得推断为 PASS，也不得通
 原则：
 
 > 没有裁决权和证据能力，就不要代替验收方宣布通过；能机械验证的，也不要推给人类。
+
+
+### 35. 把局部完成误判成 Authorized Objective 完成
+
+Task Exit、Slice Gate、Stage Gate、commit、CI 完成或一次局部修复通过，都只是 checkpoint。
+
+每次 checkpoint 都必须重新判断：
+
+`Authorized Objective complete?`
+
+未完成时继续判断：
+
+`Ready Work? → Authorized Skill Route? → Replan? → Human/External Blocker?`
+
+不得默认：
+
+`Local Complete → Ask User / STOP`
+
+FULL AUTO 下只要仍有合法自主推进路径，就必须继续。
+
+### 36. 把局部阻塞误判成全局阻塞
+
+一个 Task 被 credential、environment、dependency、external service 或其他前置条件阻塞时，必须先检查 Dependency Graph。
+
+如果还有与该 blocker 无关的 Ready Work：
+
+- 记录当前 Local Blocker。
+- 切换到下一 Ready Work。
+- 不向用户宣布整个施工被阻塞。
+
+只有当：
+
+- 当前 Horizon 内没有任何 Ready Work；
+- 所有剩余工作都依赖 blocker；
+- 或必须由 Human / External Authority 做当前 Agent 无法执行的动作；
+
+才是 Global Blocker。
+
+原则：
+
+> **Block the dependency branch, not the whole execution, unless the whole execution is actually blocked.**
+
+### 37. 把用户明确命令当成一次性提示，而不是持续运行时授权
+
+用户已经明确说：
+
+- 全自动施工。
+- 一直做下去。
+- 不要每步回来问。
+- 把现有计划做完。
+- 除非真的需要我，不要停。
+
+则形成 Active User Directive / Standing Authorization。
+
+禁止：
+
+- 一个 Task / Slice / Stage 完成后假装授权已消费。
+- 上下文变长后忘掉用户的 Autonomy 要求。
+- 每到 checkpoint 重新询问同一个“要不要继续”。
+
+开始 / 恢复时必须恢复：
+
+```text
+Authorized Objective:
+Autonomy Mode:
+Stop / Pause Boundary:
+```
+
+原则：
+
+> **用户的明确命令持续有效，直到目标完成、用户撤销，或出现真正必须把控制权交回用户的边界。**
+
+### 38. FULL AUTO 下没有合法停机理由却主动停机
+
+`Autonomy Mode: FULL` 时，Agent 想暂停 / 停止前必须能指出合法原因。
+
+合法 STOP：
+
+- Authorized Objective 完成。
+- 用户明确 STOP / 改变命令。
+
+合法 PAUSE：
+
+- 所有剩余自主路径都被 Global Blocker 阻塞。
+- 必须由 Human / External Authority 执行不可代理动作。
+- 必须由用户做产品 / 商业 / 审美等主观裁决。
+- 需要上游能力，但当前 Agent / orchestrator 确实无法调用。
+
+以下不是合法停机理由：
+
+- 当前 Task 完成。
+- 当前 Slice 完成。
+- 当前 Stage 完成，但用户目标更高。
+- 已经 commit。
+- 已经跑完 CI。
+- 回复已经很长。
+- “我做了很多，先汇报一下。”
+- 可以调用 Architect / Blueprint / Repair Planning，但懒得路由。
+
+原则：
+
+> **FULL AUTO：有合法推进路径就继续；停止必须有理由。**
 
 
 ## 最终原则
