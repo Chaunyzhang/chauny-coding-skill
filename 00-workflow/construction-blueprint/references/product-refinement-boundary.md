@@ -1,26 +1,20 @@
 # Product Focused Refinement Boundary
 
-Blueprint 只处理实施机械细节，不补产品语义。Product Refinement 不是独立 Skill，而是统一 `product` Skill 的 Focused Refinement 模式。
+Blueprint 只决定实施机械细节，不补产品语义。Product Refinement 指统一 `product` Skill 的 Focused Refinement 模式，不是新 Skill。
 
-## 什么时候回 Product Refinement
+## 回 Product 的四道门
 
-Product Refinement 是例外路径。先过四道门：
+只有四项全部为 YES 才进入：
+1. **Current Stage**：问题直接属于当前 Requirement。
+2. **Need Now**：现在不决定就无法正确确定能力边界或 Acceptance。
+3. **Cannot Defer**：不能安全延到运营后台、配置、seed/fixture、后续 Stage 或低成本可逆默认值。
+4. **Product Impact**：不同答案会改变 User Outcome、actor/relationship、ownership/permission/visibility、state/lifecycle、irreversible action、business/commercial rule、user-visible failure/recovery、external promise、acceptance 或 privacy/sensitive semantics。
 
-1. **Current Stage**：问题直接属于当前正在建设的 Requirement。
-2. **Need Now**：现在不决定，就无法正确确定能力边界或验收。
-3. **Cannot Defer**：不能安全交给运营后台、配置项、seed / fixture、后续 Stage 或低成本可逆默认值。
-4. **Product Impact**：不同答案会改变 User Outcome、Actor / Relationship、Ownership、Permission / Visibility、State / Lifecycle、Irreversible Action、Business Rule Shape、Commercial Boundary、User-visible Failure / Recovery、External Promise、Acceptance Outcome 或 Privacy / Sensitive Product Semantics。
+先查 Product Definition / Product Atoms / Stage Contract；已有答案就直接继承相关 Atom，不重新摘要、不回问。
 
-四项必须全部成立。
+Foundation / technical-only / infrastructure / migration 默认不进入，除非缺失语义会改变底座抽象、状态模型、权限/所有权或当前 Acceptance。未来由运营后台/配置控制的价格、奖励、概率、阈值、文案等，当前只需冻结正确配置结构，不问具体运营值。
 
-先确认 Product Definition / Product Atoms / Stage Contract 是否已有答案；已有答案则直接继承相关 `Atom-n`，不重新摘要、不回问。
-
-Foundation / technical-only / infrastructure / migration Stage 默认不进入 Product Refinement，除非该语义会改变当前底座抽象、状态模型、权限 / 所有权或 Acceptance。
-
-未来由运营后台 / 配置系统控制的价格、奖励数值、概率、解锁阈值、文案等，默认不问具体值，只要求当前底座支持正确的配置结构。
-
-四道门全部通过且 Blueprint 无法安全机械选择时：
-
+通过四门且无法安全机械选择时输出：
 ```text
 Owner: Product
 Stage:
@@ -29,41 +23,26 @@ Missing Product Semantics:
 Why Different Answers Change Product Behavior:
 Downstream Impact:
 ```
+然后回 `product`（Focused Refinement）。
 
-回 `product`（Focused Refinement）。
+## 不回 Product
 
-## 不回 Product Refinement 的内容
+Blueprint 按既有约定处理：
+- UI layout / button placement / ordinary copy。
+- existing design-system component choice。
+- file/symbol/function organization。
+- test placement。
+- frozen provider 下的 SDK wiring。
+- frozen interface 语义内的 endpoint naming。
+- low-cost reversible local behavior。
+- repository convention。
 
-Blueprint 自己按既有约定处理：
+## 回 Architecture
 
-- UI layout / button placement / ordinary copy
-- existing design-system component choice
-- file / symbol / function organization
-- test placement
-- SDK wiring within frozen provider choice
-- endpoint naming within frozen interface semantics
-- low-cost reversible local behavior
-- repository convention
-
-## 回 Architecture 的内容
-
-以下属于 Chief Architect：
-
-- interface contract
-- data ownership architecture
-- consistency / transaction boundary
-- security architecture
-- technology / provider choice
-- module boundary
-- compatibility / migration strategy
-- Stage scope / architecture acceptance
+interface contract、data ownership、consistency/transaction boundary、security、technology/provider、module boundary、compatibility/migration、Stage scope / architecture acceptance 属 Chief Architect。
 
 ## 路由
 
-`Implementation detail → Blueprint`
-
-`Product semantics → product`
-
-`Product Definition change → product`
-
+`Implementation detail → Blueprint`  
+`Product semantics / Product Definition change → product`  
 `Architecture decision → chief-architect`

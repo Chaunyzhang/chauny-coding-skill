@@ -1,146 +1,68 @@
 # Repository Intake
 
-目标：让蓝图只扫描 Current Stage 真正需要的仓库范围，同时获得足够真实信息做确定性计划。
-
-## 起点
-
-先从上游给出的：
-
-- Authorized Scope
-- Architecture / Project Structure
-- Included Requirement-n
-- Entry State
-- direct dependencies
-
-定位第一批文件。
-
-不要一开始全仓库 grep 所有东西。
+目标：只扫描 Current Stage 真正需要的仓库范围，同时取得足够真实信息做确定性计划。
 
 ## 递进扫描
 
-按以下顺序扩大：
-
-1. Current Stage 直接目标文件 / module。
+从 Authorized Scope、Project Structure、Included Requirement、Entry State 和 direct dependencies 定位第一批文件，再按真实依赖扩大：
+1. 直接目标 file/module。
 2. callers / callees。
 3. shared interface / schema / state。
 4. tests / fixtures / migrations / config。
 5. external provider integration。
 6. generated artifact source。
-7. 只有发现真实依赖时再扩大。
+7. 只有发现真实依赖才继续扩大。
+
+不要一开始全仓库 grep 或建立“全项目知识图谱”。
 
 ## 必须确认的现实
 
-### 实现位置
-- 实际 Path。
-- Symbol / type / function / route / view / handler。
-- ownership / module boundary。
-- 现有 Domain Owner / Semantic Authority。
-- public entry / internal boundary。
-- 是否已有必须复用的 policy / repository / service / helper。
+**实现**：Path、Symbol/type/function/route/view/handler、ownership/module boundary、Domain Owner/Semantic Authority、public/internal boundary、必须复用的 policy/repository/service/helper。
 
-### 数据
-- schema / model。
-- migration history。
-- source of truth。
-- write / read path。
-- consistency / transaction boundary（只读上游结论）。
+**数据**：schema/model、migration history、source of truth、read/write path、上游已冻结的 consistency/transaction boundary。
 
-### 接口
-- public / internal interface。
-- version / compatibility。
-- generated client / schema source。
+**接口**：public/internal contract、version/compatibility、generated client/schema source。
 
-### 运行
-- config / environment。
-- provider SDK 初始化。
-- queue / job / scheduler / realtime path。
-- feature flag / rollout（适用时）。
+**运行**：config/environment、provider init、queue/job/scheduler/realtime、feature flag/rollout（适用时）。
 
-### 测试
-- 现有 test target。
-- 最小可运行 selector。
-- integration environment。
-- known flaky / slow suite。
+**测试**：现有 target、最小 selector、integration environment、known flaky/slow suite。
 
-### 工具命令
-只写真实可执行命令，例如：
-
-- build
-- lint / typecheck
-- targeted test
-- migration check
-- schema generation
-
-不猜不存在的脚本名。
+**工具**：只记录真实可执行的 build、lint/typecheck、targeted test、migration check、schema generation 等；不猜脚本名。
 
 ## Authority / Reuse Intake
 
-只针对 Current Stage 触及的业务事实，确认：
+只针对 Current Stage 触及的事实确认：
+- 谁拥有规则与 canonical authority。
+- 外部正确 public path。
+- 哪些直接访问会 bypass owner。
+- 是否已有同语义实现。
+- 正常变化应落在哪个 owning domain。
 
-- 当前规则由谁拥有。
-- 当前 canonical authority 在哪。
-- 哪个 public path 是外部正确入口。
-- 哪些直接访问会绕过 owner。
-- 是否已经存在相同语义的实现。
-- 正常变化应主要落在哪个 owning domain。
-
-不要为了建立“全项目知识图谱”扫描全仓。
-
-若发现两个独立位置已经在决定同一核心业务事实，这属于 Repository Reality，应报告给 Blueprint / Architecture；不要在计划中默认继续复制第三套。
+若两个独立位置已在决定同一核心业务事实，这是 Repository Reality 冲突；不要规划第三套。
 
 ## 旧实现默认继承
 
-已有项目的实现模式默认继承，除非：
-
-- 与 Stage Contract 冲突。
-- 违反当前 Architecture / Engineering Standards。
-- 已经证明无法支持本 Stage。
-- 上游 Decision 明确要求替换。
-
-Blueprint 不因为“有更漂亮写法”顺手重构。
+已有模式默认继承，除非与 Stage Contract、Architecture/Standards 冲突，已证明无法支持本 Stage，或上游 Decision 明确替换。不要因“有更漂亮写法”顺手重构。
 
 ## 仓库现实冲突
 
-如果仓库与上游冲突：
+Blueprint 可吸收：
+- 文件名/symbol 与文档略有差异但语义兼容。
+- 已批准边界内存在多种低成本机械路径。
+- 现有 helper/component 可替代原计划新建。
 
-### Blueprint 可吸收
-- 文件名 / symbol 与文档略有差异但语义兼容。
-- 已批准边界内有多种低成本机械路径。
-- 现有 helper / component 可替代原计划新建。
+回 Architecture：
+- data/interface/module boundary 不同。
+- Domain Ownership / Semantic Authority 不明确或冲突。
+- 需要新增长期 module/owner/authority/dependency direction。
+- Provider/platform 或 migration/compatibility 前提不同。
+- Stage Scope 在现结构中无法成立。
 
-### 回 Architecture
-- data / interface / module boundary 不同。
-- Domain Ownership / Semantic Authority 不明确或互相冲突。
-- Current Stage 需要新增长期 module / owner / authority / dependency direction。
-- Provider / platform 不同。
-- migration / compatibility 前提不同。
-- Stage Scope 无法在当前结构中成立。
+回 Product：
+- 真实实现暴露未定义的用户状态、失败含义、权限、不可逆行为等产品语义。
 
-### 回 Product
-- 真实实现暴露产品语义缺口，例如用户状态、失败含义、权限或不可逆行为未定义。
+## Entry State
 
-## Entry State 写法
+只写后续 Task 依赖的事实，具体到真实 path/symbol/caller/state；禁止“模块基本完成，后续需完善”式泛述。
 
-只记录后续 Task 依赖的事实。
-
-好的：
-
-> `UserRepository.save()` 当前直接写 `users` 表；`UserService.create()` 是唯一 caller；没有现成 soft-delete 状态。
-
-差的：
-
-> 用户模块目前基本完成，但后续需要完善。
-
-## 目标
-
-扫描结束后，Blueprint 应能回答：
-
-- 从哪里改。
-- 谁调用它。
-- 改动会触达什么。
-- 最小验证命令是什么。
-- 哪些真实边界需要 Slice 层验证。
-- 哪些现有 authority / public path 必须复用。
-- 哪些 bypass 必须禁止。
-- Expected Change Boundary 在哪里。
-- 是否存在需要上游重审的冲突。
+扫描结束应能回答：从哪里改、谁调用、触达什么、最小验证命令、哪些真边界需 Slice 验证、哪些 authority/public path 必须复用、哪些 bypass 禁止、Expected Change Boundary 在哪里、是否存在上游冲突。

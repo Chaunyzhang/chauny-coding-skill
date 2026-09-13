@@ -1,210 +1,83 @@
 # Planning Guardrails
 
-本参考只约束 Blueprint 阶段的模型本能：不要把想象、焦虑和“更保险”自动转换成施工义务。
+只约束 Blueprint 阶段的模型本能：不要把想象、焦虑和“更保险”自动编译成施工义务。
 
-## 1. 两条路线
+## Confirmed Defect vs Hypothetical Risk
 
-### Confirmed Defect
-
-有证据证明缺陷真实存在：
-
-- 已发生 / 可复现；
-- test / runtime evidence 已失败；
-- 合法真实输入可以确定触发；
-- invariant / data / state 已经被破坏。
+**Confirmed Defect**：已发生/可复现、test/runtime evidence 已失败、合法真实输入确定触发，或 invariant/data/state/ownership 已有直接证据错误。
 
 处理：
-
 `Evidence → Root Cause → Correct Boundary Fix → Targeted Regression Proof`
 
-不要规划表面 guard / fallback 来掩盖根因。
+真实缺陷不再计算“值不值得修”；不得用 guard/fallback/silent correction 掩盖错误源。优先定位 invariant、ownership、source of truth、state transition、transaction/consistency、lifecycle、interface contract 或 architecture placement。
 
-### Hypothetical Risk
+**Hypothetical Risk**：只有推演，没有证据证明缺陷存在。不能直接进 Scope，先评分：
 
-只有推演，没有证据证明缺陷存在。
-
-处理：
-
-`Evidence-backed Risk Score → Threshold → Decide whether it deserves work`
-
-不能从“我能想到”直接跳到 Task。
-
-## 2. Risk Score
-
-`Severity × Evidence-backed Likelihood`
+`Risk Score = Severity × Evidence-backed Likelihood`
 
 Severity 1–5：
-
-- 1：无明显影响 / 易恢复
+- 1：几乎无影响/易恢复
 - 2：局部功能异常
-- 3：用户明显受影响 / 局部状态或数据错误
-- 4：重要数据、权限、金钱、可靠性问题
-- 5：严重数据损失、安全 / 财务事故、不可恢复破坏
+- 3：用户明显受影响/局部数据或状态错误
+- 4：重要数据、权限、金钱或可靠性问题
+- 5：严重数据损失、安全/财务事故、不可恢复破坏
 
-Likelihood 1–5 必须有证据：
-
-- history
-- real input
-- external contract
-- known failure mode
-- current runtime
-- reproducible path
-
-模型单纯想到的刁钻场景默认只能是 1。
+Likelihood 1–5 必须基于 history、real input、external contract、known failure mode、runtime evidence 或真实可构造路径。纯模型想象默认只能为 1。
 
 默认门槛：
+- `1–5`：不进 Scope，不加防御或测试。
+- `6–9`：仅低复杂度、无新状态空间的顺带处理；不得升级验证层级。
+- `10–15`：可进计划，必须 targeted handling + proof。
+- `16–25`：必须进计划，按严重性完整处理与验证。
 
-- 1–5：不进入 Blueprint Scope。
-- 6–9：仅允许低复杂度、不会制造新状态空间的顺带处理；不升级验证层级。
-- 10–15：允许进入计划，必须有 targeted handling / proof。
-- 16–25：必须进入计划，按严重性完整处理与验证。
+Architecture / project risk policy 可覆盖默认门槛。
 
-Architecture / project risk policy 可以覆盖默认门槛。
+## Defensive Work Admission
 
-## 3. Defensive Work Admission
+validation、guard、fallback、retry、compatibility shim、feature flag、recovery、extra observability/regression、rollback machinery、defensive cache/duplicate state 进入 Blueprint 必须来自：
+- Upstream obligation；
+- Confirmed Defect；
+- threshold-passing evidence-backed risk。
 
-以下工作进入 Blueprint 前必须有依据：
+“生产级最好有 / 未来可能 / 更保险 / 理论上可能 / 顺手加”都不是依据。
 
-- validation
-- guard
-- fallback
-- retry
-- compatibility shim
-- feature flag
-- recovery branch
-- extra observability
-- extra regression
-- rollback machinery
-- defensive cache / duplicate state
+## Live Uncertainty
 
-合法依据：
-
-- Upstream obligation
-- Confirmed Defect
-- Evidence-backed risk above threshold
-
-非法依据：
-
-- “生产级最好有”
-- “未来可能用到”
-- “更保险”
-- “理论上可能”
-- “顺手加一下”
-
-## 4. Root Cause Rule
-
-真实缺陷不要规划成 symptom patch。
-
-优先定位：
-
-- invariant
-- ownership
-- source of truth
-- state transition
-- transaction / consistency boundary
-- lifecycle
-- interface contract
-- architecture placement
-
-如果某 guard 只让错误不再暴露，但错误源仍存在，它不是完成方案。
-
-## 5. Live Uncertainty
-
-Verification 要服务一个仍未解决的事实。
-
-每个新增验证先写清：
-
+每个新增验证先回答：
 `Uncertainty → Evidence → Decision if Pass / Fail`
 
-如果 pass / fail 都不会改变下一步，不值得执行。
+若 pass/fail 不改变下一步，不执行。相关实现未变化时，不重复已通过的检查。
 
-已通过的检查在相关实现未变化时不重跑。
+Negative proof 只在本次新增/改变 failure semantics、触达 permission/security/payment/data-integrity、修 defect 或 risk gate 明确要求时增加；不要求每 Task 人为配失败测试。
 
-## 6. Negative-path Rule
+## Delete / Replace
 
-不要求每个 Task 人为拥有一个失败测试。
+明确删除/替换意味着旧现实级联消失，包括 code/caller、import/export、config/flag、test/mock/fixture、fallback/shim、telemetry、dependency、generated reference、active docs/comments/examples。
 
-只有本次改动：
+只有真实 migration history、mixed-version compatibility、audit/legal retention 或批准的 rollback window 才保留，并写明保留责任与删除 Trigger。“留着保险”无效。
 
-- 新增失败语义；
-- 改变失败语义；
-- 触达 permission / security / payment / data-integrity 等关键边界；
-- 修复 Confirmed Defect；
-- 或 risk gate 明确要求；
+## Intermediate State
 
-才增加对应 negative proof。
+Task 中间状态只需支持继续施工，不自动要求独立生产部署。只有真实 deployment、mixed-version、migration 或 parallel contract 需要时，才规划 feature flag、expand-contract、compatibility shim、staged rollout。
 
-## 7. Delete / Replace
+## Dry Run Boundary
 
-明确删除 / 替换时，当前系统里旧现实必须消失。
-
-级联考虑：
-
-- code / caller
-- import / export
-- config / flag
-- tests / mock / fixture
-- fallback / shim
-- telemetry
-- dependency
-- generated reference
-- active docs / comments / examples
-
-只有真实 compatibility / migration / audit / rollback window 才保留旧路径。
-
-## 8. Intermediate State
-
-Task 中间状态要支持继续施工，不自动升级成“可独立生产部署”。
-
-只有真实 deployment / mixed-version / migration / parallel contract 需要时，才规划：
-
-- feature flag
-- expand-contract
-- compatibility shim
-- staged rollout
-
-## 9. Dry Run Boundary
-
-Dry Run 只验证合同可执行：
-
+Dry Run 只验证合同：
 `Entry → Prerequisite → Task → Output → Fan-in → Slice → Stage Exit`
 
-不用于：
+不用于开放式找 bug、猜未来 edge case、重新做架构/产品 review。新风险重新走 Risk Gate。
 
-- 开放式找 bug
-- 猜未来 edge case
-- 再做一轮架构 review
-- 再做一轮 product review
+## Planning Stop
 
-新风险重新走 risk gate。
-
-## 10. Planning Stop
-
-READY 后，继续规划本身也需要 Trigger。
-
-合法 Trigger：
-
+READY 后继续规划也需要 Trigger：
 - 新 Upstream obligation
 - Confirmed Defect
 - Live Uncertainty
 - threshold-passing risk
 - repository reality changed
 
-没有 Trigger 就 STOP。
+无 Trigger 就 STOP。
 
+## Criticality ≠ Reasoning
 
-## 11. Criticality Is Not Reasoning
-
-不要因为任务涉及钱、权限、数据或删除，就把施工 reasoning 自动升高。
-
-高后果问题应该在 Blueprint 阶段提前冻结：
-
-- invariant
-- ownership
-- state / failure semantics
-- atomic boundary
-- proof
-
-最终 Task 仍必须 Low / Medium。
-
-如果需要 High 才能判断正确行为，说明风险并未被正确规划。
+钱、权限、重要数据、删除等高后果边界应在 Blueprint 阶段把 invariant、ownership、state/failure semantics、atomic boundary、proof 冻结清楚，而不是把 Construction reasoning 自动升高。若仍需 High 才能判断正确行为，说明规划未完成。

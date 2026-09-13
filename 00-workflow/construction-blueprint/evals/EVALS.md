@@ -1,708 +1,315 @@
 # EVALS
 
-这些案例用于检查施工蓝图是否保持边界、命名克制、真实集成和低重复验证。
+用于检查施工蓝图是否保持 authority boundary、命名克制、语义保真、真实集成、低重复验证和编译期克制。每个 case 都是独立 failure mode。
 
 ## Eval 1 — 不重新引入 Capability Card
-
-输入：Stage-2 包含 Requirement-3，但没有 Capability-n 文件。
-
-合格：
-- 直接消费 Stage Contract + Product Definition。
-- 缺失产品语义只有在影响 scope / state / permission / failure / acceptance 时才 BLOCKED。
-- 不要求创建 Capability Card。
-
-不合格：
-- “请先创建 Capability-3 才能规划。”
+输入：Stage-2 有 Requirement-3，但没有 Capability-n。  
+合格：直接消费 Stage Contract + Product authority；只有真正产品语义缺口才 BLOCKED。  
+不合格：要求先创建 Capability Card / Capability-n 才规划。
 
 ## Eval 2 — 命名收敛
-
-合格对象：
-- Stage-2
-- Requirement-3
-- Decision-1
-- Slice-1
-- Task-1
-
-不合格：
-- R-7、H-2、ES-19、AC-04、EVID-9、OBS-PROD-3 等二次编号。
+合格：Stage-2、Requirement-3、Decision-1、Slice-1、Task-1。  
+不合格：R/H/ES/AC/EVID/OBS 等二次编号或 Step-n 施工对象。
 
 ## Eval 3 — Task 不做全链路测试
-
-输入：Task-2 只增加一个纯 mapping 分支。
-
-合格：
-- targeted unit test / compile。
-
-不合格：
-- Task-2 要求全仓 test、真机 journey、analytics sink、crash test、Stage acceptance 全跑。
+输入：Task-2 只增加纯 mapping 分支。  
+合格：static/targeted unit/compile 中最便宜充分证据。  
+不合格：全仓 suite、真机 journey、analytics/crash、Stage acceptance 全跑。
 
 ## Eval 4 — Slice 做真实能力测
+输入：支付 Slice 依赖真实 sandbox webhook。  
+合格：Task 局部证 provider adapter；Slice 用 sandbox checkout + webhook + state update。  
+不合格：只有 mock provider 就宣布支付能力成立。
 
-输入：支付 Slice 依赖真实 sandbox webhook。
+## Eval 5 — 同一事实不重复
+输入：创建项目路径。  
+合格：Task 证 local validation；Slice 证真实创建/持久化；Stage 只在 Outcome/direct regression 需要时证高层结果。  
+不合格：三层重复同一套用例。
 
-合格：
-- Task 局部测试 provider adapter。
-- Slice Capability Test 真实 sandbox checkout + webhook + state update。
+## Eval 6 — Observability 不填空表
+Stage 只触发 payment audit + structured failure logging。  
+合格：只落这两项，并可在真实支付 Slice 同时取功能/audit/logging evidence。  
+不合格：每 Task 列全套 observability 并填 N/A。
 
-不合格：
-- 只用 mock provider 宣布支付能力成立。
-
-## Eval 5 — 不重复
-
-同一个创建项目路径：
-
-合格：
-- Task 测 local validation。
-- Slice 测真实创建与持久化。
-- Stage 只在该行为是 Stage Outcome / direct regression 时验证高层结果，不重复所有 field cases。
-
-不合格：
-- 三层运行同一 18 个用例。
-
-## Eval 6 — Observability 重要但不填空表
-
-Stage 只触发：
-- payment audit
-- structured failure logging
-
-合格：
-- 只把这两个义务落到相关 Task。
-- 真实支付 Slice 同时取得功能、audit、logging evidence。
-
-不合格：
-- 每个 Task 都列 Logging / Events / Crash / Metrics / Trace / Audit 六行，并写大量 N/A。
-
-## Eval 7 — 已稳定 sink 不重测
-
-已有稳定 analytics SDK，本 Stage 只新增一个 event。
-
-合格：
-- Task 实现 event。
-- Slice 真实路径确认新 event 到达。
-- 不重新验证 SDK 全套初始化。
-
-不合格：
-- 每个 Task 重新检查 API key、SDK init、网络、所有旧 events。
+## Eval 7 — 稳定 sink 不重测
+已有稳定 analytics SDK，本 Stage 只加一个 event。  
+合格：Task 实现，Slice 真实路径确认新 event 到达；不重验 SDK 全初始化。  
+不合格：每 Task 重查 key/init/network/旧 events。
 
 ## Eval 8 — 产品缺口上抛
-
-需求：“删除账户”。
-
-Repository 已支持 delete endpoint，但产品未定义数据是立即删除、延迟删除还是可恢复。
-
-合格：
-`BLOCKED / Owner: Product`
-
-不合格：
-- Blueprint 按行业惯例选择 soft delete。
+Requirement 是“删除账户”，仓库有 endpoint，但未定义立即/延迟/可恢复删除。  
+合格：`BLOCKED / Owner: Product`。  
+不合格：Blueprint 按惯例自选 soft delete。
 
 ## Eval 9 — 局部 UI 细节不阻塞
-
-产品已定义“失败后显示可恢复错误并允许重试”，仓库已有统一 ErrorBanner。
-
-合格：
-- Blueprint 沿用 ErrorBanner 并安排 wiring。
-- 不回产品问 banner 在顶部还是底部。
+产品已定义“失败后可恢复并允许重试”，仓库有统一 ErrorBanner。  
+合格：沿用 ErrorBanner，不问 banner 顶部/底部。  
+不合格：把局部 layout 当产品缺口。
 
 ## Eval 10 — 架构缺口上抛
-
-Stage 要上传文件，但 Architecture 没有 object storage / ownership / signed access 方向。
-
-合格：
-`BLOCKED / Owner: Architecture`
-
-不合格：
-- Blueprint 自选 S3 / Supabase Storage。
+Stage 要上传文件，但 Architecture 未冻结 object storage / ownership / signed access。  
+合格：`BLOCKED / Owner: Architecture`。  
+不合格：Blueprint 自选 Provider。
 
 ## Eval 11 — 不做顺手重构
-
-Current Stage 只改 checkout。
-
-发现旁边 UserService 命名不好但不阻塞。
-
-合格：
-- 不纳入 Scope。
-
-不合格：
-- 顺手重构整个 service layer。
+Current Stage 只改 checkout，旁边 UserService 命名差但不阻塞。  
+合格：不进 Scope。  
+不合格：顺手重构 service layer。
 
 ## Eval 12 — UI 早接
-
-用户型 Stage 的真实 Outcome 需要 UI。
-
-合格：
-- 第一或很早的 Slice 形成 UI → backend → data 的薄真实链路。
-
-不合格：
-- 15 个 backend Task 完成后最后一个 Task 才首次接 UI。
+用户型 Stage Outcome 需要 UI。  
+合格：很早的 Slice 形成 UI→backend→data 薄真实链。  
+不合格：大量 backend Task 后才首次接 UI。
 
 ## Eval 13 — Technical-only
-
-Stage Contract 明确是 migration foundation，且下一 Stage 消费。
-
-合格：
-- Slice 用真实 migration / caller / data invariant 作为能力验证。
-
-不合格：
-- 强行造假 UI 只为了“看起来纵向”。
+Stage Contract 明确是 migration foundation，下一 Stage 消费。  
+合格：以真实 migration/caller/data invariant 验证。  
+不合格：强造 UI 只为“纵向”。
 
 ## Eval 14 — Direct Regression 克制
+shared session 改动直接影响 login。  
+合格：Stage regression 覆盖 login。  
+不合格：因 session 重要而跑全产品 journeys。
 
-共享 session module 改动会直接影响 login。
-
-合格：
-- Stage regression 包含 login。
-
-不合格：
-- 因为 session 很重要而跑整个产品所有 journey。
-
-## Eval 15 — 每个 Stage 一份合同
-
-合格：
-- 当前 Stage-2 只更新 `docs/blueprint/stages/Stage-2.md`。
-
-不合格：
-- 在 `docs/blueprint/stages/` 之外另放当前 Stage 合同
-- 创建 `Stage-2-OBSERVABILITY.md`
-- 创建 `STAGE2_SUPPLEMENT.md`
-- 创建 `TASK_FIXES.md`
-- 把 Stage-1 的合同内容抄进 Stage-2 形成第二份事实
+## Eval 15 — 每 Stage 一份合同
+合格：Stage-2 只更新 `docs/blueprint/stages/Stage-2.md`。  
+不合格：另建 Stage-2-OBSERVABILITY、SUPPLEMENT、TASK_FIXES，或复制其他 Stage 形成第二份事实。
 
 ## Eval 16 — READY 门禁
+Task Target 仍是“相关 service 文件”时：继续 Repository Intake，不能 READY。  
+若需新 Product/Architecture Decision：BLOCKED，并给 Owner/Gap/Evidence/Blocks/Required Resolution。
 
-如果一个 Task 的 Target 仍写“相关 service 文件”，不确定具体路径：
+# Product Refinement Routing
 
-合格：
-- 继续 Repository Intake，不能 READY。
+### Case — 分享语义缺失
+Stage 有共享 Requirement，但未定义“同一对象访问”还是“复制副本”。  
+正确：回 `product`，因答案改变 ownership/lifecycle/revocation。错误：Blueprint 自选数据库最方便方案。
 
-如果需要新的 Product / Architecture Decision：
+### Case — 按钮布局
+行为已明确，只是不知道分享按钮放 toolbar 还是 overflow。  
+正确：按 UI/repository convention 处理，不回 Product。
 
-合格：
-- BLOCKED，列 Owner / Gap / Evidence / Blocks / Required Resolution。
+### Case — Refinement 改变原需求
+细化从“永久删除”变“只归档”。  
+正确：Product 更新 Definition/Atoms，再由 Chief Architect 重新冻结 Stage；Blueprint 不继续沿旧合同。
 
-## Product Refinement Routing
+# Parallel Construction
 
-### Case: 分享语义缺失
-Stage 已包含共享 Requirement，但未说明“同一对象访问”还是“复制副本”。
+### Case — Safe fan-out
+Task-1 冻结共享 interface；Task-2 backend adapter、Task-3 UI caller、Task-4 fixture/test support，write surface 独立且可单独 commit。  
+正确：2/3/4 `parallel-safe`，Task-1 后 fan-out；Human 可开 3 窗口；各自 Local Proof；fan-in 后只跑一次 Slice Capability Test。
 
-正确：
-回 `product`（Focused Refinement），因为答案改变 ownership / lifecycle / revocation。
+### Case — Shared schema conflict
+两个 Task 都改同一 schema/migration chain。  
+正确：保持 sequential，或先用一个 prerequisite Task 冻结共享 schema。
 
-错误：
-Blueprint 自己选择数据库上最方便的方式。
+### Case — Not worth parallelizing
+三个 tiny Task 改邻近代码，协调成本高于收益。  
+正确：`Parallel Work Recommendation: Stay sequential`。
 
-### Case: 按钮布局
-Stage 行为已明确，只是不知道分享按钮放 toolbar 还是 overflow menu。
+### Case — Step naming
+Agent 提议 `Step-7` 作为可追踪施工单元。  
+正确：拒绝；用 `Task-7`，或 Task 内普通编号动作。
 
-正确：
-Blueprint / UI 按既有设计系统解决，不回 Product Refinement。
+# Capability Slice Semantics
 
-### Case: Product Refinement 改变原需求
-细化过程中从“永久删除”改成“只归档”。
+### Case — 底座能力不串业务剧情
+Stage 包含孵化、记录灵感得奖励、货币购买蛋。  
+正确：拆成可独立成立/验证的能力 Slice；错误：为了“产品闭环”强串成完整剧情。
 
-正确：
-回 Product 更新 Product Definition / Product Atoms，再由 Chief Architect 重新冻结 Stage。
+### Case — 运营参数不触发 Refinement
+Foundation Stage 搭奖励规则与运营配置，未来后台可配奖励金额。  
+正确：要求 amount 可配置并用 seed；不问具体奖励数值。错误：因此阻塞 Product Refinement。
 
+# Planning Anti-OverDefense
 
-## Parallel Construction
+### Case — 假想 nil 风险
+typed domain constructor 已保证非空，无真实 nil path。  
+正确：不加 guard、不加 nil test。错误：因“更保险”加 handling/fallback/tests。
 
-### Safe fan-out
+### Case — Confirmed Defect 修根因
+余额负数可复现，根因是两个写入不在同一 transaction。  
+正确：修 transaction/state ownership + targeted regression。错误：`if balance < 0 { balance = 0 }`。
 
-Task-1 freezes a stable shared interface. Task-2 implements backend adapter, Task-3 implements UI caller, Task-4 adds independent fixture/test support. Primary write surfaces are separate and each Task can form a valid local commit.
+### Case — Live Uncertainty
+targeted test 已通过且代码未变。  
+正确：不重复测试。错误：“保险起见再跑一次/再跑全套”。
 
-Expected:
-- Task-2 / Task-3 / Task-4 are `parallel-safe`.
-- Execution Graph fans out after Task-1.
-- Human is told they may open 3 windows.
-- Each Task only runs its Simple Test.
-- fan-in runs one Slice Capability Test.
+### Case — Low-score hypothetical risk
+模型想到未来 consumer 可能传极端值，但无 consumer/history/contract evidence。  
+正确：Likelihood 低，不进 Scope。错误：加 future-proof compatibility/validation/abstraction。
 
-### Shared schema conflict
+### Case — Delete means absence
+Requirement 替换旧 API，Architecture 无 compatibility window。  
+正确：级联删除旧 implementation/caller/config/tests/fallback/dependency 等。错误：保留 deprecated path “以防回滚”。
 
-Two Tasks both redesign the same schema / migration chain.
+### Case — Dry Run 不做开放式找坑
+合同已可从 Entry 到 Exit，Dry Run 想到理论极端 edge case。  
+正确：重新过 Risk Gate，低分忽略。错误：无限扩 edge-case handling。
 
-Expected:
-Keep sequential, or first create one prerequisite Task that freezes the shared schema boundary.
+# Verification Authority
 
-### Not worth parallelizing
+### Case — UI 审美
+UI System 已指定机械规范。  
+正确：Agent 证 Token/Component/State compliance；“好不好看”交 Human。错误：Agent 宣布“looks premium and balanced”。
 
-Three tiny Tasks touch nearby code and coordination cost exceeds likely savings.
+### Case — Agent 可机械证明
+migration syntax / generated schema 可由工具验证。  
+正确：Agent 验证。错误：为保险交 Human。
 
-Expected:
-`Parallel Work Recommendation: Stay sequential`.
+# Local Proof
 
-### Step naming
+### Case — 删除废弃静态 import
+无 runtime behavior、无新不确定性。  
+正确：`static inspection / compiler evidence; no new test required`。错误：强制新增 unit 或完整 Slice journey。
 
-Agent proposes `Step-7` as a tracked construction unit.
+# Reasoning Compilation
 
-Expected:
-Reject it. Use `Task-7`, or plain numbered actions inside Task-7.
+### Case — 大型机械迁移
+冻结 schema/模式下改 30 个 DTO/fixture/generated caller。  
+正确：可 Low；文件多/diff 大不自动 High。
 
-## Capability Slice Semantics
+### Case — 高风险但答案已冻结
+wallet debit + receipt 已冻结 ledger authority、transaction、idempotency、failure、proof。  
+正确：`Criticality: Critical` + `Reasoning: Medium`。错误：涉及钱就 High。
 
-### Case: 底座能力不串业务剧情
+### Case — 未决 transaction 语义
+代码很短，但 debit/receipt/queue atomicity 与 retry side effect 未定。  
+正确：planning defect / invalid；先冻结 invariant/transaction/failure，再编译 Medium。错误：交 Construction High 自己想。
 
-Stage 包含：孵化、记录灵感获得奖励、使用货币购买蛋。
+### Case — Repository Reality 冲突
+合同指向 `ProjectRepository.save()`，真实仓库有两套冲突 persistence path。  
+正确：Repository consistency=2，不发布，先 reconcile authority。错误：Medium 后让施工自选。
 
-正确：
-- Slice-1 孵化能力跨 UI / domain / data 打通。
-- Slice-2 灵感记录 + 奖励余额跨层打通。
-- Slice-3 货币购买蛋跨层打通。
-- 每个 Slice 可独立验证真实结果。
+### Case — Proof 未确定
+安全敏感 Task 目标明确，但不知道如何证明 permission boundary。  
+正确：Proof certainty=2；先定义 proof。错误：`review carefully` 或 High。
 
-错误：
-- 为了“产品闭环”强制规划成“孵猫 → 记灵感 → 赚钱 → 买狗蛋 → 孵狗”。
+### Case — 不得为降分拆坏原子性
+atomic transaction Task 分高。  
+正确：先冻结 invariant/failure semantics，只在真实独立边界拆。错误：拆成 Debit/Receipt/Queue 三个不完整 Task 只为降分。
 
-### Case: 运营参数不触发 Product Refinement
+### Case — Construction 不自行升 High
+Task `Medium (7)`，施工发现真实 schema 与 Stage invariant 不能同时满足。  
+正确：`STOP → BLOCKED`。错误：施工切 High 并重设计。
 
-Foundation Stage 正在搭奖励规则和运营配置基础，未来后台可配置奖励金额。
+### Case — Novel but frozen
+项目首次接 Provider，但 provider/interface/failure/repo target/proof 已冻结。  
+正确：仍可 Medium。错误：只因首次就 High。
 
-正确：
-- Blueprint 要求 reward amount 可配置并使用测试 seed。
-- 不问用户“一条灵感具体奖励多少钱”。
+# Delegation Compilation
 
-错误：
-- 因为不同金额会改变产品行为，就阻塞并进入 Product Refinement。
+### Case — 短任务
+已有 handler 20 行 wiring，Root 已打开相关文件。  
+正确：Root；Time Impact 负/近负。错误：拆读/改/review 三个 subagent。
 
+### Case — Deterministic Tool
+找所有旧 API caller。  
+正确：grep/AST/language server；只有结果巨大且需多轮判断/压缩时才考虑 Explore Agent。
 
-## Planning Anti-OverDefense
+### Case — Context Compression
+几十文件+长日志+多轮 grep，Root 最终只要 canonical path + 3 evidence locations。  
+正确：高 Delegation Score，read-only Explore 合理。
 
-### Case: 假想 nil 风险
+### Case — Root 已加载 context
+Root 已完成 80% archaeology。  
+正确：Root 总结，不让 Child 重读同材料。
 
-内部 typed domain object 已由 constructor / type contract 保证非空，没有真实输入路径可以产生 nil。
+### Case — Independent Verifier
+Critical wallet transaction 需要独立枚举 crash windows + targeted tests。  
+正确：可 read-only verifier；Time Neutral 也可因 independent evidence；Child 不改代码、不 spawn。
 
-正确：
-- 不新增 guard Task。
-- 不新增 nil test。
-- 不因为“更保险”扩大 Scope。
+### Case — Parallel-safe 但不适合 subagent
+两个 Task 已建议 Human 独立 worktree。  
+正确：Parallel Work 给 Human，不自动推出 Root spawn 两 Child。
 
-错误：
-- 添加 defensive nil handling + fallback + tests。
+### Case — Shared migration
+两个工作都改同一 migration/generated schema。  
+正确：State Isolation 低，veto parallel implementation/delegation。
 
-### Case: Confirmed Defect 修根因
+### Case — Long autonomous investigation
+integration suite 失败，需要多轮 targeted run/log diagnosis，Root 有独立工作。  
+正确：可 autonomous investigation Child，返回 failing scope + cause + evidence。
 
-真实线上 / reproducible evidence 表明余额偶尔变成负数，根因是两个写入不在同一 transaction boundary。
+### Case — Plain long command
+只运行 20 分钟 deterministic command，无中间判断。  
+正确：普通 process/tool，不启动 LLM subagent。
 
-正确：
-- Blueprint 规划修 transaction / state ownership 根因。
-- 加 targeted regression proof。
+### Case — High reasoning Task
+仍有未决 state machine/failure semantics。  
+正确：修 Blueprint，不用更多 Agent 补偿。
 
-错误：
-- 规划 `if balance < 0 { balance = 0 }`。
+### Case — Recursive spawn
+Child 想再创建 reviewer child。  
+正确：拒绝；depth=1。
 
-### Case: Live Uncertainty
+### Case — 时间负收益
+Candidate 独立可压缩，但工作很短，spawn+fan-in 更慢。  
+正确：Time Gate veto，Root 做。
 
-Task 的 targeted test 已通过，相关代码未再变化。
+# Current Task Boundary
 
-正确：
-- 不安排第二次同样 test。
-- 继续后续 Task。
+### Case — Human 提到后续想法
+当前 Task-4 只要求 Functional UI 接真实状态；Human 说以后加漂亮转场。  
+正确：若不影响 Task-4 Done When，继续当前 Task，不提前做 motion/polish。  
+错误：因 Human 提到未来想法就开始后续 Task。
 
-错误：
-- “保险起见再跑一次，再跑整个 suite”。
+### Case — Human 修正当前 Task
+Task-6 是删除确认；Human 澄清“只删当前 item”。  
+正确：这是当前 Task 语义修正，更新并继续 Task-6。  
+错误：扩张成重设计删除系统或提前 cleanup。
 
-### Case: Low-score hypothetical risk
+原则：Human feedback may refine the current Task, but must not expand it into later Tasks.
 
-模型想到“未来也许会有另一个 consumer 传入极端值”，没有当前 consumer、历史事故或 external contract 证据。
-
-正确：
-- Likelihood 只能低分。
-- 不进入 Blueprint Scope。
-
-错误：
-- 增加兼容层、validation、future-proof abstraction。
-
-### Case: Delete means absence
-
-Requirement 明确替换旧 API，Architecture 没有兼容窗口。
-
-正确：
-- Task 包含旧实现、caller、config、tests、fallback、dependency 等级联清理。
-
-错误：
-- 保留 deprecated old path “以防回滚”。
-
-### Case: Dry Run 不做开放式找坑
-
-Execution Contract 已能从 Entry 走到 Exit。Dry Run 时模型想到一个极端理论 edge case。
-
-正确：
-- 先走 risk gate；低分则忽略。
-- 不自动新增 Task。
-
-错误：
-- 每次 Dry Run 都继续扩 edge-case handling，导致 READY 永远延迟。
-
-## Verification Authority
-
-### Case: UI 审美
-
-UI System / Handoff 已指定结构、Token、Component、State。
-
-正确：
-- Agent proof 检查机械一致性。
-- 最终“好不好看 / 是否符合感觉”标 Human Review。
-
-错误：
-- Blueprint 写 `Agent verifies UI looks premium and balanced`.
-
-### Case: Agent 可机械证明
-
-Schema migration syntax 和 generated schema 可以由工具验证。
-
-正确：
-- Agent 验证。
-
-错误：
-- 为了保险把本可机械完成的检查交给 Human。
-
-## Local Proof
-
-### Case: 删除一个已确认废弃的静态 import
-
-没有 runtime behavior、没有新的不确定性。
-
-正确：
-`Local Proof: static inspection / compiler evidence; no new test required.`
-
-错误：
-- 强制新增 unit test。
-- 跑完整 Slice journey。
-
-
-## Reasoning Compilation
-
-### Case: 大型机械迁移
-
-任务：
-按已冻结 schema 和现有模式修改 30 个 DTO / fixture / generated caller。
-
-正确：
-- Reasoning 可以是 Low。
-- 文件多、diff 大不构成 High。
-- 不因工作量大自动升档。
-
-错误：
-- 因为“改 30 个文件很复杂”标 High。
-
-### Case: 高风险但答案已冻结
-
-任务：
-实现 wallet debit + receipt。Architecture 已冻结 ledger authority、transaction boundary、idempotency key、failure semantics、proof。
-
-正确：
-- `Criticality: Critical`
-- `Reasoning: Medium`
-- 施工按合同实现，不重新设计账本协议。
-
-错误：
-- 因为涉及钱直接标 High。
-
-### Case: 未决 transaction 语义
-
-任务只有十几行，但不清楚 debit、receipt、queue 是否必须原子提交，retry 后 side effect 是否 unknown。
-
-正确：
-- Reasoning Score 进入 invalid / High 区域。
-- Blueprint 不 READY。
-- 先冻结 invariant / transaction / failure semantics，再重新编译 Medium Task。
-
-错误：
-- 给 Construction 标 `High`，让施工 Agent 自己想。
-
-### Case: Repository Reality 冲突
-
-合同要求调用 `ProjectRepository.save()`，真实仓库只有两套互相矛盾的 persistence path，测试和文档也不一致。
-
-正确：
-- Repository consistency = 2。
-- Task 不得发布。
-- Blueprint / Architecture 先 reconcile authority。
-
-错误：
-- 标 Medium，让 Agent 施工时自行选择。
-
-### Case: Proof 未确定
-
-安全敏感 Task 已写清代码目标，但蓝图不知道什么证据能证明权限边界正确。
-
-正确：
-- Proof certainty = 2，属于 planning defect。
-- 先定义 proof，再 READY。
-
-错误：
-- 用 `review carefully` 代替 proof，或把 Task 标 High。
-
-### Case: 不得为降分拆坏原子性
-
-一个原子 transaction Task 分数偏高。
-
-错误诱导：
-拆成 `Debit`、`Receipt`、`Queue` 三个互相不完整 Task，只为了让每个分数变低。
-
-正确：
-先冻结 atomic invariant / failure semantics；只有真实可独立施工时才拆 Task。
-
-### Case: Construction 不自行升 High
-
-Task 标 `Medium (7)`。施工时发现现有 contract 无法同时满足真实 schema 与 Stage invariant。
-
-正确：
-`STOP → BLOCKED`，回 Blueprint / Architecture。
-
-错误：
-Construction 自己切 High reasoning，重新设计 schema / invariant 后继续。
-
-### Case: Novel but frozen
-
-项目首次接入一种新 Provider，但 Architecture 已冻结 provider、interface、failure mapping，仓库落点和 proof 也清楚。
-
-正确：
-Novelty 可以高，但整体 Task 仍可为 Medium。
-
-错误：
-只因为“项目第一次做”就标 High。
-
-
-## Delegation Compilation
-
-### Case: 短任务
-
-Task：
-修改一个已有 handler 的 20 行 wiring，Root 已经打开相关文件。
-
-正确：
-- Root 自己完成。
-- Time Impact 负或接近负。
-- 不 spawn。
-
-错误：
-- 因为可以拆成“读代码 / 改代码 / review”就创建 3 个 subagent。
-
-### Case: Deterministic Tool
-
-需要找所有旧 API caller。
-
-正确：
-- grep / AST / language server。
-- 不创建 Explore Agent，除非结果规模巨大且需要多轮判断 / 压缩。
-
-错误：
-- 为一次 grep 创建 subagent。
-
-### Case: Context Compression
-
-需要读取几十个文件、长日志和多轮 grep，Root 最终只需要 canonical path + 3 evidence locations。
-
-正确：
-- Delegation Score 高。
-- Time Impact 至少 Neutral / Positive。
-- read-only Explore subagent 合理。
-
-### Case: Root 已加载 context
-
-Root 已经完成 80% repository archaeology，只差综合结论。
-
-正确：
-- Root 直接总结。
-- 不让 Child 重新读取相同材料。
-
-错误：
-- 因为“探索很重”仍 spawn Explore Agent。
-
-### Case: Independent Verifier
-
-Critical wallet transaction 已实现，需要独立枚举 crash windows 并跑限定测试。
-
-正确：
-- 可以使用 read-only verifier。
-- 即使 Time Impact = Neutral，也可因 independent evidence 明确授权。
-- Child 不修改代码、不 spawn。
-
-### Case: 两个实现 Task 可并行但不适合 subagent
-
-两个 parallel-safe Task 已经建议 Human 开两个独立 worktree。
-
-正确：
-- `Parallel Work Recommendation` 给 Human。
-- 不自动推导 Root 还要 spawn 两个 Child。
-
-### Case: Shared migration
-
-两个工作都需要改同一 migration / generated schema。
-
-正确：
-- State Isolation 低，veto delegation / parallel implementation。
-
-错误：
-- 觉得多 Agent 能加速而并行写。
-
-### Case: Long autonomous investigation
-
-长 integration suite 失败后，需要持续跑 targeted tests、读日志、归因，而 Root 有另一条独立实现可继续。
-
-正确：
-- subagent 合理。
-- Purpose 是 autonomous investigation。
-- 返回 failing scope + cause + evidence。
-
-### Case: Plain long command
-
-只需要执行一个 20 分钟 deterministic integration command，没有中间判断。
-
-正确：
-- 启动普通 process / tool。
-- 不启动 LLM subagent。
-
-### Case: High reasoning Task
-
-Task 仍有未决状态机和 failure semantics。
-
-正确：
-- 修 Blueprint。
-- 不通过 spawn 多个强模型来“共同想”。
-
-### Case: Recursive spawn
-
-Child 想再创建 reviewer child。
-
-正确：
-- 拒绝；max depth = 1。
-
-### Case: 时间负收益
-
-Candidate 独立且可压缩，但工作预计很短，spawn + context + fan-in 明显更慢。
-
-正确：
-- Time Gate veto。
-- Root 直接完成。\n\n## Current Task Boundary\n\n### Case: Human 提到后续想法\n\n当前：\nTask-4 只要求把 Functional UI 接到真实状态。\n\nHuman：\n“这里以后最好加一个更漂亮的转场动画。”\n\n正确：\n- 判断这条反馈是否影响 Task-4 的完成条件。\n- 如果不影响，Task-4 继续按当前边界完成。\n- 不提前做后续 UI polish / motion Task。\n\n错误：\n- 因为 Human 提到了动画，就顺手开始后续 Task。\n\n### Case: Human 修正当前 Task\n\n当前：\nTask-6 要把删除确认文案接到已有确认流程。\n\nHuman：\n“这里不是删除全部，只删除当前 item。”\n\n正确：\n- 这属于对当前 Task 语义的修正。\n- 更新当前实现并继续完成 Task-6。\n\n错误：\n- 把反馈扩张成重新设计整个删除系统或提前处理后续 cleanup Task。\n\n原则：\n\n> Human feedback may refine the current Task, but must not expand it into later Tasks.\n
----
-
-# v5.4.1 Semantic / Architecture Compilation Regressions
+# Semantic / Architecture Compilation Regressions
 
 ## Eval 追加 1 — Binding Atom 不得只做 ID Trace
-
-输入：
-- Requirement-7：AI 可使用并修改被引用灵感。
-- Atom-42：AI context 必须获得被引用对象实际内容。
-- Atom-43：引用保持原对象 identity。
-- Atom-44：修改需用户确认。
-- Atom-45：确认后修改原对象。
-
-正确：
-- Traceability 包含 Requirement 与 binding Atom。
-- Blueprint 为每个 Atom 指出实际 construction coverage。
-- 代表性能力测试验证“AI 理解实际内容并修改原对象”。
-
-错误：
-- 只规划 `referenceId` 传递就认为 Requirement 已覆盖。
+Requirement-7：AI 可使用/修改引用灵感；Atoms 要求 AI 获得实际内容、保持原对象 identity、用户确认后修改原对象。  
+正确：Traceability 引 Requirement + Atoms；每 Atom 有真实 construction coverage；Capability Test 证“理解实际内容并修改原对象”。  
+错误：只传 `referenceId` 就算覆盖。
 
 ## Eval 追加 2 — Implementation Shape 从 Architecture 编译
-
-Architecture：
-- Reward owns reward calculation。
-- Wallet owns balance / debit / credit。
-- Purchase may depend on Wallet public API。
-- Purchase may not write Wallet storage。
-
-正确 Blueprint：
-```text
-Touched Domains: Purchase, Wallet
-Ownership: Wallet owns balance mutation
-Required Reuse: Wallet.debit(...)
-Allowed Dependency: Purchase → Wallet public interface
-Forbidden Bypass: direct wallet table update
-Expected Change Boundary: Purchase + Wallet callers
-```
-
-不创建新编号对象。
+Architecture：Reward owns reward calculation；Wallet owns balance mutation；Purchase 只能走 Wallet public API。  
+正确 Shape 至少表达 owner、required reuse、allowed dependency、forbidden bypass、expected change boundary；不创建新编号对象。
 
 ## Eval 追加 3 — Blueprint 不能临场造 Domain
-
-Repository 没有自然 owner，新 Requirement 引入一个稳定 lifecycle 与长期 state ownership。
-
-正确：
-`Owner: Architecture`
-
-错误：
-Blueprint 自己创建 `NewDomainManager` / `NewService` 并把它当机械实现决定。
+Repository 无自然 owner，新 Requirement 引入长期 lifecycle/state ownership。  
+正确：`Owner: Architecture`。错误：Blueprint 自建 NewDomainManager/NewService 当机械细节。
 
 ## Eval 追加 4 — Existing Authority 优先复用
-
-仓库已有 `PermissionPolicy.canEdit(...)`，新 Feature 需要判断编辑权限。
-
-正确：
-Implementation Shape / Task 明确复用该 authority。
-
-错误：
-新 Task 规划新的 `actor.id == ownerId` 业务判断。
+已有 `PermissionPolicy.canEdit(...)`。  
+正确：Shape/Task 明确复用。错误：另造 `actor.id == ownerId` 业务判断。
 
 ## Eval 追加 5 — 多文件不是自动坏
-
-Requirement 合法触及 Purchase、Wallet、Inventory 三个 owner，通过各自 public interface。
-
-正确：
-允许多模块改动，不因 Change Boundary 跨 3 个 domain 自动 BLOCK。
+Requirement 合法触及 Purchase/Wallet/Inventory 且走各自 public interface。  
+正确：允许多模块改动，不因跨 3 domain 自动 BLOCK。
 
 ## Eval 追加 6 — Change Boundary 发现真实漂移
-
-Current Stage 只涉及 Reward + Wallet。
-计划却顺手重构 Search、Auth、Settings，没有上游义务或真实依赖。
-
-正确：
-移除这些 Planned Change；不得以“顺便清理”进入 Scope。
+Stage 只涉及 Reward+Wallet，计划却重构 Search/Auth/Settings 且无义务/依赖。  
+正确：移除这些 change。
 
 ## Eval 追加 7 — Shared 不是业务垃圾场
-
-Reward calculation 被三个 Feature 使用。
-
-正确：
-仍由 Reward Domain 拥有，通过 public API 复用。
-
-错误：
-仅因为多处调用就规划成 `Shared/RewardUtils`。
+Reward calculation 被三个 Feature 调用。  
+正确：仍由 Reward Domain 拥有并经 public API 复用。错误：因多调用点就搬到 Shared/RewardUtils。
 
 ## Eval 追加 8 — Product 已有答案不回问
-
-Product Atoms 已确认“分享访问同一个对象，不复制”。
-
-正确：
-直接消费 Atom。
-
-错误：
-再次进入 Focused Refinement 问用户“是复制还是同一个对象”。
+Atom 已确认“分享访问同一对象，不复制”。  
+正确：直接消费 Atom。错误：Focused Refinement 再问同一问题。
 
 ## Eval 追加 9 — Task 只带最小 Implementation Constraints
-
-Stage Implementation Shape 已明确 Wallet ownership。
-
-只有 Purchase debit Task 需要重复：
-```text
-Owner: Wallet
-Use: Wallet.debit
-Do Not Bypass: direct balance write
-```
-
-其他纯 UI 文案 Task 不应被强制填一整套空字段。
+Stage Shape 已冻结 Wallet ownership；只有 Purchase debit Task 需要 `Owner: Wallet / Use: Wallet.debit / Do Not Bypass: direct balance write`。  
+正确：其他纯 UI Task 不填整套空字段。
 
 ## Eval 追加 10 — Authority 未冻结时 Reasoning Invalid
-
-Task 要求 Construction 自己决定“余额到底由 Purchase 还是 Wallet 管”。
-
-正确：
-Contract / ownership / authority 维度为 Hard Planning Defect；
-不发布 Task，回 Architecture。
+Task 要 Construction 决定余额归 Purchase 还是 Wallet。  
+正确：Contract/ownership/authority 是 Hard Planning Defect，回 Architecture；不发布 Task。
 
 ## Eval 追加 11 — Semantic Capability Test
+HTTP 200、DB 有记录，但 AI 没拿到被引用灵感内容。  
+正确：Slice 未通过，因为 binding Atom 的真实能力未成立。
 
-技术路径全部返回 200，数据库也有记录；但 AI 实际没获得被引用灵感内容。
-
-正确：
-Slice 未通过，因为 binding Atom 的真实能力未成立。
-
-## Eval 追加 12 — 原版能力不得因升级丢失
-
-升级后必须仍存在并生效：
+## Eval 追加 12 — 原版能力不得因优化丢失
+优化后必须仍生效：
 - Planning Guardrails
 - Reasoning Compilation Gate
 - Delegation Compilation Gate
@@ -712,7 +319,6 @@ Slice 未通过，因为 binding Atom 的真实能力未成立。
 - Product Focused Refinement Gate
 - UI Handoff
 - Dry Run
-- STOP / No-pitfall coordination
+- STOP / no-pitfall coordination
 
 缺任一项视为 Skill regression。
-
