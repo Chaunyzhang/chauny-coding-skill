@@ -1,7 +1,7 @@
 ---
 name: construction-blueprint
 display_name: 施工蓝图
-description: 接收 Chief Architect 冻结的 Current Stage Contract，并消费 Product Definition / Product Atoms、Domain Ownership、Semantic Authority 与 Engineering Standards；在不创造产品或架构决策的前提下，基于真实仓库把 Stage 编译成可机械施工的纵向 Slice、Implementation Shape 与精确 Task；从规划源头抑制语义丢失、边界绕过、重复 authority、防御性扩张、重复验证和假想风险工作。
+description: 接收 Chief Architect 冻结的 Current Stage Contract，把正常 Stage 编译成可机械施工的 Execution Contract；也可接收 Stage Verifier 冻结的 Repair Handoff Contract 进入 Repair Mode，在独立临时 workspace 中以同等 Task 颗粒度编译修复施工，并只在 REPAIR VERIFIED 后一次性 reconcile canonical Stage 文档。两种模式都不创造产品或架构决策。
 ---
 
 # 施工蓝图
@@ -61,6 +61,37 @@ Stage Contract 是当前 Scope / Exit / Acceptance 的主权威。Blueprint 至�
 
 聊天历史不能替代仓库。按 Stage Scope 从目标文件、caller/callee、schema、config、tests、generated artifacts、integration 与真实命令递进扫描；详细见 `references/repository-intake.md`。
 
+## 两种编译模式
+
+### Normal Stage Mode
+
+默认模式。输入是 Chief Architect 冻结的 Current Stage Contract，输出唯一 canonical：
+
+`docs/blueprint/stages/Stage-<N>.md`
+
+### Repair Mode
+
+只有收到 Stage Verifier 的完整 `Repair Handoff Contract`，且其中明确：
+
+```text
+Target Workflow: Construction Blueprint
+Mode: Repair
+```
+
+才进入。
+
+Repair Mode：
+
+- 不重新规划整个 Stage；
+- canonical Stage Contract 与 Stage Execution Contract 保持 READ ONLY；
+- 把 Frozen Finding Scope 编译成 `.workbench/repairs/Stage-<N>/Repair-Execution.md`；
+- 使用正常 Blueprint 的同一 Repository Intake、Guardrail、Reasoning、Delegation、Parallel、Task、Verification 与 Dry Run 标准；
+- Scope 只能来自 Repair Handoff，不得顺便吸收 Concern、Deferred Observation、未来 hardening 或无关 cleanup；
+- 若正确修复需要新的 Product / Architecture / Stage decision，立即 BLOCKED 并 Route；
+- 只有 Stage Verifier 输出 `REPAIR VERIFIED` + Stage Reconciliation Contract 后，才允许一次性更新 canonical Stage Execution Contract。
+
+详细协议见 `references/repair-mode.md`。
+
 ## 对象与状态
 
 沿用上游对象，不重新编号：
@@ -70,11 +101,13 @@ Stage Contract 是当前 Scope / Exit / Acceptance 的主权威。Blueprint 至�
 - Decision-n
 - Stage-n
 
-Blueprint 只创建：
+Normal Stage Mode 只创建：
 - `Slice-n`：Current Stage 内可独立成立、可验证的纵向能力状态。
 - `Task-n`：Slice 内最小、确定、可施工并可局部证明的改动单元。
 
-两者仅在当前 Execution Contract 内从 1 编号。`Step` 只能表示普通动作步骤，不得成为项目对象。
+两者仅在当前 canonical Execution Contract 内从 1 编号。`Step` 只能表示普通动作步骤，不得成为项目对象。
+
+Repair Mode 可在临时 workspace 使用 `Repair Task 1 / 2 / ...` 作为显示标签，但它们不是长期项目对象，不进入 canonical 编号体系；Reconciliation 后不得残留在 canonical Stage 文档。
 
 禁止再造 `Capability-n / R-n / H-n / ES-n / AC-n / EVID-n / Checkpoint-n / Observability-n / Phase-n / Step-n` 等追踪体系。Acceptance、Preservation、Regression、Operational Obligation 直接引用上游原条目。
 
@@ -143,7 +176,7 @@ Reasoning 衡量剩余决策空间，不是工作量或 Criticality。高后果�
 
 ## 核心施工原则
 
-1. **每个 Stage 一份 Execution Contract**：`docs/blueprint/stages/Stage-<N>.md`。同一 Stage 不建 supplement / observability copy / summary；临时探索只进 `.workbench/`，交付前删除或并回。
+1. **每个 Stage 一份 canonical Execution Contract**：`docs/blueprint/stages/Stage-<N>.md`。同一 Stage 不建长期 supplement / copy / summary。Repair Mode 允许 `.workbench/repairs/Stage-<N>/` 临时合同，但它永远是 non-canonical；Repair Verified 后一次性 reconcile 回 canonical Stage 文档，再由 verifier closure 后删除。
 2. **先让真实能力成立**：用户型 Stage 优先 `Thin Vertical Capability Slice → Real Integration → Capability Verification → Expand`。UI 是能力的一部分，不默认最后接。
 3. **Slice 是能力闭环，不是业务剧情**：证明 `Real Entry → required layers → Real State/Side Effect → Visible/Observable Result`；独立能力分 Slice。
 4. **Task 是施工单元，不是验收单元**：Task 有精确 target/actions/local proof/done when，但不默认重跑 Slice/Stage/Provider。
@@ -295,10 +328,13 @@ Dry Run 新想到的“万一”重新走 Risk Gate，不能自动扩 Scope。Bl
 
 ## Execution Contract 与 Handoff
 
-每个 Stage 只维护：
+Normal Stage Mode 每个 Stage 只维护 canonical：
 `docs/blueprint/stages/Stage-<N>.md`
 
-固定结构与字段只由 `references/docs-spec.md` 定义。
+Repair Mode 只维护临时：
+`.workbench/repairs/Stage-<N>/Repair-Execution.md`
+
+两者职责、Reconciliation 与历史 Stage 边界见 `references/repair-mode.md`；canonical 固定结构与字段只由 `references/docs-spec.md` 定义。
 
 READY 后交给 Construction Agent。Construction：
 - 按 Execution Graph 与 Slice/Task 依赖推进，不假设全程串行。
@@ -329,5 +365,6 @@ Blueprint 不预造大量 Evidence ID；只需验证位置与可重复步骤清�
 - `references/verification.md`：三层验证与 authority。
 - `references/operational-obligations.md`：运行义务施工与 evidence。
 - `references/docs-spec.md`：Execution Contract 唯一结构。
+- `references/repair-mode.md`：Stage Verifier Repair Handoff 接收、临时 Repair Execution 与 Stage Reconciliation。
 
 核心质量标准：Construction Agent 能否从真实 Repository Entry State 沿唯一已批准路径完成 Current Stage，并以最小充分证据证明纵向能力和最终 Outcome。准确、可执行、早集成、少重复；不要把模型自己的焦虑编译成项目工作量。

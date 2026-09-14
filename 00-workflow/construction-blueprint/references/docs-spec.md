@@ -1,6 +1,6 @@
 # Execution Contract Docs Spec
 
-本文件是 `docs/blueprint/stages/Stage-<N>.md` 的唯一结构 owner。每个 Stage 恰好一份合同；不同 Stage 可并存。已完成 Stage 的合同冻结为后续 Preservation / Direct Regression 输入，不再改写，也不并入当前合同。
+本文件是 `docs/blueprint/stages/Stage-<N>.md` 的唯一 canonical 结构 owner。每个 Stage 恰好一份 canonical 合同；不同 Stage 可并存。已完成 Stage 的合同冻结为后续 Preservation / Direct Regression 输入，不再改写，也不并入当前合同。Repair Mode 的 `.workbench/repairs/Stage-<N>/Repair-Execution.md` 是临时 non-canonical 工作材料，不构成第二份 Stage 合同。
 
 ## 文档规则
 
@@ -8,6 +8,9 @@
 - Blueprint 只编号 Slice-n / Task-n；Atom/Requirement/Decision/Stage 沿用上游，Acceptance/Preservation/Regression/Operational Obligation 不另编号。
 - 失效计划直接删除，不保留 INVALIDATED、Task 墓地、supplement、parallel contract 或长篇 Revision Log；Stage 完成事实由 Stage Baseline / verifier evidence 承担，不靠保留废弃计划。
 - 临时研究只能放 `.workbench/`，交付前删除或把有效结论并回合同。
+- Repair Cycle 的所有修复合同/evidence 必须放 `.workbench/repairs/Stage-<N>/`；Repair Verified 前 canonical Stage Contract / Execution Contract 均只读。
+- Stage Reconciliation 只在 Stage Verifier 输出 `REPAIR VERIFIED` + bounded Reconciliation Contract 后执行；只替换/删除被 repair 实际失效的 canonical 内容，不 append repair history，不改无关章节。
+- Reconciliation closure 后默认删除 Repair Workspace；若有明确 audit retention，则只能 `CLOSED / NON-AUTHORITATIVE` 归档。
 - Path / Symbol / Command 优先于泛述。
 
 ## 固定骨架
@@ -204,3 +207,6 @@ Required Resolution:
 - 全量 test/E2E/真机被机械塞进每 Task。
 - 主能力仅 Mock 成立。
 - 失效 Task 留在正文做历史说明。
+- Repair 未验证就提前改 canonical Stage 合同。
+- Reconciliation 把 Finding / patch chronology / 临时 Repair Task append 成长期历史。
+- Repair Workspace 被当成第二份 active Stage authority。

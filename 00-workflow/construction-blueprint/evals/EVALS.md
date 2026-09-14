@@ -322,3 +322,37 @@ HTTP 200、DB 有记录，但 AI 没拿到被引用灵感内容。
 - STOP / no-pitfall coordination
 
 缺任一项视为 Skill regression。
+
+# Repair Mode Regressions
+
+## Repair Eval 1 — 必须有正式 Handoff
+Stage Verifier 只说“Wallet 有问题，修一下”，没有 Frozen Finding / Target State / Boundary / Proof。
+正确：不进入 Repair Mode；要求完整 Repair Handoff，不能从聊天猜 Scope。
+
+## Repair Eval 2 — 同颗粒度，不是简版修复清单
+Repair Handoff 完整，但输出只有“改 Wallet、删旧 helper、跑测试”。
+正确：使用正常 Blueprint 的 Task granularity、Reasoning、precise Targets、Actions、Local Proof、Done When 等；只是范围更窄、合同临时。
+
+## Repair Eval 3 — canonical Stage 在 Repair Verified 前只读
+Repair 执行到一半，Planner 想同步修改 `docs/blueprint/stages/Stage-4.md`。
+正确：拒绝；所有中间事实只进 `.workbench/repairs/Stage-4/`。
+
+## Repair Eval 4 — Handoff Boundary 不足时上抛
+正确修复 F-02 需要新增长期 Billing authority。
+正确：`BLOCKED / Owner: Architecture`；不扩大 Repair Handoff，不自己冻结 authority。
+
+## Repair Eval 5 — REPAIR VERIFIED 才能 Reconcile
+Builder 声称改完，但 Stage Verifier 仍有 UNRESOLVED Finding。
+正确：不得修改 canonical Stage Execution Contract。
+
+## Repair Eval 6 — Reconciliation 只保留最终事实
+Repair Verified 后 canonical Task-3 的原方案已失效。
+正确：按 final Repository Reality 替换/删除受影响内容；不 append F-01、patch 过程、旧/新双版本。
+
+## Repair Eval 7 — 未受影响部分保持稳定
+Repair 只影响 Wallet Slice。
+正确：Reconciliation 不顺便重写 Search / Analytics / UI 无关章节。
+
+## Repair Eval 8 — Historical Stage 不改写
+Repair Handoff 指向一个在 cycle 开始前已 frozen 的历史 Stage。
+正确：BLOCKED；route 新 maintenance / repair work unit，不修改历史 Stage contract。

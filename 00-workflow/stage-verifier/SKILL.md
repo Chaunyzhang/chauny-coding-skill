@@ -1,7 +1,7 @@
 ---
 name: stage-verifier
 display_name: 阶段审查官
-description: 在完整理解 Product Definition / Product Atoms、Architecture / Engineering Standards、当前 Stage Contract、Construction Blueprint、实际实现与验证证据后，对当前 Stage 做一次性、全量、可收敛的审查；冻结 Findings 后，再在上游权威不变的前提下编译与 Construction Blueprint 同颗粒度的 Repair Blueprint。既判断阶段是否正确完成，也给出可直接施工、可验证、可收敛的修复路径。
+description: 对当前 Stage 做一次性、全量、可收敛审查；冻结 Findings 后，强制通过 Action Admission Gate 控制后续动作，并把可修复问题以 Repair Handoff Contract 回流给 Construction Blueprint 的 Repair Mode。修复期间使用独立临时 Repair Workspace，原 Stage Execution Contract 保持只读；修复验证完成后再做一次性 Stage Reconciliation，最终 PASS 封口。
 ---
 
 # 阶段审查官
@@ -14,222 +14,215 @@ description: 在完整理解 Product Definition / Product Atoms、Architecture /
 
 审查链：
 
-`Product Semantics → Architecture Ownership / Authority → Stage Contract → Blueprint Implementation Shape → Actual Implementation → Evidence`
+`Product Semantics → Architecture Ownership / Authority → Stage Contract → Construction Blueprint → Actual Implementation → Evidence`
 
-本 Skill 不是单纯测试验收，也不是开放式 code review。
+本 Skill 不是开放式 code review，也不是第二套 Construction Blueprint。
 
-它同时回答三件事：
+它只负责三件事：
 
-1. **有没有做对。**
-2. **是不是以当前项目允许长期保留的方式做对。**
-3. **如果没做对，怎样在不改变上游产品 / 架构的前提下，以 Blueprint 级颗粒度修到正确状态。**
+1. 一次性判断当前 Stage 是否正确完成。
+2. 把全部可证明问题冻结为有限 Finding Set，并归因到正确层级。
+3. 在需要修复时输出冻结的 Repair Handoff Contract；详细施工计划由 Construction Blueprint 的 Repair Mode 编译。
 
-## 核心输出
+---
 
-首次审查先冻结一次完整结论：
+# 核心状态与输出
+
+首次审查只允许：
 
 `PASS | FIX | REPLAN_BLUEPRINT | REPLAN_ARCHITECTURE | PRODUCT CHANGE | VERIFICATION BLOCKED`
 
-然后根据结论进入第二阶段：
+含义：
 
-- `PASS`：不生成修复工作，立即结束。
-- `FIX`：基于 Frozen Finding Set 生成完整 `Repair Blueprint`。
-- `REPLAN_BLUEPRINT`：若 Product / Architecture / Stage Contract 仍正确，生成 scoped `Repair Blueprint`，替代原 Blueprint 中受影响的施工路径；未受影响部分继续有效。
-- `REPLAN_ARCHITECTURE`：不猜修复路线；等待 Architect 更新后，再恢复 Repair Planning。
-- `PRODUCT CHANGE`：不写修复蓝图；等待 Product + Architecture 重新冻结。
-- `VERIFICATION BLOCKED`：只给 Evidence Acquisition Plan，不把“缺证据”伪装成代码修复。
+- `PASS`：当前 Stage 已满足全部完成条件；立即封口。
+- `FIX`：Product / Architecture / Stage Contract 正确，Implementation 需要修复；输出 Repair Handoff Contract。
+- `REPLAN_BLUEPRINT`：上游正确，但原施工路径错误；输出 Repair Handoff Contract，交 Construction Blueprint 重编受影响路径。
+- `REPLAN_ARCHITECTURE`：需要新的或改变后的长期 owner / authority / boundary / dependency / architecture decision；停止修复，回 Chief Architect。
+- `PRODUCT CHANGE`：产品事实、Atom、Rule、Acceptance 或用户目标改变/冲突；停止修复，回 Product。
+- `VERIFICATION BLOCKED`：唯一阻塞是关键证据不足；只输出 Evidence Acquisition Plan。
 
-Finding Set 一经首次审查冻结，Repair Blueprint 只能覆盖这些 Findings 及其共同根因、必要清理和直接回归。
+修复轮增加一个中间状态：
 
-后续只验证被冻结的 Finding、Repair Blueprint 的直接影响，以及修复直接引入的阻断性回归。
+`REPAIR VERIFIED`
 
-`PASS` 是终态；达到后立即结束。
+它表示 Frozen Findings 已经按 Required State 修复并有足够证据，但 canonical Stage Execution Contract 还没有完成一次性 Reconciliation。此时不得继续修代码；必须进入 Stage Reconciliation。
 
-## 写权限
+最终只有在 Reconciliation 完成并通过 bounded check 后，才输出：
 
-验收官不修改项目文件。
+`PASS — Stage Review Closed`
+
+---
+
+# 写权限与文档边界
+
+Stage Verifier 不修改代码，也不直接修改 canonical Stage 文档。
 
 只读取：
 
 - `docs/product/Product-Definition.md`
 - `docs/product/Product-Atoms.md`
-- `docs/architecture/`
+- 当前 Architecture / Engineering Standards
 - 当前 `Stage-n` Contract
-- 当前 Stage 的 Construction Blueprint / Execution Contract
+- 当前 Stage Construction Blueprint / Execution Contract
 - Repository / diff / runtime path
-- Test / build / migration / deployment / observability / manual evidence
+- tests / build / migration / deployment / observability / manual evidence
 - Preservation / Regression / Deferred information
+- 修复轮的 Repair Workspace
 
-所有结论在聊天中汇报。
+所有审查结论可以在聊天中汇报；需要持久化修复材料时，统一进入临时 Repair Workspace。
 
-`Repair Blueprint` 也是审查输出的一部分，不创建第二份长期 Stage Execution Contract。原 Stage Blueprint 对未受影响范围继续有效；Repair Blueprint 只作为 Frozen Finding Scope 的临时施工合同。
+硬规则：
+
+> Repair Cycle 开始后，canonical Stage Contract 与 canonical Stage Execution Contract 都是 **READ ONLY**。
+
+修复期间不得一边施工一边改 canonical Stage 文档。
+
+Repair Workspace 默认：
+
+`.workbench/repairs/Stage-<N>/`
+
+若项目已有明确临时工作区约定，沿用项目约定；但必须满足：独立、临时、非 canonical、修复结束后可消费并删除。
+
+详细生命周期见 `references/repair-workspace.md`。
 
 ---
 
-# 角色边界
+# Authority Boundary
 
-## 负责
+Stage Verifier 负责：
 
-- 恢复当前 Stage 的权威上下文。
-- 建立完整的产品语义 → 架构 → 蓝图 → 实现映射。
-- 验证 binding `Atom-n` 没有在施工中丢失。
-- 验证 Stage Contract / Acceptance / Exit State。
-- 验证 Domain Ownership、Semantic Authority、Module Boundary、Dependency Direction。
-- 验证 Blueprint v5.4 的 Implementation Shape 是否被忠实实现。
-- 审查当前改动的实现质量。
-- 验证 Preservation / Regression / Scope。
-- 验证所有完成声明具有真实证据。
-- 一次性给出当前 Stage 全部需要修正的问题。
-- 把问题归因到正确上游层。
-- Frozen Findings 形成后，重新读取相关上游权威与 Repository Reality，做一次独立 Repair Planning Pass。
-- 对 `FIX` / 可局部重规划的 `REPLAN_BLUEPRINT` 编译 Blueprint 级 Repair Blueprint。
-- 把共同根因的多个 Findings 合并成正确修复路径，而不是逐 Finding 打补丁。
-- 为 Repair Blueprint 定义 Target State、Scope、Implementation Shape、Dependency Graph、Repair Tasks 与 Verification。
+- 恢复当前 Stage 权威上下文。
+- 建立产品语义 → 架构 → Stage → Blueprint → Implementation → Evidence 映射。
+- 验证 binding Atom、Stage Contract、Architecture Invariants、Implementation Shape、Implementation Quality、Scope、Preservation / Regression 与 Evidence。
+- 首次一次性冻结全部 Current Stage Findings。
+- 归因 Implementation / Blueprint / Architecture / Product / Evidence。
+- 对可修复问题编译 Repair Handoff Contract。
+- 修复后只检查 Frozen Findings、合法 Direct Regression 和 Reconciliation Target。
+- 判断何时必须继续、Route 或停止。
 
-## 不负责
+Stage Verifier 不负责：
 
-- 重新定义产品。
-- 修改 Product Atoms。
-- 修改 Roadmap / Stage Contract。
-- 重新设计 Architecture。
-- 改写未受 Finding 影响的 Blueprint 范围。
-- 在 Product / Architecture 尚未重新冻结时，猜测上游修复方案。
+- 重新定义产品或修改 Product Atoms。
+- 改 Stage Scope / Exit / Acceptance。
+- 创建或修改长期 Architecture Decision、Domain Owner、Semantic Authority、核心 boundary / dependency direction。
+- 自己编译 Blueprint 级 Task / Slice / Delegation / Parallel / Verification Execution Contract。
 - 实现代码。
-- 主动审查历史 Stage。
-- 为未来 Stage 制造风险项。
-- 对未触及代码做开放式“顺便优化”。
-- 为了显得严格而持续扩大 Finding Set。
+- 对历史 Stage 做开放式重审。
+- 对未触及范围做“顺便优化”。
+- 因为发现更多可能性就扩大 Frozen Finding Set。
 
 下游可以发现上游问题，但不能替上游做决定。
 
 ---
 
-# 最高优先级收敛规则
+# 收敛协议：默认停止，继续必须证明合法
 
-## 1. 只审当前 Stage
+详细规则见 `references/convergence-protocol.md`。
 
-审查范围由 Current Stage Contract 决定。
+## 1. Initial Review 是有限全量，不是无限搜索
 
-历史问题只有在直接阻断当前 Stage 正确实现、验证或完成时进入 Finding。
+首次输出 Finding 前必须完成固定六个审查维度，但每一个额外 read / search / test / profiler / runtime check 都仍需有明确目的。
 
-未来能力、未来扩展、未来优化不进入当前 Findings。
+初始 Review Action 只允许来自：
 
-## 2. 首次一次性全量
+- 尚未关闭的 mandatory review dimension；
+- 一个具体 Live Uncertainty；
+- 一个上游 authority / implementation path 需要定位；
+- 一个 Stage Acceptance / binding Atom / architecture constraint 需要证明。
 
-首次输出 Finding 前必须完成全部规定维度。
+不能以“再看看还有没有问题”为 Action Basis。
 
-不得：
+## 2. Findings Freeze
 
-`先发现几个 → 修完 → 再重新全库找几个`
-
-首次输出后 Finding Set 冻结。
-
-## 3. Finding 冻结
-
-首次：
+首次审查结束后形成：
 
 `F-01 ... F-N`
 
-修复轮只判断：
+之后普通 Finding Set 永久冻结。
+
+修复轮只允许：
 
 - `RESOLVED`
 - `PARTIALLY RESOLVED`
 - `UNRESOLVED`
+- `REGRESSION-XX`：仅限本轮 repair 直接引入、且会阻断 Current Stage 的新问题。
 
-只有修复直接引入新的当前 Stage 阻断性问题，才允许新增：
+若冻结后收到新的外部证据，证明一个原本就存在的 Current Stage BLOCKER，从而使当前 Review 结论客观失效：
 
-`REGRESSION-XX`
+> 不把它追加到旧 Finding Set；输出 `REVIEW CYCLE INVALIDATED — NEW REVIEW REQUIRED`，关闭当前 cycle，从新的 Initial Review 重新冻结。
 
-## 3A. 诊断与修复规划必须分两遍
+这条是极窄例外，不得由主动开放式探索制造。
 
-不要一边发现问题一边马上想 patch。
+## 3. Action Admission Gate
 
-正确顺序：
+Finding Freeze 之后，任何新的 read / search / test / planning / repair / verification 行动，在执行前都必须能完整填写内部 Action Ticket：
 
-`Review → Freeze Findings → Re-intake Authorities → Root Cause Synthesis → Repair Blueprint`
+```text
+Action Basis:
+Bound To:
+Question / Unknown:
+Decision Impact:
+Max Scope:
+Stop After:
+```
 
-原因：
+合法 `Action Basis` 只有：
 
-- 诊断阶段需要避免“想到一个问题就被某种修法带偏”。
-- 修复规划必须同时看到全部 Findings，才能识别共同根因。
-- 多个 Finding 可能由一个错误 authority / ownership / state flow 引起。
-- 修复应该恢复正确系统结构，而不是让代码被 Findings 切成很多小补丁。
+- `FROZEN_FINDING`
+- `SHARED_ROOT_CAUSE`
+- `REQUIRED_PROOF`
+- `REPAIR_REGRESSION`
+- `UPSTREAM_ROUTE`
+- `STAGE_RECONCILIATION`
 
-Repair Planning Pass 必须重新读取：
+任何字段无法明确：**不得执行该动作。**
 
-1. Product Definition。
-2. binding Product Atoms / Representative Examples。
-3. Architecture / Engineering Standards / Domain Ownership / Semantic Authority。
-4. Current Stage Contract。
-5. 原 Construction Blueprint / Implementation Shape。
-6. Frozen Finding Set。
-7. 当前 Repository Reality。
-8. Findings 直接相关的现有 tests / evidence。
+“顺便”“保险”“更完整”“最佳实践”“附近还有类似问题”“未来可能”都不是合法 basis。
 
-第一次审查时的“记忆”不能代替这次 re-intake。
+## 4. Repair Boundary
 
-## 4. PASS 立即结束
+Repair Cycle 的合法范围只有：
 
-满足当前 Stage 完成标准：
+`Frozen Findings + Shared Root Causes + Necessary Mechanical Consequences + Required Delete/Remove + Direct Regression Surface + Required Proof`
 
-`PASS — 阶段审查完成`
+新发现必须分类：
 
-不得继续：
+- Frozen Finding 的组成部分 / 共同根因 → 可继续。
+- Repair 自己引入的 Current Stage blocker → `REGRESSION-XX`。
+- 需要新 Product / Architecture / Stage decision → 立即 Route，停止 Repair。
+- 与本轮 Repair 无关的 confirmed defect → `Deferred Observation`，不进入本轮 repair。
+- Hypothetical Risk / polish / code smell → 不行动。
 
-- “再看看还能不能优化”
-- “顺便再扫一下”
-- “为了保险再跑一遍等价测试”
+## 5. MUST STOP
 
-## 5. Confirmed Defect 与 Hypothetical Risk 分开
+满足任一条件都必须停止当前行动链：
 
-Finding 必须有当前证据。
+1. 当前目标已获得足够证据。
+2. 没有通过 Action Admission Gate 的合法下一步。
+3. 下一步会超出 Repair Boundary。
+4. 下一步需要 Product / Architecture / Stage authority 决策。
+5. Frozen Findings 已全部达到 Required State，且 required proof / direct regression 完成。
+6. Reconciliation Check 通过，最终 PASS 已封口。
 
-以下可以成为 Finding：
+达到 Stop 条件后继续 review / search / hardening / cleanup / equivalent verification 属于错误行为。
 
-- 实际错误 / 可复现失败。
-- 当前有效输入路径可以证明会错。
-- 明确违反 Product Atom / Contract / Invariant / Engineering Standard / Blueprint。
-- 当前 diff 形成双 authority、越界 dependency、unowned mutation 等确定结构事实。
-- 关键 Evidence 缺失导致无法判断完成。
+## 6. PASS Seal
 
-以下不能仅凭想象成为 Finding：
+`PASS — Stage Review Closed` 封闭当前 Review Cycle。
 
-- “以后可能很慢”
-- “理论上也许会 race”
-- “万一以后增加第二个 provider”
-- “最好再多做一个 fallback”
+PASS 后不得“最后再扫一遍”。只有以下事件可以开启**新的** Review Cycle：
 
-假想风险必须先有 Evidence-backed likelihood 或当前架构义务。
+- 用户明确要求重新审查；
+- PASS 后发生新的 implementation change；
+- 出现新的外部 evidence，实质性推翻原 PASS 依据。
 
-## 6. 新检查必须解决 Live Uncertainty
-
-运行新的测试、全库搜索、性能测量或额外调查前，先回答：
-
-> 当前具体不知道什么？
-
-> 如果检查失败，我们会改变什么判断？
-
-回答不出来：不运行。
-
-## 7. 不重复已有充分证据
-
-已有新鲜、可信、范围匹配的 test / build / migration / runtime evidence，不为了 reviewer 自己“亲眼再看一次”重复运行。
-
-只有当前审查产生了新的具体不确定性，才运行最小 targeted check。
-
-## 8. 废弃即消失
-
-当前 Stage 触及范围内，已经删除 / 替换的规则、实现、接口、fallback、alias、test、fixture、comment、doc、config、flag、generated reference 不应以“旧版本说明”继续留在 active system。
-
-确定残留即 Finding。
-
-允许历史存在于版本库 / 明确归档，不在当前活动事实源保留幽灵路径。
+不得续接旧 cycle。
 
 ---
 
 # Source of Truth
 
-按以下顺序恢复：
+按以下职责顺序恢复：
 
 1. 当前用户授权。
 2. Product Definition。
@@ -238,14 +231,12 @@ Finding 必须有当前证据。
 5. Engineering Standards / Project Structure / Domain Ownership / Semantic Authority。
 6. Roadmap 中 Current Stage 的位置与依赖。
 7. Current Stage Contract。
-8. Current Construction Blueprint / Implementation Shape。
-9. 当前 diff、相关实现、调用链、数据流、状态流、side effects。
+8. Current Construction Blueprint / Execution Contract。
+9. 当前 Repository Reality / diff / execution path。
 10. Preservation / Regression / Deferred。
 11. 当前验证证据。
 
-审查不是“谁写得更晚谁优先”。
-
-遇到冲突按职责归因：
+冲突按职责归因：
 
 `Product semantic → Architecture → Stage Contract → Blueprint → Implementation`
 
@@ -253,971 +244,169 @@ Finding 必须有当前证据。
 
 ---
 
-# 审查前建立四张图
+# Initial Review
 
-输出 Finding 前，必须先在内部建立以下模型。
+详细审查维度、四张 Review Map、Hard Invariants、Sensors、Evidence 与 Quality Matrix 见 `references/stage-review-standard.md`；Finding Gate 见 `references/finding-standard.md`；方法协议见 `references/review-protocol.md`。
 
-## 1. Semantic Coverage Map
+固定流程：
 
-对每个 Current `Requirement-n`：
-
-`Requirement-n → binding Atom-n → Expected Product Behavior → Implementation Coverage → Evidence`
-
-目标：
-
-> ID traceability 不够；产品语义必须仍然存在。
-
-例如：
-
-`Atom: AI 必须看到被引用灵感实际内容`
-
-不能因为实现存在 `referenceId` 就视为覆盖。
-
-必须确认真实 context assembly 得到内容，并有相应 Evidence。
-
-## 2. Ownership / Authority Map
-
-对当前 Stage 触及的核心业务事实回答：
-
-- 哪个 Domain owns 该规则 / state / lifecycle？
-- 哪个组件是唯一 Semantic Authority？
-- 谁可以 mutation？
-- 其他模块通过什么 public capability 合作？
-- 哪些依赖 / bypass 被 Architecture 禁止？
-
-至少覆盖 Current Stage 改动真正触及的规则。
-
-## 3. Implementation Shape Map
-
-从 Blueprint 读取：
-
-- Touched Domains
-- Ownership
-- Existing Authorities to Reuse
-- Allowed Dependencies
-- Forbidden Bypasses
-- State / Side-effect Flow
-- Expected Change Boundary
-- Targets / References
-
-再还原实际实现的同一张图。
-
-审查的是：
-
-`Expected Shape vs Actual Shape`
-
-## 4. Execution Work Map
-
-对性能 / 工作效率敏感的实际路径，按需要列：
-
-- DB reads / writes
-- network / external calls
-- collection scans / sorts / transforms
-- parse / serialization
-- state mutations
-- transaction / lock boundary
-- async / parallel work
-- cache / index / batch use
-
-不是每个 Task 都必须画。
-
-只有当前行为存在明显成本、规模、远程 I/O 或 reviewer 已发现具体效率疑问时使用。
+1. **Restore**：读取 Current Stage 必要 Source of Truth。
+2. **Build Review Model**：建立 Semantic Coverage、Ownership / Authority、Implementation Shape；仅在有真实效率疑问时建立 Execution Work Map。
+3. **Review Completeness**：关键输入不足则 `VERIFICATION BLOCKED`，不猜。
+4. **Run Six Dimensions**：Semantic & Contract、Architecture & Shape、Implementation Quality、Preservation / Regression、Scope、Evidence。
+5. **Freeze Findings**：一次性形成全部 Current Stage Findings；之后禁止开放式重新审查。
+6. **Classify Result**：PASS / FIX / REPLAN_BLUEPRINT / REPLAN_ARCHITECTURE / PRODUCT CHANGE / VERIFICATION BLOCKED。
+7. **If repairable**：生成 Repair Handoff Contract，然后停止 verifier planning。
 
 ---
 
-# Stage Review Standard
+# Repair Handoff Contract
 
-首次审查必须完成六个一级维度。
+详细标准见 `references/repair-handoff.md`。
 
-## 1. Semantic & Contract Correctness
+当 Result 为 `FIX` 或上游仍正确的 `REPLAN_BLUEPRINT`：
 
-检查：
+Stage Verifier 只输出修复边界和正确状态，不输出详细施工 Tasks。
 
-### Product Semantic Coverage
-
-- Current binding `Atom-n` 是否全部有实现覆盖。
-- Product identity 是否保持。
-- Actor / ownership / permission 是否正确。
-- State / lifecycle 是否正确。
-- 必须确认 / 不可逆规则是否正确。
-- Product-visible failure / recovery 是否正确。
-- Representative Example 是否仍能成立。
-- 技术手段是否被错误当作产品义务本身。
-
-要求：
-
-`Binding Atom Coverage = 100%`
-
-存在未覆盖 binding Atom：
-
-`FAIL`
-
-### Stage Contract
-
-逐项验证：
-
-- Intent
-- Must Have
-- Exit State / Visible Delta
-- Acceptance Criteria
-- Explicit Non-Scope
-- Stop Rule
-
-每项必须有 implementation + evidence。
-
-### Core Logic Correctness
-
-当前改动实际触及的：
-
-- validation
-- state transition
-- identity
-- ordering
-- concurrency / idempotency（适用时）
-- data integrity
-- error semantics
-- permission / security boundary
-
-必须与权威规则一致。
-
----
-
-## 2. Architecture & Implementation Shape
-
-检查当前 Stage 相关的：
-
-- Domain Ownership
-- Semantic Authority
-- Module Boundary
-- Public / Internal Boundary
-- Dependency Direction
-- Data Ownership / Mutation Authority
-- Interface Contract
-- Project Structure
-- Engineering Standards
-- Architecture Invariants
-
-以及 Blueprint 的：
-
-- Required Reuse
-- Allowed Dependencies
-- Forbidden Bypasses
-- Expected State Flow
-- Expected Change Boundary
-
-### 硬指标
-
-以下目标默认应为：
+Handoff 至少包含：
 
 ```text
-Uncovered Binding Atoms: 0
-Independent Semantic Authorities for one rule: 1
-Unowned Core Mutations: 0
-Forbidden Boundary Crossings: 0
-Unapproved New Long-lived Modules / Authorities: 0
-Unexplained Changes outside Expected Change Boundary: 0
-```
-
-不是所有规则都要建立独立对象；这里只统计 Current Stage 真正触及的核心语义。
-
----
-
-## 3. Implementation Quality
-
-代码质量不靠“看起来优雅”，固定审六个维度。
-
-详细审查标准（Authority Test / Ownership Test / Boundary Test / Change Locality Test / Removal Test 等）见 `references/implementation-review-standard.md`。
-
-每个维度输出：
-
-`PASS | CONCERN | FAIL`
-
-### 3.1 Correctness
-
-人话：
-
-> 这段实现本身做的事情对不对？
-
-具体看：
-
-- condition / branch 是否遗漏真实路径。
-- mutation target 是否正确。
-- data / object identity 是否正确。
-- error 是否被错误吞掉 / 转换。
-- transaction / ordering 是否破坏业务语义。
-- async / concurrency 是否产生确定竞态。
-- resource lifecycle 是否正确。
-- current valid input 是否存在可证明错误路径。
-
-明确错误：
-
-`FAIL`
-
-纯理论可能性：
-
-不构成 Finding。
-
-### 3.2 Work Efficiency
-
-人话：
-
-> 为了完成一次真实行为，有没有做明显多余的工作？
-
-检查：
-
-- N+1 DB / network。
-- 同一 request / action 重复 fetch。
-- 已有结果却重复 parse / transform / scan。
-- 可 batch 的远程操作无理由逐项执行。
-- 可并行且相互独立的高延迟 I/O 被无理由串行。
-- transaction / lock 包含远程调用或无关重工作。
-- `SELECT *` / 整体加载后再过滤，而已有明确查询能力。
-- 绕过已有 cache / index / batch path。
-- 同一 state 多次无意义写入。
-
-不要做 micro-optimization。
-
-Finding 必须能说明：
-
-`多做了什么 → 为什么非必要 → 当前路径有什么实际成本 / 规模影响`
-
-### 3.3 Semantic Unity
-
-人话：
-
-> 同一条业务规矩是不是只有一个地方真正说了算？
-
-检查：
-
-- 是否绕过已有 policy / repository / domain service。
-- 是否复制现有业务判断。
-- 同一核心 state 是否出现第二个独立 mutation path。
-- Client / Server 是否各自独立决定同一个最终业务真相。
-- 同一 config / enum / error meaning 是否存在多个权威来源。
-- 一条业务规则变化是否必须修改多个独立 decision point。
-
-强规则：
-
-> 一个核心产品 / Domain 事实的 `Semantic Authority Count` 应为 1。
-
-两个地方只是调用 / projection / display 不算双 authority。
-
-两个地方独立决定同一规则：
-
-`FAIL`
-
-### 3.4 Modular Integrity
-
-人话：
-
-> 项目还是不是一块块职责清楚的业务板块？
-
-检查：
-
-- 当前逻辑是否落在 owning domain。
-- Feature 是否直接访问另一个 Feature 内部实现。
-- Shared / Common / Utils 是否吸收了有明确业务 owner 的逻辑。
-- 是否新增循环依赖。
-- Public API 是否为了一个局部需求泄露内部状态。
-- 新 Requirement 是否迫使大量无关模块理解同一业务规则。
-- 当前改动是否形成“删掉一个 Feature 会拖垮大量无关区域”的新耦合。
-- 新建 module / manager / service 是否有真实新责任，且已被 Architecture 批准。
-
-### Change Locality
-
-目标：
-
-> 正常产品变化主要发生在 owning domain。
-
-不是要求“只改一个文件”。
-
-但如果一次局部规则变化要求多个无关 module 同步修改决定逻辑，必须检查是否存在：
-
-- ownership leakage
-- duplicated authority
-- wrong abstraction boundary
-
-确认存在才 FAIL。
-
-### 3.5 Structural Health
-
-人话：
-
-> 代码放对地方了吗？职责边界清楚吗？
-
-检查：
-
-- Domain logic 是否跑进 UI / Controller / transport adapter。
-- Persistence logic 是否散到不该拥有数据的层。
-- 一个 function / class 是否承担多个独立责任。
-- side effect 是否藏在看似 pure 的 helper / getter / mapper。
-- public interface 是否暴露过多内部步骤。
-- dependency injection / state flow 是否清楚。
-- error mapping / validation / mutation 是否放在正确 boundary。
-- control flow 是否因不必要分支变得难以理解。
-
-### 3.6 Maintainability
-
-人话：
-
-> 下一个没参加这次施工的人，能不能安全看懂、修改和验证？
-
-检查：
-
-- Naming 是否表达 domain intent。
-- abstraction 是否对应真实重复语义 / 真实变化轴。
-- 是否存在 speculative abstraction。
-- dead / superseded code 是否残留。
-- comments 是否解释 Why，而非翻译代码。
-- 核心行为是否能在合理成本下测试。
-- test 是否证明结果，而不是只证明 mock 被调用。
-- 修改一个规则时，正确修改位置是否清楚。
-- bug 出现时，责任 owner 是否清楚。
-
----
-
-# Hard Invariants / Review Sensors / Project Standards
-
-这是审查规范的三层结构。
-
-## A. Hard Invariants
-
-证据确认后直接构成 FAIL / Finding：
-
-- binding Product Atom 未被实现。
-- 同一核心规则出现两个独立 Semantic Authority。
-- 越过 owner 直接 mutation 核心 state。
-- 违反明确禁止的 dependency / module boundary。
-- Blueprint 明确要求复用 authority，但实际重新实现第二套逻辑。
-- 当前有效路径存在确定 correctness defect。
-- error 被吞掉并改变产品语义。
-- 当前 Stage 改动留下旧实现 / fallback / alias / dead active path。
-- 未批准新增长期 Domain / Module / Authority。
-- 关键 Acceptance 无真实 Evidence。
-- 实际 Scope 无法追溯到 Current Stage。
-
-## B. Review Sensors
-
-Sensor 只触发“深入看”，不能单独成为 Finding。
-
-项目没有自己的阈值时，可使用以下默认 sensor：
-
-```text
-Function logical lines > 60
-Nesting depth > 3
-Parameters > 5
-Cyclomatic complexity > 10（工具可得时）
-One change touches > 3 domain modules
-New Shared / Common / Utils business helper
-Loop contains DB / network call
-Transaction contains external network call
-New public API with no current-stage consumer
-Repeated business condition appears in > 1 location
-```
-
-触发后必须回答：
-
-> 实际责任 / 语义 / 性能问题是什么？
-
-回答不出来：不是 Finding。
-
-## C. Project Standards
-
-如果 Architect / Engineering Standards 已定义：
-
-- complexity threshold
-- dependency rule
-- naming rule
-- error pattern
-- module layout
-- state ownership
-- performance budget
-- API rule
-- testing requirement
-
-优先按项目标准判。
-
-Reviewer 不得用自己的通用偏好覆盖已批准项目标准。
-
----
-
-# Preservation / Regression
-
-验证：
-
-- Preservation Set。
-- Regression Set。
-- 既有公开行为。
-- 既有 Semantic Authority。
-- 既有 Module Boundary / Dependency Direction。
-- 当前改动不改变不属于 Current Stage 的稳定语义。
-
-不要重跑所有历史测试。
-
-选择足以证明当前直接影响的最小 evidence。
-
----
-
-# Scope Integrity
-
-反向追踪：
-
-`Implementation Change → Blueprint Task / Implementation Shape → Stage Requirement / Atom / Architecture Obligation`
-
-### 可量化目标
-
-```text
-Unexplained Implementation Changes: 0
-Deferred Items accidentally implemented: 0
-Future-only scope accidentally implemented: 0
-```
-
-实际 change 超出 Expected Change Boundary 时：
-
-先判断是否只是必要机械影响。
-
-若是：说明原因。
-
-若它代表：
-
-- 新业务 responsibility
-- 新 Semantic Authority
-- 新长期 module
-- 新 dependency direction
-- 新产品行为
-
-则不是 Builder 可自行决定。
-
-归因到 Blueprint / Architecture / Product。
-
----
-
-# Evidence Quality
-
-证据按最便宜、足够证明事实的层级使用。
-
-### Task-local
-
-适合：
-
-- type / lint / compile
-- pure logic test
-- schema / migration static check
-- targeted unit / integration test
-- symbol / dependency inspection
-
-### Slice capability
-
-适合：
-
-- 真实能力路径
-- client → service → persistence → visible result
-- real DB / external boundary（实际需要时）
-- Product Atom / Representative Example semantic proof
-
-### Stage
-
-适合：
-
-- Stage Acceptance
-- Preservation / Regression
-- Stage Exit State
-- 交付级必要 evidence
-
-不要求同一事实在 Task / Slice / Stage 重复证明三次。
-
-### Evidence 状态
-
-必须区分：
-
-- `PROVEN`
-- `FAILED`
-- `NOT RUN`
-- `BLOCKED`
-- `INFERRED`
-
-`INFERRED` 不能伪装成真实运行证据。
-
-缺少关键 evidence 导致无法判断：
-
-`VERIFICATION BLOCKED`
-
----
-
-# Finding Standard
-
-详细 Finding Gate / Concern / Layer / Evidence / Required State 规则见 `references/finding-standard.md`。
-
-一个 Finding 必须同时满足：
-
-1. 属于 Current Stage，或直接阻断 Current Stage。
-2. 是 Confirmed Defect / Confirmed Violation / Required Evidence Gap。
-3. 有具体 Evidence。
-4. 能指出违反的产品语义、Contract、Architecture、Engineering Standard、Blueprint 或质量硬规则。
-5. 有明确 Required State。
-6. 修复后可以确定地验证。
-
-Finding 固定字段：
-
-```text
-ID:
-Layer: Implementation | Blueprint | Architecture | Product | Evidence
-Dimension: Semantic | Correctness | Efficiency | Semantic Unity | Modular Integrity | Structural Health | Maintainability | Scope | Evidence
-Severity: BLOCKER | MAJOR | REGRESSION
-Location:
-Expected / Authority:
-Actual Evidence:
-Why It Matters:
-Required State:
-Verification:
-```
-
-### Severity
-
-`BLOCKER`
-当前 Stage 无法正确完成 / 安全完成 / 验证。
-
-`MAJOR`
-存在明确的产品、架构、蓝图或实现质量违反，当前 Stage 不应接受。
-
-`REGRESSION`
-只用于修复轮直接引入的新阻断性问题。
-
-没有 `MINOR Finding`。
-
-非阻断 polish 不进入 Frozen Finding Set。
-
----
-
-# Quality Matrix
-
-首次审查必须给六个实现质量维度 verdict：
-
-| Dimension | Verdict | Evidence |
-|---|---|---|
-| Correctness | PASS / CONCERN / FAIL | ... |
-| Work Efficiency | PASS / CONCERN / FAIL | ... |
-| Semantic Unity | PASS / CONCERN / FAIL | ... |
-| Modular Integrity | PASS / CONCERN / FAIL | ... |
-| Structural Health | PASS / CONCERN / FAIL | ... |
-| Maintainability | PASS / CONCERN / FAIL | ... |
-
-定义：
-
-### PASS
-
-当前审查范围内没有确认违反。
-
-### CONCERN
-
-存在具体 smell / sensor，但还不能证明为 Stage-blocking violation。
-
-CONCERN：
-
-- 不创建 Finding。
-- 不触发修复循环。
-- 不要求 reviewer 为了消除它继续探索。
-- 可以简要说明其依据。
-
-### FAIL
-
-确认违反，必须对应至少一个 Frozen Finding。
-
-Stage `PASS` 要求：
-
-- 六个维度无 `FAIL`。
-- 可以存在少量 `CONCERN`，但不得是被降级的真实违反。
-
----
-
-# 首次审查流程
-
-审查方法（Diff-first / Contract-first、Computational Sensors vs Inferential Review、Test Discipline、Human Authority）见 `references/review-protocol.md`。
-
-## Phase 1 — Restore
-
-完整读取 Source of Truth。
-
-## Phase 2 — Build Review Model
-
-建立：
-
-1. Semantic Coverage Map
-2. Ownership / Authority Map
-3. Implementation Shape Map
-4. 必要时 Execution Work Map
-
-## Phase 3 — Review Completeness
-
-确认关键输入足够。
-
-缺失则：
-
-`VERIFICATION BLOCKED`
-
-不要靠猜测补。
-
-## Phase 4 — Run Six Review Dimensions
-
-按固定顺序：
-
-1. Semantic & Contract Correctness
-2. Architecture & Implementation Shape
-3. Implementation Quality
-4. Preservation / Regression
-5. Scope Integrity
-6. Evidence Quality
-
-## Phase 5 — Freeze Findings
-
-一次性形成全部 Current Stage Findings。
-
-之后不再开放式重新审查。
-
----
-
-# Repair Planning Pass
-
-当首次 Result 是 `FIX` 或可由当前已冻结 Product / Architecture 正确解决的 `REPLAN_BLUEPRINT` 时，在首次输出前完成本阶段。
-
-详细格式见 `references/repair-blueprint.md`。
-
-## 1. Repair Eligibility
-
-先逐 Finding 判断：
-
-### Local Repairable
-
-满足：
-
-- Product semantics 正确且冻结。
-- Architecture / Ownership / Semantic Authority 正确且冻结。
-- Stage Contract 正确。
-- 修复不需要新长期 Domain / Module / Authority / dependency direction。
-- 可以通过改变 implementation / 受影响 Blueprint path 达到 Required State。
-
-进入 Repair Blueprint。
-
-### Upstream Blocked
-
-如果 Finding 需要：
-
-- 改 Product Atom / Product Rule / Acceptance；
-- 改 Domain Ownership / Semantic Authority；
-- 新建长期 module boundary；
-- 改 dependency direction；
-- 改 Stage Scope / Exit State；
-- 改 foundational architecture；
-
-不得继续猜修复方案。
-
-保持：
-
-`REPLAN_ARCHITECTURE` 或 `PRODUCT CHANGE`
-
-等待上游重新冻结后再恢复 Repair Planning。
-
-### Evidence Only
-
-如果唯一问题是缺证据：
-
-不生成 Repair Blueprint。
-
-生成最小 `Evidence Acquisition Plan`。
-
-## 2. Root Cause Synthesis
-
-Frozen Findings 不按“一条 Finding = 一个 Repair Task”机械翻译。
-
-先建立：
-
-`Finding → Root Cause → Correct Authority / Boundary → Required System State`
-
-然后：
-
-- 同一根因的 Findings 合并规划。
-- 症状修复必须服从根因修复。
-- 严重 Confirmed Defect 要在正确 root layer 修完整，不以最小 diff 为目标。
-- 修复旧现实后，旧 path / fallback / alias / duplicated authority 必须按适用范围清理干净。
-
-例如：
-
-```text
-F-01 Purchase 直接改 balance
-F-02 UI 自己判断 insufficient balance
-F-03 Wallet.debit 没被调用
-
-共同根因：
-Wallet Semantic Authority 被绕过。
-
-正确修复：
-恢复 Purchase → Wallet public capability，
-让 insufficient-balance 也由 Wallet authority 决定，
-删除 / 改造重复判断与 direct write。
-```
-
-## 3. Repair Target State
-
-先定义修完以后必须成立什么，不先写代码动作。
-
-至少包含：
-
-- 哪些 Frozen Findings 被消除。
-- 哪些 binding Atoms 重新成立。
-- 哪个 owner / authority 恢复唯一性。
-- 哪些 boundary / dependency 恢复正确。
-- 哪些旧 path 必须消失。
-- 哪些 Preservation / Direct Regression 必须继续成立。
-
-## 4. Repair Scope
-
-只允许：
-
-- Frozen Finding root causes。
-- 修复这些 root causes 的必要 mechanical changes。
-- 删除 superseded path。
-- Findings 修复的直接 regression coverage。
-
-禁止：
-
-- 顺手重构。
-- Future hardening。
-- 与 Findings 无关的 code health cleanup。
-- 把 Concern 偷偷升级进 repair scope。
-
-## 5. Repair Implementation Shape
-
-重新从上游编译当前修复所需的最小施工形状：
-
-```text
-Touched Domains / Modules:
-Ownership:
-Required Reuse / Existing Authorities:
-Allowed Dependencies:
-Forbidden Bypasses:
-State / Side-effect Flow:
-Expected Repair Change Boundary:
-Delete / Remove:
-```
-
-如果这里出现新的上游 architecture decision：
-
-停止，回 Architecture。
-
-## 6. Repair Dependency Graph
-
-按真实依赖排序。
-
-可以并行的修复只有在：
-
-- write surface 独立；
-- authority / schema / generated artifact 不冲突；
-- local proof 独立；
-- fan-in 清楚；
-
-时才标记 parallel-safe。
-
-不要为了修复速度默认并行。
-
-## 7. Repair Tasks
-
-Repair Task 的颗粒度与 Construction Blueprint `Task-n` 对齐，但不创建新的长期项目 ID。
-
-只使用临时显示标签：
-
-`Repair Task 1 / 2 / 3`
-
-每项必须包含：
-
-```text
-Finding Coverage:
-Upstream Basis:
-Goal:
-Implementation Constraints:   # 适用时
-Prerequisites:
-Targets:
-Actions:
-Operational Work:             # 适用时
-Local Proof:
-Expected Result:
-Done When:
-```
-
-需要时追加：
-
-```text
-Write Surface:
-Parallel With:
-Fan-in:
-```
-
-要求：
-
-- Targets 精确到 Path / Symbol / Schema / Migration / Test。
-- Actions 描述状态改变，不写空泛“修复 F-01”。
-- `Implementation Constraints` 直接继承 authority / owner / boundary / reuse。
-- `Local Proof` 只证明当前 Repair Task。
-- 不把整套 Stage test 复制到每个 Repair Task。
-- 不要求 Builder 重新做 Architecture 选择。
-
-## 8. Repair Verification
-
-Repair Blueprint 必须同时定义三层必要证据：
-
-### Repair Task Local Proof
-
-证明局部修改成立。
-
-### Affected Slice Capability Proof
-
-如果 Finding 破坏真实 capability / binding Atom，修完后重新证明该 affected Slice。
-
-不重跑未受影响 Slice。
-
-### Finding Resolution Matrix
-
-每个 Frozen Finding 必须有：
-
-`Finding → Repair Task → Proof → Resolution Condition`
-
-### Direct Regression
-
-只覆盖修复直接可能影响的稳定行为。
-
-除非修复改变整个 Stage integration，否则不默认重跑全部 Stage。
-
-## 9. Repair Stop Rule
-
-满足：
-
-- Frozen Findings 全部达到 Required State。
-- binding semantic coverage 恢复。
-- authority / ownership / boundary 恢复。
-- superseded paths 按要求清理。
-- Repair direct regressions 通过。
-- 没有修复直接引入的 Blocking Regression。
-- 没有新的上游 decision requirement。
-
-即停止修复。
-
-不要把 Repair Blueprint 变成第二轮产品开发。
-
----
-
-# 首次输出
-
-```text
-## Stage Review
-
-Result: PASS | FIX | REPLAN_BLUEPRINT | REPLAN_ARCHITECTURE | PRODUCT CHANGE | VERIFICATION BLOCKED
-
-### Stage Understanding
+Target Workflow: Construction Blueprint
+Mode: Repair
 Stage:
-Current Outcome:
-Binding Requirements / Atoms:
-Entry State:
-Required Delta:
-Exit State:
-Deferred Boundary:
-
-### Semantic Coverage
-Binding Atoms Covered: X / Y
-Uncovered:
-Representative Example Status:
-
-### Architecture / Implementation Shape
-Affected Domains:
-Owners:
-Semantic Authorities:
-Forbidden Crossings: 0 / ...
-Unapproved Authorities / Modules: 0 / ...
-Change Boundary:
-
-### Implementation Quality
-Correctness:
-Work Efficiency:
-Semantic Unity:
-Modular Integrity:
-Structural Health:
-Maintainability:
-
-### Scope / Preservation / Regression
-...
-
-### Evidence
-...
-
-### Findings
-F-01 ...
-F-N ...
-
-### Decision
-为什么是当前 Result。
-
-### Repair Blueprint
-# 仅 Result = FIX 或可局部重规划的 REPLAN_BLUEPRINT 时出现
-Repair Target State:
+Frozen Finding Set:
 Root Cause Groups:
-Repair Scope:
-Repair Implementation Shape:
-Repair Dependency Graph:
-Repair Tasks:
-Repair Verification:
-Repair Stop Rule:
-
-### Evidence Acquisition Plan
-# 仅 VERIFICATION BLOCKED 且问题只是证据不足时出现
-
-### Next Action
-只给当前 Result 对应的下一步。
+Upstream Basis:
+Repair Target State:
+Allowed Repair Boundary:
+Required Delete / Remove:
+Preservation / Direct Regression:
+Explicit Non-Scope:
+Required Proof:
+Repair Stop Gate:
+Repository Anchors:
 ```
 
-如果 `PASS`：
+随后必须输出：
 
-> `PASS — 阶段审查完成`
+`REPAIR PLANNING REQUIRED — Route to Construction Blueprint / Repair Mode`
 
-立即结束。
+Stage Verifier 到此停止规划。
+
+它不得：
+
+- 自己模拟 Construction Blueprint 的 Task schema；
+- 创建 `Repair Task` 施工单；
+- 自己决定 Delegation / Parallel / Reasoning / Slice / Task granularity；
+- 因“接下来怎么改已经很明显”就越权施工规划。
+
+Construction Blueprint 负责把 Handoff 编译成与正常 Blueprint **同颗粒度、同 planning gates、同 verification discipline** 的临时 Repair Execution Contract。
+
+如果当前运行环境无法路由到 Construction Blueprint：保持 Handoff，停止；不得由 Stage Verifier 自行替代。
 
 ---
 
-# 修复轮
+# Repair Workspace Lifecycle
+
+修复材料只存在临时 Repair Workspace，不直接修改 canonical Stage Execution Contract。
+
+推荐最小材料：
+
+```text
+.workbench/repairs/Stage-<N>/
+  Review-Snapshot.md
+  Repair-Handoff.md
+  Repair-Execution.md
+  Repair-Evidence.md
+```
+
+其中：
+
+- `Review-Snapshot.md`：Frozen Findings + initial decision 的不可变快照。
+- `Repair-Handoff.md`：Verifier → Construction Blueprint 的冻结输入。
+- `Repair-Execution.md`：Construction Blueprint Repair Mode 编译出的施工合同。
+- `Repair-Evidence.md`：Frozen Finding resolution、required proof、direct regression 和 builder/verifier evidence。
+
+Repair Workspace 是 non-canonical working state；它不能覆盖 Product / Architecture / Stage authority。
+
+详细读写与清理规则见 `references/repair-workspace.md`。
+
+---
+
+# Fix Review
 
 收到修复后：
 
-1. 读取最新 diff。
-2. 读取原 Frozen Finding Set。
-3. 读取本轮 Repair Blueprint。
-4. 读取每项 Finding 新 evidence。
-5. 只检查 Frozen Findings、Repair Blueprint 目标区域及其直接影响。
-6. 判断：
-   - RESOLVED
-   - PARTIALLY RESOLVED
-   - UNRESOLVED
-7. 检查修复是否按 Repair Implementation Shape 执行。
-8. 检查修复是否直接引入 Current Stage 阻断性 regression。
-9. 不重新做开放式全量审查。
+1. 读取 Frozen Finding Snapshot。
+2. 读取 Repair Handoff 与 Repair Execution Contract。
+3. 读取最新 diff 与 repair evidence。
+4. 只检查 Frozen Findings、Repair Boundary 和 repair 直接影响。
+5. 对每个 Finding 输出 `RESOLVED | PARTIALLY RESOLVED | UNRESOLVED`。
+6. 仅在 repair 直接引入 Current Stage blocker 时新增 `REGRESSION-XX`。
+7. 每个额外动作必须过 Action Admission Gate。
+8. 不重新做开放式全量审查。
 
-如果 Builder 偏离 Repair Blueprint，但最终实现仍满足同一上游 authority / Required State：
+Builder 偏离 Repair Execution Contract 时：
 
-- 先判断偏离是否只是低成本局部实现选择。
-- 不是因为“和蓝图字面不同”就自动新增 Finding。
-- 如果偏离改变 owner / authority / boundary / state semantics，才升级处理。
+- 若只是边界内低成本局部实现选择，且仍满足同一 upstream authority / Target State，不因字面不同新增 Finding。
+- 若改变 owner / authority / boundary / product semantics / Stage contract，停止并 Route。
 
-输出：
+结果：
+
+- Finding 未清零 → `FIX` 或上游 Route。
+- Frozen Findings 清零、proof 足够、无 blocking direct regression → `REPAIR VERIFIED`。
+
+`REPAIR VERIFIED` 后禁止继续代码修复和 hardening，进入 Stage Reconciliation。
+
+---
+
+# Stage Reconciliation
+
+目标：修复结束后，才把 canonical Stage Execution Contract 一次性更新为最终有效施工事实。
+
+Stage Verifier 不直接写文档；它输出一个 bounded `Stage Reconciliation Contract`：
 
 ```text
-## Fix Review
-
-F-01: RESOLVED / ...
-F-02: ...
-REGRESSION-01: ... # 只有直接引入时
-
-Result: PASS | FIX | REPLAN_BLUEPRINT | REPLAN_ARCHITECTURE
+Canonical Stage Document:
+Reconciliation Basis:
+Affected Sections / Tasks:
+Final Effective State:
+Superseded Content To Remove:
+Preserved Unaffected Content:
+Evidence To Retain:
+Forbidden History / Narrative:
 ```
 
-全部 Finding resolved 且 evidence 完整：
+然后：
 
-`PASS — 阶段审查完成`
+`STAGE RECONCILIATION REQUIRED — Route to Construction Blueprint`
+
+Construction Blueprint 依据最终 Repository Reality + Repair Workspace 做一次性 Reconciliation。
+
+硬规则：
+
+- 只更新被 repair 实际失效的 Stage 施工事实。
+- 未受影响部分继续有效，不做无关重写。
+- 删除 superseded plan，不保留 old/new 双版本。
+- 不把 Finding / patch chronology / reviewer 对话 append 成 Stage history。
+- canonical Stage 文档只保留最终有效 truth。
+
+Reconciliation 完成后，Verifier 只做 **bounded Reconciliation Check**：
+
+- 对照 Reconciliation Contract 检查目标字段是否与最终 Repository Reality 一致；
+- 不重新 review code；
+- 不新增普通 Findings；
+- 不扩大 scope。
+
+通过后：
+
+`PASS — Stage Review Closed`
+
+然后 Repair Workspace 默认删除。只有项目存在明确 audit / compliance retention requirement 时可以归档；归档必须标记 `CLOSED / NON-AUTHORITATIVE`。
+
+如果被审查的 Stage 在 Repair Cycle 开始前已经是正式 frozen historical Stage：
+
+> 不修改历史 Stage 文档；Route 到新的 maintenance / repair work unit，由上游工作流创建新的当前施工合同。
 
 ---
 
@@ -1225,126 +414,81 @@ Result: PASS | FIX | REPLAN_BLUEPRINT | REPLAN_ARCHITECTURE
 
 ## Implementation
 
-Stage / Blueprint 正确，实际实现偏离。
+上游与 Blueprint 正确，实际实现偏离：
 
-冻结 Findings 后生成：
-
-`Repair Blueprint → Builder`
+`FIX → Repair Handoff → Construction Blueprint / Repair Mode`
 
 ## Blueprint
 
-产品与架构正确，但 Blueprint：
+Product / Architecture / Stage 正确，但原 Blueprint 的 Implementation Shape、Task grouping、Target、Dependency、Proof 等错误：
 
-- 漏 binding Atom coverage。
-- Implementation Shape 错误。
-- Required Reuse / Forbidden Bypass 错误。
-- Task / Slice 无法正确到达 Stage Exit。
-- 施工路径本身制造双 authority / 错误边界。
+`REPLAN_BLUEPRINT → Repair Handoff → Construction Blueprint / Repair Mode`
 
-`REPLAN_BLUEPRINT`
-
-如果 Product / Architecture / Stage Contract 仍正确，Reviewer 在 Finding 冻结后进入 Repair Planning Pass，生成只覆盖受影响施工范围的 `Repair Blueprint`。
-
-Repair Blueprint 可以改变受影响的施工路径、Task 划分、Targets、Actions 和 Verification，但不能改变 Product / Architecture / Stage Contract。
-
-未受影响的原 Blueprint 继续有效。
+未受影响的原 Blueprint 继续作为 canonical 输入；修复期间保持只读。
 
 ## Architecture
 
-当前实现暴露：
-
-- ownership 错。
-- Semantic Authority 缺失 / 冲突。
-- module boundary / dependency direction 不成立。
-- Stage Contract 缺必要 architecture decision。
-- 历史架构直接阻断 Current Stage。
+需要改变 ownership、Semantic Authority、core boundary、dependency direction、foundational architecture 等：
 
 `REPLAN_ARCHITECTURE`
 
-Reviewer 不自行重构 Architecture。
+停止 repair，不猜。
 
 ## Product
 
-用户目标 / Atom / Rule / Acceptance 真正改变，或当前产品事实互相冲突。
+用户目标、Atom、Rule、Acceptance 或产品事实改变/冲突：
 
 `PRODUCT CHANGE`
 
-Reviewer 不自行解释新产品意图。
+停止 repair，不解释新产品意图。
 
 ## Evidence
 
-实现可能正确，但关键事实无足够 evidence。
+实现可能正确，但缺关键 evidence：
 
 `VERIFICATION BLOCKED`
 
-列出具体缺的事实，不扩大测试范围。
+只列缺失事实和最小 Evidence Acquisition Plan。
 
 ---
 
-# 废弃内容残留
+# Final PASS Gate
 
-当前 Stage 触及范围内扫描：
-
-- superseded implementation
-- old alias / shim
-- fallback
-- disabled old branch
-- dead config / flag
-- old test / fixture / mock
-- commented-out implementation
-- outdated docs / examples
-- generated reference
-- unused dependency
-
-如果旧现实已被替代且没有明确 compatibility / migration / audit responsibility：
-
-残留即 Finding。
-
-不得用：
-
-- `SUPERSEDED`
-- “deprecated, do not use”
-- “旧方案保留备用”
-- revision-log-style active note
-
-代替删除。
-
----
-
-# 最终完成条件
-
-只有全部成立才能 PASS：
+只有全部成立才能输出最终 PASS：
 
 - Current Stage Contract 全部满足。
-- Binding Product Atoms 100% 覆盖。
-- Product semantic example 成立（适用时）。
-- Architecture Invariants 保持。
-- Domain Ownership / Semantic Authority 正确。
-- Blueprint Implementation Shape 被忠实实现。
+- Binding Product Atoms 100% 覆盖；Representative Example 适用时成立。
+- Architecture Invariants、Domain Ownership、Semantic Authority、boundary 正确。
+- Construction Blueprint 的有效 Implementation Shape 被正确实现。
 - 六个 Implementation Quality 维度无 FAIL。
-- Preservation / Regression 满足。
+- Preservation / Direct Regression 满足。
 - Scope 无未授权扩张。
-- 所有 Stage-blocking 结论有真实 evidence。
+- 所有 Stage-blocking 结论有足够 evidence。
 - Frozen Finding Set 清零。
-- 若本 Stage 经 Repair Blueprint 修复：Repair Target State、Finding Resolution Matrix 与直接回归全部满足。
+- 若发生 Repair：Repair Target State、Required Delete / Remove、Required Proof 与 Direct Regression 均完成。
+- Stage Reconciliation 已完成且 bounded check 通过。
 - 没有 Blocking Evidence Gap。
-- 没有当前 Stage 范围内的 active superseded residue。
+- 当前 Stage 触及范围无 active superseded residue。
+- 当前没有通过 Action Admission Gate 的未完成合法动作。
 
 满足后：
 
-`PASS — 阶段审查完成`
+`PASS — Stage Review Closed`
 
-立即结束。
+立即停止，封闭当前 Review Cycle。
 
 ---
 
-# 按需加载 References
+# References
 
-- Finding 判定与 Verdict 标准：`references/finding-standard.md`
-- 六个实现质量维度的详细审查标准：`references/implementation-review-standard.md`
-- 审查协议（diff-first / computational vs inferential / 测试纪律 / Human Authority）：`references/review-protocol.md`
-- Repair Blueprint 的格式与标准：`references/repair-blueprint.md`
+按需加载：
 
-四份文件均可独立使用：不运行完整 stage-verifier 流程时，也可直接按单份文件执行对应审查。
+- `references/stage-review-standard.md`：四张图、六个审查维度、Hard Invariants / Sensors、Scope、Evidence、Quality Matrix。
+- `references/finding-standard.md`：Finding Gate、Concern、Layer、Evidence、Required State、Deferred Observation。
+- `references/implementation-review-standard.md`：六个 Implementation Quality 维度的详细标准。
+- `references/review-protocol.md`：diff-first / contract-first、合理扩展、工具与 Human Authority。
+- `references/convergence-protocol.md`：Action Admission Gate、Repair Boundary、Freeze Break、MUST STOP、PASS Seal。
+- `references/repair-handoff.md`：Verifier → Construction Blueprint 的冻结修复输入。
+- `references/repair-workspace.md`：临时修复工作区、只读 canonical Stage、Reconciliation 与清理。
 
-不要默认一次读完；只在对应维度需要时加载。
+不要默认一次读完；进入对应阶段时加载对应 owner。

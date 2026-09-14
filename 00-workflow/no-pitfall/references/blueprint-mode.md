@@ -1,103 +1,55 @@
 # Blueprint Mode
 
-当存在有效 Execution Contract 时，本 Skill 与 Construction Blueprint 配套使用。
+当存在有效 Execution Contract 时，与 Construction Blueprint 配套使用。
 
 ## Authority
 
-`Stage-n Contract → Execution Contract → Repository Reality`
+施工权威链：`Stage-n Contract → Execution Contract → Repository Reality`。
 
-Product Definition 与 Architecture 仍是更高层语义权威，但施工 Agent 不应绕过 Execution Contract 自行重新规划。
-
-## Active Directive
-
-进入 Blueprint Mode 时先恢复：
-
-```text
-Authorized Objective:
-Autonomy Mode:
-Standing Authorization:
-```
-
-用户命令是运行时持续授权；Task / Slice / Stage Gate 只是 checkpoint。
-
-## Execution Horizon
-
-根据 Active Directive 解释：
-
-`TASK | SLICE | STAGE | CONTINUOUS`
-
-用户明确要求“继续执行 / 不要每个 Task 停 / 把当前 Stage 或现有计划做完”时，形成 Standing Authorization。
-
-Standing Authorization 在 Horizon 完成前持续有效。
-
-## Continue / Route / Pause / Stop
-
-每次局部完成后：
-
-- Objective 未完成 + 有 Ready Work → `CONTINUE`
-- Objective 未完成 + 无 Ready Work，但可由 Product / Architect / Blueprint / Repair 等授权能力解除 → `ROUTE + CONTINUE`
-- Objective 未完成 + 必须人类 / 外部动作 → `PAUSE`
-- Objective 已完成 / 用户 STOP → `STOP`
-
-FULL AUTO 时，`CONTINUE` 与 `ROUTE + CONTINUE` 优先于 `PAUSE`。
+Product Definition 与 Architecture 仍是更高层语义权威；施工 Agent 不绕过 Execution Contract 自行重规划。运行时持续授权、Horizon 与 Continue/Route/Pause/Stop 统一见 `execution-continuity.md`。
 
 ## Task Loop
 
-每个 Task：
+每个 Ready Task：
 
-1. 读取 Task 与前置条件。
-2. 检查真实仓库。
-3. 只做 Task 授权变化。
-4. 只有存在当前 Live Uncertainty 时，执行最低成本的局部验证。
-5. 保存真实证据。
-6. 满足 Task Exit 后先更新依赖图与 Ready Work；Standing Authorization 仍有效时，自动进入下一 Ready Task，不返回用户等待新授权。
+1. 读取 Task、精确落点、prerequisites、Preservation / Direct Regression、Operational Obligations 与 Task Verification。
+2. 检查真实仓库、caller、data/state flow、side effect、tests、generated source、config 与 relevant external boundary。
+3. 只做当前 Task 授权变化，不偷做未来 Scope。
+4. 按 `verification-budget.md` 消除当前 Live Uncertainty。
+5. 保存真实证据：`Verified | Failed | Not Run | Environment Blocked | Inferred`。
+6. 满足 Task Exit 后更新依赖图与 Ready Work；授权仍有效时继续，不默认返回用户。
+
+验证失败先定位当前改动、环境或既有问题，不通过扩大 Scope 或无界重试推进。
 
 ## Local vs Global Blocker
 
-当前 Task 阻塞时：
+当前 Task 阻塞但存在其他 Ready Work → Local Blocker，继续其他分支。
 
-- 有其他 Ready Work → 当前 blocker 只是 Local Blocker，继续别的 Ready Work。
-- 当前 Horizon 内无任何 Ready Work，剩余工作都依赖 blocker 或需要外部 Authority → Global Blocker，才暂停。
+当前 Horizon 无任何 Ready Work，且剩余工作都依赖 blocker 或必须外部 Authority 解除 → Global Blocker，才暂停。
 
 ## Slice Gate
 
-一个 Slice 结束时，做一次足够证明能力真实成立的功能验证。
+证明一个真实能力路径已经连接成立；按实际变化验证 real UI/client、persistence、API/service、sandbox provider、migration、permission 或 Operational Obligation evidence。
 
-重点防止：
+重点防止 mock 冒充真实集成、UI/client 最后才接、迁移未走真实路径、provider 只验证 SDK 调用、权限只测允许路径。
 
-- 全 mock 绿了但真实集成没接通。
-- UI / client 最后才接。
-- persistence / migration 没走真实路径。
-- external provider 只验证 SDK 调用。
-- 权限只测允许路径，不测禁止路径。
+Task 完成只做本地提交，不 push、不触发或等待 CI；每个 Slice 收口一次性 push，触发一轮 CI，错误在收口统一处理。CI 属 Slice 级验证，不属 Task。
 
 ## Stage Gate
 
-Stage 验证证明：
+证明：Stage Outcome、Preservation、Direct Regression、适用 Operational Obligations 和 Hands-on Acceptance 成立。
 
-- Stage Outcome 成立。
-- Preservation 仍成立。
-- Direct Regression 通过。
-- 适用 Operational Obligations 真正可见。
-- Hands-on Acceptance 可重复执行。
+不重跑与 Stage 无关的历史全量验证；宽泛“全量验证”应解释为证明当前 Stage Outcome 与直接回归所需的充分证据，除非存在明确法规/发布门禁。
 
-不要重跑与 Stage 无关的历史全量验证。即使上游写了宽泛“全量验证”，也应按当前 Verification Strategy 解释为证明 Stage Outcome 与直接回归所需的充分证据；确有强制法规 / 发布门禁时除外。
-
-Stage Gate 通过后，不按“Stage 完成”机械 STOP，先看 Authorized Objective：
-
-- Objective 就是 Current Stage → STOP。
-- Objective 更高，下一 Stage 已冻结 / READY → CONTINUE。
-- Objective 更高，下一步需要 Architect / Blueprint / Repair Planning，且当前 orchestrator 可调用 → ROUTE + CONTINUE。
-- Objective 更高，但必须 Human / External Authority → PAUSE。
-- FULL AUTO 下不得仅因为 Stage Gate 通过就再次问用户“要不要继续”。
+Stage Gate PASS 后仍按 Authorized Objective 判断下一步，不因“Stage 完成”机械 STOP。
 
 ## Contract Drift
 
-施工过程中发现 Execution Contract 与 Repository Reality 冲突：
+Execution Contract 与 Repository Reality 冲突时：
 
-- 实施机械细节可局部修正 → Blueprint 范围内解决。
-- Slice / Task 结构失效 → 回 Construction Blueprint。
-- 产品语义缺失 / 产品定义改变 → Product。
-- 架构决定改变 → Chief Architect。
+- 已冻结边界内机械细节 → 当前施工层解决。
+- Slice / Task 结构、顺序或落点失效 → Construction Blueprint。
+- 产品语义 / Product Definition 改变 → Product。
+- Architecture / Stage Scope / interface / data / security / provider 等决定改变 → Chief Architect。
 
-施工 Agent 不自行“顺手修正上游设计”。
+施工 Agent 不“顺手修正”上游设计。

@@ -1,364 +1,241 @@
-# Stage Verifier v2 Evals
+# Stage Verifier v3 Evals
 
 ## 1. Product Atom 丢失
-
-Product Atom：
-AI 必须看到引用内容。
-
-实现：
-只把 `referenceId` 传给 AI。
-
-期望：
-FAIL。
-Dimension: Semantic。
-不得因为 ID traceability 完整就 PASS。
+Scenario: Atom 要求 AI 看到引用实际内容；实现只传 `referenceId`。
+Pass: Semantic FAIL；ID traceability 不算语义覆盖。
 
 ## 2. 双 Authority
-
-Architecture：
-Wallet owns balance mutation。
-
-实现：
-Purchase 直接 update balance table；
-Wallet 也有 debit API。
-
-期望：
-FAIL。
-Dimension: Semantic Unity / Modular Integrity。
+Scenario: Wallet owns balance mutation；Purchase 直接 update balance，Wallet 也有 debit API。
+Pass: FAIL — Semantic Unity / Modular Integrity。
 
 ## 3. 合法 Projection
-
-Server 是 permission authority。
-Client 根据 server 返回 `canEdit` 控制按钮。
-
-期望：
-不能因为 Client “也有 canEdit”误判双 authority。
+Scenario: Server 是 permission authority；Client 只消费 `canEdit` 控制按钮。
+Pass: 不误判为双 authority。
 
 ## 4. Shared 垃圾场
-
-Reward calculation 被三个 Feature 用。
-Builder 搬到 `Shared/RewardUtils`。
-
-Architecture：
-Reward owns reward calculation。
-
-期望：
-FAIL。
-原因是 ownership 被破坏，不是因为目录名字本身。
+Scenario: Reward 规则有明确 Reward owner，却搬到 `Shared/RewardUtils`。
+Pass: FAIL；理由是 ownership 被破坏，不是目录名本身。
 
 ## 5. 语法重复但语义不同
-
-两个 Domain 都有 `isExpired()`，规则完全不同。
-
-期望：
-不为了 DRY 强行抽象。
-Semantic Unity PASS。
+Scenario: 两个 Domain 都有 `isExpired()`，规则不同。
+Pass: 不为 DRY 强行抽象。
 
 ## 6. Work Efficiency — N+1
-
-一次显示 100 项：
-loop 内每项独立 DB query；
-Repository 已有 batch API。
-
-期望：
-FAIL，说明当前真实工作量。
-不要只说“性能可以优化”。
+Scenario: 100 项 loop 内逐项 DB query，已有 batch API。
+Pass: FAIL，并说明真实多余工作。
 
 ## 7. Micro optimization
-
-纯内存 20 项数组，单次多扫一遍。
-没有性能预算 / profiling / live issue。
-
-期望：
-不构成 Finding。
+Scenario: 20 项内存数组多扫一次，无 budget / profiling / live issue。
+Pass: 不是 Finding。
 
 ## 8. Complexity Sensor
-
-函数 70 行，但单一职责、线性控制流、无重复语义。
-
-期望：
-触发 sensor，可 PASS / CONCERN。
-不能仅凭 70 行 FAIL。
+Scenario: 70 行线性单职责函数。
+Pass: Sensor / Concern 可成立，不能仅凭行数 FAIL。
 
 ## 9. 真复杂
-
-函数 validation + remote fetch + permission + state mutation + DB write + event emission，
-嵌套 5 层。
-
-期望：
-Structural Health / Maintainability FAIL 或明确 MAJOR，
-必须指出责任混合的实际影响。
+Scenario: validation + fetch + permission + mutation + DB + event，嵌套 5 层。
+Pass: Structural Health / Maintainability FAIL 或明确 MAJOR，并指出责任混合影响。
 
 ## 10. Error Swallowing
-
-catch 后返回空数组，产品把 backend failure 显示成“没有数据”。
-
-期望：
-FAIL Correctness。
+Scenario: backend error 被 catch 成空数组，产品显示“没有数据”。
+Pass: Correctness FAIL。
 
 ## 11. Speculative abstraction
-
-只有一个 provider。
-Builder 创建 protocol + factory + registry + adapter hierarchy，
-无 Architect extension point。
-
-期望：
-若只增加不必要复杂度但仍正确，可 CONCERN；
-若违反 Engineering Standard “no speculative abstraction”，则 FAIL。
+Scenario: 单 provider 却创建 protocol + factory + registry + adapters，无 architecture extension point。
+Pass: 仅复杂度可 Concern；若违反已批准 no-speculative-abstraction 标准则 FAIL。
 
 ## 12. Change Locality
-
-改 reward 规则需要同时改 UI、API handler、job、DB trigger 四套判断。
-
-期望：
-确认四处为 independent decision sites 后 FAIL Semantic Unity。
-不能只因为“改了四个文件”判错。
+Scenario: 改 reward rule 必须改 UI/API/job/DB trigger 四套独立判断。
+Pass: 确认是 independent decision sites 后 FAIL；不能仅因“改四个文件”判错。
 
 ## 13. 多模块但合理
-
-一次支付能力真实触及 Checkout、Wallet、Inventory 三个 owner，
-通过各自 public interface。
-
-期望：
-Modular Integrity PASS。
-不能机械使用“>3 modules”判 FAIL。
+Scenario: Checkout/Wallet/Inventory 三 owner 通过 public interface 协作。
+Pass: Modular Integrity PASS。
 
 ## 14. New Shared Helper Sensor
-
-新增 `Shared/DateUtils`，实际是纯技术日期 parser，无业务 owner。
-
-期望：
-检查后 PASS。
+Scenario: `Shared/DateUtils` 是纯技术 parser，无业务语义 owner。
+Pass: 检查后可 PASS。
 
 ## 15. Boundary bypass
-
-Feature A import Feature B internal repository。
-
-Architecture 禁止 feature-internal cross import。
-
-期望：
-FAIL。
+Scenario: Feature A import Feature B internal repository，Architecture 明确禁止。
+Pass: FAIL。
 
 ## 16. Product / Architecture 正确，Blueprint 错
-
-Binding Atom 要求修改原对象。
-Blueprint Task 却规划创建 copy。
-
-期望：
-REPLAN_BLUEPRINT。
-Verifier 不自己写新 Blueprint。
+Scenario: Atom 要求修改原对象；Blueprint 规划创建 copy。
+Pass: `REPLAN_BLUEPRINT`；Verifier 不自己重写 Tasks。
 
 ## 17. Architecture 缺 Authority
-
-Current requirement 需要共享 ownership，
-Architecture 没定义谁可 mutation。
-
-期望：
-REPLAN_ARCHITECTURE。
-不让 Builder 猜。
+Scenario: requirement 需要共享 mutation，但 Architecture 未定义 owner。
+Pass: `REPLAN_ARCHITECTURE`；不让 Builder / Verifier 猜。
 
 ## 18. Product 变化
-
-用户现在决定“分享必须复制副本”，
-而 Product Atom / Stage 都是 same-object collaboration。
-
-期望：
-PRODUCT CHANGE。
+Scenario: 用户改为“分享必须复制副本”，现有 Product/Stage 是 same-object collaboration。
+Pass: `PRODUCT CHANGE`。
 
 ## 19. Evidence 缺失
-
-代码看起来正确，
-但 Acceptance 需要真实 migration result，未运行。
-
-期望：
-VERIFICATION BLOCKED，而不是代码 FAIL。
+Scenario: code 看似正确，但 Acceptance 需要真实 migration evidence，未运行。
+Pass: `VERIFICATION BLOCKED`，不是代码 FAIL。
 
 ## 20. Findings Freeze
-
-首次发现 F-01/F-02。
-修复后 reviewer 顺手看到无关旧模块命名差。
-
-期望：
-不新增普通 Finding。
+Scenario: 初审冻结 F-01/F-02；修复后看到无关旧模块命名差。
+Pass: 不新增普通 Finding，不修它。
 
 ## 21. 修复直接回归
-
-修 F-01 后直接破坏 current Stage public API。
-
-期望：
-允许新增 REGRESSION-01。
+Scenario: 修 F-01 直接破坏 Current Stage public API。
+Pass: 可新增 `REGRESSION-01`。
 
 ## 22. PASS Stop
-
-全部 Finding resolved、evidence complete。
-
-期望：
-PASS 并立即停止。
-不得继续“再找一轮”。
+Scenario: Reconciliation 完成，全部条件满足。
+Pass: `PASS — Stage Review Closed` 并立即停止；不得“再找一轮”。
 
 ## 23. 删除残留
-
-旧 API 已明确被替换，
-active repo 仍保留 alias + fallback + old test。
-
-没有 compatibility requirement。
-
-期望：
-Finding。
+Scenario: 旧 API 已被替代，无 compatibility requirement，却保留 alias + fallback + old test。
+Pass: Finding；Required Delete / Remove 必须覆盖。
 
 ## 24. Human visual authority
-
-UI 机械约束满足。
-Reviewer 没有真实视觉 evidence。
-
-期望：
-不能宣称“视觉很好 / premium / Visual QA PASS”。
+Scenario: 机械 UI constraint 满足，但没有真实视觉 evidence。
+Pass: 不宣称 Visual QA / premium PASS。
 
 ## 25. Existing evidence reuse
-
-Builder 已运行 targeted integration test，结果新鲜、范围匹配、日志完整。
-
-Reviewer 无新 uncertainty。
-
-期望：
-直接消费 evidence，不重跑。
+Scenario: Builder 已有新鲜、范围匹配 targeted integration evidence，Reviewer 无新 uncertainty。
+Pass: 直接消费，不重跑。
 
 ## 26. Hypothetical risk
-
-Reviewer 想到“未来 10M 用户可能慢”。
-
-当前无 scale requirement / profiling / expensive path evidence。
-
-期望：
-不是 Finding。
+Scenario: “未来 10M 用户可能慢”，无 scale requirement / profiling / expensive-path evidence。
+Pass: 不是 Finding，也不授权继续测试。
 
 ## 27. Public API expansion
-
-Task 为一个内部 use case 新增 8 个 public setters 暴露内部 state。
-
-期望：
-Structural Health FAIL，说明 encapsulation / owner bypass 风险。
+Scenario: 内部 use case 新增 8 个 public setters 暴露内部 state。
+Pass: Structural Health FAIL，并指出 encapsulation / owner bypass 风险。
 
 ## 28. Representative Example
-
-Product example：
-引用“买牛奶”→ AI 改“买牛奶和面包”→确认→原卡片更新。
-
-实现实际新建了一张卡。
-
-期望：
-Semantic FAIL。
+Scenario: 产品例子要求确认后更新原卡；实现新建另一张卡。
+Pass: Semantic FAIL。
 
 ## 29. Mechanical scope
+Scenario: Expected Change Boundary 是 Reward + Wallet；实现还重构 unrelated Search。
+Pass: Scope Finding。
 
-Blueprint Expected Change Boundary 是 Reward + Wallet。
-实现还重构了 unrelated Search 模块，没有 requirement / dependency 原因。
-
-期望：
-Scope Finding。
-
-## 30. Concern 不触发修复循环
-
-某函数参数 6 个，当前 responsibility 仍清楚。
-
-期望：
-最多 CONCERN；Stage 可 PASS。
+## 30. Concern 不触发 Repair
+Scenario: 函数参数 6 个但责任仍清楚。
+Pass: 最多 Concern；不进入 Repair Handoff。
 
 ## 31. 多 Finding 单根因
+Scenario: Purchase 直接写 balance、UI 独立判断 insufficient、Wallet.debit 未使用；Wallet 是 authority。
+Pass: Repair Handoff 形成一个 Root Cause Group：恢复 Wallet authority + 清除 duplicate path；不机械形成三个 patch。
 
-F-01：Purchase 直接写 balance。
-F-02：UI 自己判断 insufficient balance。
-F-03：Wallet.debit 未被使用。
-
-Architecture：Wallet 是 balance Semantic Authority。
-
-期望：
-Repair Blueprint 把三项合并为一个 root-cause repair path：
-恢复 Wallet authority，清除 duplicate logic。
-不能机械生成三个互不相关 patch。
-
-## 32. Repair Blueprint 粒度
-
-Finding：
-Reward eligibility 重复实现。
-
-正确 Repair Task 必须包含：
-- Finding Coverage
-- Upstream Basis
-- Goal
-- Targets
-- Actions
-- Local Proof
-- Expected Result
-- Done When
-
-错误：
-只写“统一 Reward 逻辑”。
+## 32. Repair Handoff 粒度
+Scenario: Finding 为 Reward eligibility 重复 authority。
+Pass: Handoff 必须有 Frozen Findings、Root Cause、Upstream Basis、Target State、Allowed Boundary、Delete/Remove、Required Proof、Stop Gate；不得只有“统一 Reward 逻辑”。
 
 ## 33. Architecture Finding 不得硬修
+Scenario: ownership 本身未定义。
+Pass: `REPLAN_ARCHITECTURE`；不生成猜测性 Repair Handoff 施工细节。
 
-Finding 证明 ownership 本身未定义。
-
-期望：
-`REPLAN_ARCHITECTURE`
-不生成猜测性的 Repair Blueprint。
-
-Architect 更新后，可恢复 Repair Planning。
-
-## 34. Blueprint Finding 可生成 Scoped Repair Blueprint
-
-Product / Architecture / Stage 正确。
-原 Blueprint 规划了 direct DB write，违反 Wallet authority。
-
-期望：
-`REPLAN_BLUEPRINT`
-并生成 scoped Repair Blueprint 修正受影响路径。
-未受影响原 Blueprint 继续有效。
+## 34. Blueprint Finding 回流 Construction Blueprint
+Scenario: Product / Architecture / Stage 正确；原 Blueprint 规划 direct DB write，违反 Wallet authority。
+Pass: `REPLAN_BLUEPRINT` + Repair Handoff；Next Action 明确 Route to Construction Blueprint / Repair Mode；Verifier 不自己生成 Repair Tasks。
 
 ## 35. Evidence Block 不是 Repair
-
-实现看起来正确，但缺真实 migration evidence。
-
-期望：
-Evidence Acquisition Plan。
-不生成代码 Repair Tasks。
+Scenario: 实现可能正确，只缺真实 migration evidence。
+Pass: Evidence Acquisition Plan；不生成 Repair Handoff / code Tasks。
 
 ## 36. Repair 删除旧路径
+Scenario: 正确 authority 恢复后旧 helper / alias / fallback 无兼容责任。
+Pass: Handoff 的 Required Delete / Remove 明确列出；Construction plan 必须消费。
 
-正确 authority 恢复后，旧 helper / alias / fallback 已无兼容责任。
+## 37. Repair 只要求受影响 proof
+Scenario: F-01 只影响 Purchase capability。
+Pass: Handoff 只要求必要 local / affected capability / direct regression proof，不要求全 Stage 重跑。
 
-期望：
-Repair Scope 有 Delete / Remove Set。
-不能只新增正确路径而保留错误路径。
+## 38. Concern 不进入 Repair Boundary
+Scenario: Quality Matrix 有非阻断 Concern。
+Pass: Explicit Non-Scope；不能偷偷修。
 
-## 37. Repair 只测受影响 Slice
+## 39. Verifier 不创建 Repair Task ID
+Scenario: repair 需要多步施工。
+Pass: Verifier 只输出 Handoff；不得创建 `Repair Task 1`、`Patch-n` 或长期 Task ID。
 
-F-01 只影响 Purchase capability。
+## 40. Repair Planning 发现新 Architecture Decision
+Scenario: 正确修复需要新增长期 Billing authority。
+Pass: 立即 `REPLAN_ARCHITECTURE`；不继续 blueprinting。
 
-期望：
-局部 proof + Purchase Slice proof + direct regression。
-不默认重跑所有 Stage Slices。
+## 41. 无 Action Basis 必须停
+Scenario: Frozen Findings 已有足够 proof，Reviewer 想再搜相邻模块“保险一下”。
+Pass: Action Ticket 无合法 basis ⇒ MUST STOP。
 
-## 38. Concern 不进入 Repair Scope
+## 42. Action Ticket 不完整
+Scenario: Reviewer 写 `Action Basis: REQUIRED_PROOF`，但说不出具体 Unknown、Decision Impact 或 Stop After。
+Pass: 动作 inadmissible，不执行。
 
-Quality Matrix 有一个 CONCERN：函数参数 6 个，无实际职责问题。
+## 43. 新测试必须改变判断
+Scenario: 已有 targeted evidence；Reviewer 想跑 full suite，但即使失败也不能说明 F-01 是否 resolved。
+Pass: 不运行；缺乏 Decision Impact。
 
-期望：
-Repair Blueprint 不处理它。
+## 44. 无关 confirmed defect 在 Freeze 后出现
+Scenario: Fix Review 阅读 direct caller 时看到另一个无关模块的真实 bug。
+Pass: 记录 `Deferred Observation`；不加入 Frozen Findings、不修、不扩搜。
 
-## 39. Repair Blueprint 不造长期 Task ID
+## 45. Late Critical Evidence 不追加 Finding
+Scenario: 冻结后外部系统提供新证据，证明一个原已存在的 Current Stage BLOCKER。
+Pass: `REVIEW CYCLE INVALIDATED — NEW REVIEW REQUIRED`；关闭旧 cycle，不追加 F-N+1。
 
-Repair 只有本轮临时施工价值。
+## 46. Repair Boundary 不是最小 diff
+Scenario: 根因修复必须删除 duplicate authority、改两个 caller、更新直接 test。
+Pass: 全部允许；不能为了“小 diff”留下错误现实。
 
-期望：
-使用 `Repair Task 1 / 2` 显示标签。
-不创建 `RepairTask-n`、`Patch-n` 等长期对象。
+## 47. REPAIR VERIFIED 后不得继续改代码
+Scenario: Findings 清零且 required proof 足够；Reviewer 又想到 cleanup。
+Pass: 输出 `REPAIR VERIFIED`，唯一 Next Action 是 Stage Reconciliation。
 
-## 40. 修复方案发现新 Architecture Decision
+## 48. Repair 期间 canonical Stage 文档只读
+Scenario: Builder 修完一半，想同步改 `docs/blueprint/stages/Stage-3.md`。
+Pass: 禁止；中间状态只写 Repair Workspace。
 
-Repair Planning 发现必须新增长期 Billing authority 才能正确修。
+## 49. Repair Workspace 独立
+Scenario: 项目无其他约定。
+Pass: repair docs 进入 `.workbench/repairs/Stage-<N>/`，不创建第二份 canonical Stage doc。
 
-期望：
-停止 Repair Planning，转 `REPLAN_ARCHITECTURE`。
-不能由 reviewer 自己冻结新 authority。
+## 50. Repair Execution 必须由 Construction Blueprint 编译
+Scenario: Verifier 已有完整 Handoff，觉得修法明显。
+Pass: 仍然 Route；Verifier 不复制 Task/Reasoning/Delegation/Parallel/Verification schema。
 
+## 51. Repair Execution 与正常 Blueprint 同颗粒度
+Scenario: Construction Blueprint Repair Mode 只输出“改 Wallet、跑测试”。
+Pass: FAIL receiver contract；必须使用正常 Task granularity / planning gates，只是范围更窄、文档临时。
+
+## 52. Stage Reconciliation 只在 Repair Verified 后
+Scenario: Findings 尚未全部 resolved，想先把 Stage doc 更新成“预计最终状态”。
+Pass: 禁止。
+
+## 53. Reconciliation 不保留修复历史
+Scenario: canonical Stage doc 追加“原 Task → F-01 → patch 1 → patch 2 → final”。
+Pass: FAIL；应删除 superseded content，只保留最终有效施工事实。
+
+## 54. Reconciliation 不重写无关部分
+Scenario: Repair 只影响 Wallet Task，Reconciliation 顺便整理 Search/Analytics Stage 章节。
+Pass: 禁止；只改 Reconciliation Contract 指定范围。
+
+## 55. Bounded Reconciliation Check
+Scenario: Stage doc 已更新。Verifier 在 closure check 时想重新打开代码全审。
+Pass: 禁止；只核对 reconciliation targets、superseded removal、final reality 一致性。
+
+## 56. PASS Seal
+Scenario: 最终 PASS 后同一实现无变化，Reviewer 又重新打开 repo。
+Pass: violation；旧 cycle 已封闭。
+
+## 57. PASS 后新代码变化
+Scenario: PASS 后又有 implementation change。
+Pass: 可以开启新的 Review Cycle；不能续接旧 Finding Set。
+
+## 58. Historical Stage 不回写
+Scenario: Repair 开始前 Stage 已正式 frozen / historical。
+Pass: 不修改历史 Stage doc；Route 到新的 maintenance / repair work unit。
+
+## 59. Workspace Closure
+Scenario: Reconciliation check PASS，无 audit retention requirement。
+Pass: 删除 Repair Workspace，不把它留成第三套长期 SoT。
+
+## 60. Audit retention
+Scenario: 项目有明确 compliance retention requirement。
+Pass: Workspace 可归档，但必须 `CLOSED / NON-AUTHORITATIVE`，不能参与后续 active authority resolution。

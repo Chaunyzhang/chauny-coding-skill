@@ -1,112 +1,113 @@
 # Review Protocol
 
-> 本文件可独立使用：可直接作为审查方法协议；在 stage-verifier 流程中，由 `SKILL.md` 的「首次审查流程」加载。
+> Owner: Initial Review / Fix Review 的阅读与证据方法。继续/停止 Gate 由 `convergence-protocol.md` 定义。
 
 ## Diff-first, Contract-first
 
 顺序：
 
-1. 读 Contract / Atoms / Architecture / Blueprint。
+1. 读 Current Stage 所需 Contract / Atoms / Architecture / Blueprint。
 2. 读 diff。
 3. 还原实际 execution path。
 4. 只有出现具体 uncertainty 时扩展到相邻代码。
 
 不要先全库搜索“有没有问题”。
 
-## 合理扩展范围
+## Reasonable Expansion
 
-允许为了确认当前 Finding：
+为确认当前 obligation / Finding 可以：
 
-- 找 canonical authority。
-- 看 direct caller / callee。
-- 看 owning domain public interface。
-- 看 touched entity lifecycle。
+- 找 canonical authority；
+- 看 direct caller / callee；
+- 看 owning domain public interface；
+- 看 touched entity lifecycle；
 - 看 current regression dependency。
 
 不允许：
 
-- 顺手审 unrelated module。
-- 扫历史 stage 找旧问题。
-- 扫 future code 猜风险。
+- 顺手审 unrelated module；
+- 扫历史 Stage 找旧问题；
+- 扫 future code 猜风险；
+- 因看到更多文件而自行扩大 review boundary。
+
+Initial Review 的每个额外动作必须关闭 mandatory review coverage 或 Live Uncertainty；Finding Freeze 后必须通过 Action Admission Gate。
 
 ## Computational Sensors vs Inferential Review
 
-### Computational
+优先使用工具证明它擅长的事实：
 
-优先复用：
+- compiler / typecheck；
+- lint / formatter；
+- dependency rules；
+- static analysis；
+- targeted test；
+- query plan / profiler（有 live uncertainty 时）；
+- complexity metric（sensor）。
 
-- compiler / typecheck
-- lint / formatter
-- dependency rules
-- static analysis
-- test
-- query plan / profiler（有 live uncertainty 时）
-- complexity metric（sensor）
+Reviewer 推理重点：
 
-### Inferential
+- semantic coverage；
+- authority duplication；
+- ownership；
+- module boundary；
+- change locality；
+- abstraction quality；
+- side-effect placement；
+- maintainability。
 
-Reviewer 智能主要花在：
-
-- semantic coverage
-- authority duplication
-- ownership
-- module boundary
-- change locality
-- abstraction quality
-- side-effect placement
-- maintainability
-
-不要用 LLM token 替代静态工具擅长的事情。
+不要用 LLM token 替代静态工具，也不要因工具存在就无条件全跑。
 
 ## Test Discipline
 
-已有足够 evidence：
+已有新鲜、可信、范围匹配 evidence ⇒ 直接消费。
 
-不重复。
+新代码阅读产生具体 uncertainty ⇒ 跑最小 targeted evidence。
 
-新代码阅读产生新 uncertainty：
+高成本 environment / device / deployment ⇒ 只有 Acceptance、required capability proof 或具体 uncertainty 要求时使用。
 
-只跑 targeted evidence。
+同一事实不要在多个层级重复证明。
 
-高成本环境 / device / deployment：
-
-只有 current acceptance / slice proof / specific uncertainty 要求时使用。
-
-## Human Authority
+## Human / External Authority
 
 Agent 可判断：
 
-- code / dependency / schema
-- test / build
-- module boundary
-- authority duplication
-- state flow
-- deterministic runtime evidence
+- code / dependency / schema；
+- test / build；
+- module boundary；
+- authority duplication；
+- state flow；
+- deterministic runtime evidence。
 
 Human / external authority：
 
-- subjective UI visual quality
-- physical device sensory judgment（Agent 无法访问时）
-- business/product choice
-- inaccessible external manual process
+- subjective visual quality；
+- Agent 无法访问的 physical-device sensory judgment；
+- business/product choice；
+- inaccessible external manual process。
 
-Agent 不得把无法实际观察的事情报告为 PASS。
+Agent 不得把无法实际观察的事情报告为 PASS，也不得把本可机械证明的事实无理由转嫁给 Human。
 
-## Repair Planning Second Pass
+## After Finding Freeze
 
-Finding Set 冻结以后，Repair Planning 必须视为新的 reasoning pass：
+诊断与后续动作必须分开：
 
-1. Re-intake Product / Architecture / Stage / Blueprint。
-2. 读取 Frozen Findings。
+1. Frozen Finding Set 成立。
+2. Re-intake 相关 Product / Architecture / Stage / original Blueprint / Repository Reality。
 3. 按 root cause 合并。
-4. 判断 Local Repairable vs Upstream Blocked。
-5. 编译 Repair Target State。
-6. 编译 Repair Scope / Implementation Shape。
-7. 编译 Repair Tasks。
-8. 编译 Finding Resolution Matrix。
-9. 定义 Stop Rule。
+4. 判断 Implementation / Blueprint repairable，还是 Architecture / Product / Evidence route。
+5. 编译 Repair Handoff Contract。
+6. 停止 Stage Verifier 的施工规划。
 
-不要直接把 Finding 的 `Required State` 扩写几句就叫 Repair Blueprint。
+不要把 Finding 的 `Required State` 扩写几句就假装是 Blueprint，也不要由 Verifier 自己创建 Task / Slice。
 
-Repair Blueprint 的颗粒度应与 Construction Blueprint Task 对齐，但范围只能覆盖 Frozen Findings 和必要直接影响。
+## Fix Review
 
+Fix Review 只读：
+
+- immutable Review Snapshot；
+- Repair Handoff；
+- Repair Execution；
+- latest diff；
+- Repair Evidence。
+
+只验证 Frozen Findings、合法 REGRESSION 和 direct impact。任何新检查都必须通过 `convergence-protocol.md` 的 Action Admission Gate。

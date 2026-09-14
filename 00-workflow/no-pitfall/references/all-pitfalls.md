@@ -117,7 +117,7 @@ Mock、stub、fixture 和 fake 只证明其覆盖范围内的逻辑。
 
 涉及真实集成、持久化、协议、权限、迁移或运行环境的验收，应使用能够证明对应真实边界的验证方式。
 
-分层口径见 `SKILL_AUTHORING_STANDARD.md`《表四：验证分层》：V0 秒级检查可以用替身，但它的结论只能声称到该层；真机、真库、部署与远程接收端属于 V1，必须用真实边界证明，不得拿 V0 的绿灯冒充，也不得因此要求每个 Task 都跑一次 V1。
+验证预算与真实边界口径见 `verification-budget.md`。低成本局部证据只能证明对应层级；真机、真库、部署与远程接收端必须用真实边界证明，也不得因此要求每个 Task 都跑真实环境验证。
 
 ### 18. 用 TODO 或口头承诺代替当前交付
 
@@ -165,29 +165,13 @@ Mock、stub、fixture 和 fake 只证明其覆盖范围内的逻辑。
 
 ### 25. 把内部 Execution Horizon 当成比用户命令更高的授权
 
-当前局部 Task / Slice / Stage 完成，不等于用户命令结束。
+Execution Horizon 只是对 Active User Directive 的内部解释，必须服务于用户真正的 Authorized Objective。
 
-Execution Horizon 只是 Agent 对 Active User Directive 的内部解释：
+Task / Slice / Stage Exit 不会自动消费仍有效的上层 Standing Authorization；用户明确要求更高目标或 FULL AUTO 时，不得因当前内部 Horizon 较小而提前 STOP。
 
-- `TASK` / `SLICE` / `STAGE` / `CONTINUOUS` 都必须服务于用户真正的 Authorized Objective。
-- 用户明确要求更高层目标 / FULL AUTO 时，不得保守收缩成 `TASK`。
-- 如果用户目标不是“完成一个 Stage”，Stage Gate 也不能擅自终止命令。
+同时不得借“继续执行”越过未冻结 Scope、Stage / Blueprint Authority 或擅自开启未来工作。
 
-禁止的是：
-
-- 越过 Horizon 自行开启未来 Scope。
-- 没有冻结 Stage / Blueprint 就自行施工。
-- 因为发现顺手优化而扩张。
-
-不禁止：
-
-- 在同一 Standing Authorization 内，从已完成 Task 自动进入下一 Ready Task。
-- Stage 完成后，在 `CONTINUOUS` 授权下进入已经冻结且 READY 的下一 Stage。
-
-原则：
-
-> **局部 Exit 不消耗仍然有效的上层 Standing Authorization。**
-
+完整持续执行判定见 `execution-continuity.md`。
 ### 26. 留下不可继续工作的半成品
 
 任务中断、上下文切换或交接时，保持仓库状态可理解、可恢复、可继续。
@@ -223,256 +207,86 @@ Execution Horizon 只是 Agent 对 Active User Directive 的内部解释：
 
 ### 29. 把秒级检查与真实环境验证混成一件事
 
-两种跑偏都错：要求每个小步都跑全量测试、真机、部署和后台取证，会让验证变成主要耗时；把真实环境验证整体攒到最后，会让错误在很晚才暴露。
+验证过度和验证不足都错：不能每个小步跑全量、真机、部署和远程取证，也不能把所有真实边界验证拖到最后。
 
-按预算分层：Task 做最低成本局部检查；Slice 证明真实能力；Stage 证明阶段结果与直接回归。验证层级由本次改动产生的风险与仍未解决的不确定性决定，不由“测试类型看起来更完整”决定。
+按 `verification-budget.md` 分层：Task 用最低成本证据消除当前 Live Uncertainty；Slice 证明真实能力路径；Stage 证明阶段结果与直接回归。已有等价证据且相关实现未变化时，不重复证明同一事实。
 
-已有等价证据且相关实现未变化时，不重复证明同一事实。全量测试、真机、真库、部署与远程接收端取证只在对应层级或明确 Trigger 下执行。
-
-重平台例外（iOS 等编译 / 单测运行本身超出 Task 预算的平台）：agent 不把编译、跑测、真机、CI 当成每个 Task 的默认门槛；优先复用已有增量构建状态，并按项目约定在 Slice / Stage 合理聚合。
-
-
+iOS 等重平台不把 build / test / 真机 / CI 设为每个 Task 的固定门槛，应按项目约定在最早有意义的 Slice / Stage 聚合。
 ### 30. 把假想风险当成真实缺陷修
 
 先区分：
 
-- **Confirmed Defect**：已有实际失败、稳定复现、失败测试、错误数据 / 状态、被破坏的 invariant，或基于合法输入与真实代码路径可以确定问题真实存在。
-- **Hypothetical Risk**：尚无证据证明系统存在缺陷，只是推演“可能会发生”。
+- **Confirmed Defect**：已有实际失败、稳定复现、失败测试、错误数据/状态、被破坏的 invariant，或合法输入沿真实代码路径可确定问题存在。
+- **Hypothetical Risk**：尚无证据证明缺陷真实存在，只是推演“可能发生”。
 
-Confirmed Defect 不做概率辩论，进入第 31 条的根因修复路线。
-
-Hypothetical Risk 不得直接触发 guard、fallback、retry、兼容层、额外 validation、额外测试或架构扩张。先计算：
+Confirmed Defect 直接进入第 31 条的根因修复；Hypothetical Risk 不得直接触发 guard、fallback、retry、兼容层、额外 validation/test 或架构扩张，先评估：
 
 `Risk Score = Severity (1–5) × Evidence-backed Likelihood (1–5)`
 
-Severity：
+Severity：`1` 局部轻微可恢复；`2` 局部功能异常/短暂用户影响；`3` 重要功能或需修复的数据/状态问题；`4` 广泛功能、金钱、权限、安全或数据风险；`5` 不可逆数据损失、重大安全/财务/合规事故或核心系统失效。
 
-- `1`：局部轻微影响，可立即恢复。
-- `2`：局部功能异常或短暂用户影响。
-- `3`：重要功能错误、需要修复的数据 / 状态问题。
-- `4`：广泛功能、金钱、权限、安全或数据风险。
-- `5`：不可逆数据损失、重大安全 / 财务 / 合规事故或核心系统失效。
+Likelihood 必须由证据支撑：`1` 纯理论；`2` 少见条件；`3` 有明确现实路径；`4` 常见条件或相似事故/数据支持；`5` 正常路径高概率或已知环境几乎必然触发。仅仅“模型能想到”不能提高 Likelihood；无证据按 1 计。
 
-Likelihood 必须有证据支撑：
+处理门槛：`1–7` 接受风险，不增加代码/测试；`8–14` 允许一次低成本调查，不直接建设防御体系；`15–25` 进入正式调查/设计，确认缺陷后按第 31 条修复。高 Severity 可更早调查，但不能跳过证据要求。
 
-- `1`：纯理论可能；没有现实证据。
-- `2`：需要少见条件，现实中不常出现。
-- `3`：真实使用中有明确可发生路径。
-- `4`：常见条件或已有相似事故 / 数据支持。
-- `5`：正常路径高概率触发或已知环境几乎必然遇到。
-
-仅仅“模型能想到”不能提高 Likelihood；没有证据时按 1 计。发现一个可能性不等于获得施工授权。
-
-处理门槛：
-
-- `1–7`：接受风险；不增加代码和测试。
-- `8–14`：允许一次低成本调查以判断它是否其实是 Confirmed Defect；不得直接建设防御体系。
-- `15–25`：风险足以进入正式调查 / 设计；若证据确认缺陷，转第 31 条彻底修复；若仍只是推测，处理强度必须与证据和影响匹配。
-
-安全、数据、金钱、权限等领域可以因为 Severity 很高而更早调查，但不能因为“后果很严重”就跳过证据要求。
-
-原则：
-
-> 别把想象当 Bug。假想风险先证明，再决定是否施工。
-
+原则：别把想象当 Bug；假想风险先证明，再决定是否施工。
 ### 31. 已确认缺陷只做表面防御，不修根因
 
-一旦问题被证据确认存在，目标从“降低概率”切换为“恢复正确系统”。
+Confirmed Defect 的目标是恢复正确系统。必须追到真正被破坏的 invariant、ownership/source of truth、state transition、data/transaction semantics、interface/boundary、concurrency/ordering 或 architecture/domain logic。
 
-必须追到真正被破坏的：
+不得用 guard、silent catch、fallback、提高 timeout、增加 retry、额外 validation 或局部夹断数据压住症状后宣布修复，除非它们本身属于根因修复。
 
-- invariant。
-- ownership / source of truth。
-- state transition。
-- data / transaction semantics。
-- interface / boundary。
-- concurrency / ordering。
-- architecture / domain logic。
-
-禁止用 guard、silent catch、fallback、提高 timeout、增加 retry、额外 validation、局部夹断数据等手段把症状压住后宣布修复完成，除非这些本身就是根因修复的一部分。
-
-高影响真实问题不追求“最小补丁”；应修到正确层级，并删除因此不再需要的临时保护和重复逻辑。
-
-修复后只做足以证明根因被修复和关键回归未发生的针对性验证。
-
-原则：
-
-> 真 Bug 要追到底；不要用防御性补丁把真实缺陷藏起来。
-
+高影响真实问题不追求“最小补丁”；修到正确层级后，删除不再需要的临时保护/重复逻辑，并只做足以证明根因修复和关键回归未发生的针对性验证。
 ### 32. 没有活的不确定性仍继续测试、检查或取证
 
-任何新增测试、检查、搜索、日志取证、截图、重跑、审计之前，必须能回答：
+新增测试、检查、搜索、日志取证、截图、重跑或审计前必须回答：
 
-1. **我现在具体不知道什么？**
-2. **这个结果如果失败，我下一步会做什么不同？**
-3. **现有证据是否已经等价证明了这个事实？**
+1. 当前具体不知道什么？
+2. 失败会让下一步做什么不同？
+3. 是否已有等价证据？
 
-如果答不出来，不执行。
-
-“更保险”“再确认一下”“顺手全跑”“多一个绿灯更放心”不是有效 Trigger。
-
-有效 Trigger 是仍然存在、会改变实现或放行决定的具体不确定性。
-
-原则：
-
-> 每一次验证都必须消除一个仍然存在、且会改变下一步行动的不确定性。
-
+答不出来就不执行。“更保险”“再确认一下”“多一个绿灯”不是 Trigger。有效 Trigger 必须是仍存在且会改变实现或放行决定的具体 `Live Uncertainty`。
 ### 33. 已有充分证据后仍继续 hardening、testing 或自我审计
 
-施工必须有停止条件，但停止条件属于**当前 Execution Horizon**，不是天然属于单个 Task。
+某个 Task / Slice / Stage Outcome 已实现且该层级证据充分后，停止该层级的 edge-case 搜索、防御扩张、重复测试、额外 regression、顺手重构和自我审计。
 
-当某个 Task / Slice / Stage Outcome 已实现且对应层级证据充分：
+然后回到 Authorized Objective：仍有 Standing Authorization 与 Ready Work 就继续；Horizon 完成才 STOP；无 Ready Work 且存在 Global Blocker 才暂停；需要越过 Scope / Authority 则路由。
 
-必须停止这个已完成层级上的：
-
-- 找更多 edge case。
-- 增加防御分支。
-- 重跑已通过测试。
-- 扩大 regression。
-- 顺手重构。
-- 继续搜索“还有没有问题”。
-- 为提高主观信心增加检查。
-
-然后判断：
-
-- Standing Authorization 仍有效且有 Ready Work → 继续下一合法工作。
-- Horizon 已完成 → STOP。
-- 无 Ready Work 且存在 Global Blocker → 暂停并报告 blocker。
-- 继续需要越过 Scope / Authority → 路由上游。
-
-“继续工作也需要 Trigger”的正确含义是：
-
-> **继续新的、超出当前授权 Horizon 的工作需要 Trigger；同一 Standing Authorization 内尚未完成的下一 Task 不需要新的 Trigger。**
-
+“继续需要 Trigger”只适用于超出当前授权的新工作，不适用于同一 Standing Authorization 内尚未完成的下一合法工作。
 ### 34. 越过验证与裁决边界，替自己没有证据能力的事项宣布通过
 
-先区分结论属于：
+Agent 能机械验证的 build/test/schema/symbol/dependency/contract/runtime evidence 等应自己验证；审美、主观体验、真机感知、产品/商业偏好以及 Agent 无法访问的外部流程交 Human / External Authority。
 
-- **Agent 可机械验证**：build / test / schema / symbol / dependency / contract、可访问 runtime evidence、规则一致性等。
-- **Human / External Authority 裁决**：审美、主观体验、产品 / 商业偏好、真机感知效果、Agent 无法访问的外部后台 / 设备 / 人工流程等。
+不得把可机械验证事项无理由甩给 Human，也不得通过模拟、截图自评或推断替代自己没有证据能力/裁决权的真实验收。
 
-Agent 能机械证明的事项应自己验证，不得为了保险全部甩给 Human。
-
-Agent 没有证据能力或裁决权的事项不得推断为 PASS，也不得通过模拟、反复截图、自我评价或代理人式猜测替代真实验收。
-
-例如 UI：
-
-- Token / Component / State / Accessibility 机械项 → Agent 检查。
-- 是否好看、舒服、符合审美、Motion 主观质感 → Human Review。
-
-需要 Human / External 验收时，Agent 只提供最短、最清晰的检查清单和当前已知事实，不制造额外验证流程。
-
-原则：
-
-> 没有裁决权和证据能力，就不要代替验收方宣布通过；能机械验证的，也不要推给人类。
-
-
+需要外部验收时，只提供最短检查清单和已知事实。完整 Authority Boundary 见 `verification-budget.md`。
 ### 35. 把局部完成误判成 Authorized Objective 完成
 
-Task Exit、Slice Gate、Stage Gate、commit、CI 完成或一次局部修复通过，都只是 checkpoint。
+Task Exit、Slice Gate、Stage Gate、commit、CI 或一次局部修复通过都只是 checkpoint。
 
-每次 checkpoint 都必须重新判断：
+每次 checkpoint 都按 `execution-continuity.md` 重新判断 Authorized Objective、Ready Work、可授权路由和 Human/External Blocker；不得默认 `Local Complete → Ask User / STOP`。
 
-`Authorized Objective complete?`
-
-未完成时继续判断：
-
-`Ready Work? → Authorized Skill Route? → Replan? → Human/External Blocker?`
-
-不得默认：
-
-`Local Complete → Ask User / STOP`
-
-FULL AUTO 下只要仍有合法自主推进路径，就必须继续。
-
+FULL AUTO 下，只要仍有合法自主推进路径就必须继续。
 ### 36. 把局部阻塞误判成全局阻塞
 
-一个 Task 被 credential、environment、dependency、external service 或其他前置条件阻塞时，必须先检查 Dependency Graph。
+Task 被 credential、environment、dependency、external service 等阻塞时，先检查 Dependency Graph。
 
-如果还有与该 blocker 无关的 Ready Work：
+仍有不依赖该 blocker 的 Ready Work → 记为 Local Blocker 并继续；只有当前 Horizon 无任何 Ready Work、所有剩余工作都依赖 blocker，或必须 Human / External Authority 介入，才是 Global Blocker。
 
-- 记录当前 Local Blocker。
-- 切换到下一 Ready Work。
-- 不向用户宣布整个施工被阻塞。
-
-只有当：
-
-- 当前 Horizon 内没有任何 Ready Work；
-- 所有剩余工作都依赖 blocker；
-- 或必须由 Human / External Authority 做当前 Agent 无法执行的动作；
-
-才是 Global Blocker。
-
-原则：
-
-> **Block the dependency branch, not the whole execution, unless the whole execution is actually blocked.**
-
+原则：阻塞依赖分支，不要在全局仍可推进时阻塞整个执行。
 ### 37. 把用户明确命令当成一次性提示，而不是持续运行时授权
 
-用户已经明确说：
+“全自动施工 / 一直做下去 / 不要每步回来问 / 把现有计划做完 / 除非真的需要我不要停”等明确命令形成 Active User Directive / Standing Authorization。
 
-- 全自动施工。
-- 一直做下去。
-- 不要每步回来问。
-- 把现有计划做完。
-- 除非真的需要我，不要停。
+Task / Slice / Stage 完成、上下文变长或 checkpoint 都不会自动消费该授权，也不得重新询问同一个“要不要继续”。开始或恢复时必须恢复 Authorized Objective、Autonomy Mode 与 Stop / Pause Boundary。
 
-则形成 Active User Directive / Standing Authorization。
-
-禁止：
-
-- 一个 Task / Slice / Stage 完成后假装授权已消费。
-- 上下文变长后忘掉用户的 Autonomy 要求。
-- 每到 checkpoint 重新询问同一个“要不要继续”。
-
-开始 / 恢复时必须恢复：
-
-```text
-Authorized Objective:
-Autonomy Mode:
-Stop / Pause Boundary:
-```
-
-原则：
-
-> **用户的明确命令持续有效，直到目标完成、用户撤销，或出现真正必须把控制权交回用户的边界。**
-
+授权持续到目标完成、用户撤销，或真正必须把控制权交回 Human / External Authority 的边界。
 ### 38. FULL AUTO 下没有合法停机理由却主动停机
 
-`Autonomy Mode: FULL` 时，Agent 想暂停 / 停止前必须能指出合法原因。
+`Autonomy Mode: FULL` 下，有合法推进路径就继续。
 
-合法 STOP：
+合法 STOP：Authorized Objective 完成，或用户明确 STOP / 改变命令。
 
-- Authorized Objective 完成。
-- 用户明确 STOP / 改变命令。
+合法 PAUSE：所有自主路径被 Global Blocker 阻塞；必须 Human / External Authority 执行不可代理动作；必须用户做主观产品/商业/审美裁决；或需要上游能力但当前 Agent / orchestrator 确实无法调用。
 
-合法 PAUSE：
-
-- 所有剩余自主路径都被 Global Blocker 阻塞。
-- 必须由 Human / External Authority 执行不可代理动作。
-- 必须由用户做产品 / 商业 / 审美等主观裁决。
-- 需要上游能力，但当前 Agent / orchestrator 确实无法调用。
-
-以下不是合法停机理由：
-
-- 当前 Task 完成。
-- 当前 Slice 完成。
-- 当前 Stage 完成，但用户目标更高。
-- 已经 commit。
-- 已经跑完 CI。
-- 回复已经很长。
-- “我做了很多，先汇报一下。”
-- 可以调用 Architect / Blueprint / Repair Planning，但懒得路由。
-
-原则：
-
-> **FULL AUTO：有合法推进路径就继续；停止必须有理由。**
-
-
-## 最终原则
-
-先确认事实，再修改系统。
-
-按正式契约完成当前范围；正确性、安全、数据和架构边界保持完整。
-
-所有“完成”都以实际证据为依据，所有超出当前授权的决策都回到规划层。
+Task / Slice / Stage / commit / CI 完成、回复变长、想先汇报，或明明可路由 Architect / Blueprint / Repair Planning，都不是合法停机理由。详见 `execution-continuity.md`。
