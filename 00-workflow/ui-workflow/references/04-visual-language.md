@@ -4,6 +4,8 @@
 
 **目标**：把 Human 的主观感觉编译成一套统一、可执行、能约束页面和组件的视觉语言。
 
+如果视觉方向来自截图/设计稿，而不是 Human 形容词，先读取 `14-image-style-reverse-engineering.md` 的 `Resolved Style DNA`。图片已经证明的 Visual Laws / type / color / spacing / shape / surface / icon 规则优先作为输入，本模块负责统一和消解，而不是重新凭感觉发明另一套风格。
+
 ## Human Alignment
 
 只对齐会改变整体方向的内容：
@@ -150,3 +152,35 @@ Resolved:
 ## 停止条件
 
 当视觉方向已经能直接约束页面构图、组件、tokens 和 motion，而不是只剩形容词时停止。
+
+---
+
+## Visual Laws：从方向到统一世界
+
+Resolved traits 之后，不得直接跳 token。先写 3–5 条能跨页面、跨组件约束结果的 Visual Laws。
+
+Visual Law 应同时影响多个维度，例如：
+
+- `Typography + spacing before containers` 会同时约束 hierarchy、Card 使用、divider、surface 和 section rhythm。
+- `Energy lives in response, not decoration` 会约束 accent、icon、motion、surface 和 illustration。
+- `Only floating layers get elevation` 会同时约束 row、card、popover、sheet、modal。
+
+如果一条规则只能决定一个数值，它不是 Visual Law，而是 token。
+
+## 最终视觉输出不得停在倾向
+
+在交付实现前，本模块的结论必须进入 `UI-DESIGN-SPEC.md` 并解析为具体：
+
+- Typography roles + size/line-height/weight/tracking。
+- Color roles + exact value/system semantic。
+- spacing scale + page/section/component gaps。
+- radius scale + 使用边界。
+- border / surface / elevation/shadow。
+- icon family/size/stroke/filled policy。
+- motion timing/easing/spring + reduced-motion fallback。
+- component treatment。
+- Forbidden / Guardrails。
+
+不得把 `中等、适度、舒适、轻微、现代、精致` 等词留给实现阶段解释。
+
+完整输出格式见 `13-ui-design-spec.md`。

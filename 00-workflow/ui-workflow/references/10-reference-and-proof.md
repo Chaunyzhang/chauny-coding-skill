@@ -2,7 +2,7 @@
 
 ## A. Reference Analysis
 
-**何时加载**：用户提供截图、产品、Moodboard、竞品或明确参考对象。
+**何时加载**：用户提供产品、Moodboard、竞品或明确参考对象。若用户提供的是 UI 截图/设计稿并要求逆向或复刻视觉风格，改用 `14-image-style-reverse-engineering.md`；本模块只保留高层参考原则提取。
 
 目标不是“做得像”，而是提取可迁移原则。
 

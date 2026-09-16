@@ -85,3 +85,18 @@ Human 反馈如“挤、廉价、死、太可爱”，先接受，再翻译成 h
 - 未解决问题明确列出。
 
 就停止，不进行重复低收益检查。
+
+---
+
+## Spec Conformance
+
+存在 `UI-DESIGN-SPEC.md` 时，Rendered Verification 还必须检查实现是否偏离规格：
+
+- 是否偷偷新增 spacing / radius / type / color / shadow 值。
+- 是否用“差不多”的组件替代已定义 Component Grammar。
+- 是否改变 Page Structure / hierarchy / container strategy。
+- 是否丢失定义过的 states / feedback / recovery。
+- 是否让 Secondary/Micro trait 侵占全局视觉语言。
+- 是否违反 Forbidden / Guardrails。
+
+如果最终实现更合理，需要先更新 Spec，再让代码与 Spec 一致；不要让“实现已经这么写了”反过来成为未经记录的新设计规则。

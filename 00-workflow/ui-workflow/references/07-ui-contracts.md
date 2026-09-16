@@ -90,3 +90,16 @@ UI element
 ## 停止条件
 
 当 UI 和真实系统之间的关键映射已经显式，且不再依赖口头翻译或“实现时再决定”时停止。
+
+---
+
+## Contract 必须写回 UI-DESIGN-SPEC.md
+
+Contract 不作为另一份平行 handoff 文档存在。对当前 UI 真正影响显示和行为的内容，应收束进 `UI-DESIGN-SPEC.md` 的：
+
+- Page States。
+- Component States。
+- State & Interaction Rules。
+- Implementation Mapping。
+
+这样实现者只有一个设计权威来源，不需要在视觉稿、散文 handoff、状态文档之间人工翻译。

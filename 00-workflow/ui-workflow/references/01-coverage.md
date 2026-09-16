@@ -68,7 +68,16 @@
 - pointer / touch / keyboard
 - dark / high contrast / text scaling / zoom / RTL / localization
 
-## 9. Visual Language
+## 9. Image Evidence（有截图/设计稿时）
+- source scope：单页 / 多页 / 多状态 / 多 breakpoint
+- Observed / Resolved / Unknown 是否分开
+- structure / hierarchy / composition 是否可逆向
+- typography / color / spacing / radius / surface / icon / imagery 是否可提取
+- 可见 component / state 是否有重复证据
+- motion / responsive / hidden state / business truth 是否缺证据
+- Style DNA 与源产品业务/品牌特征是否分离
+
+## 10. Visual Language
 - Human intent
 - Primary / Secondary / Micro / Avoid
 - reference extraction
@@ -77,7 +86,7 @@
 - spacing / density / icon / imagery / motion
 - coherence / drift
 
-## 10. System / Reuse
+## 11. System / Reuse
 - semantic tokens
 - primitives
 - components
@@ -86,7 +95,7 @@
 - themes
 - shared state rules
 
-## 11. Implementation Mapping
+## 12. Implementation Mapping
 - UI object ↔ content/domain object
 - UI state ↔ source/owner
 - UI event ↔ command
@@ -94,7 +103,7 @@
 - pending/result/error ↔ visible feedback
 - recovery ↔ available action
 
-## 12. Verification
+## 13. Verification
 - normal / empty / loading / error
 - permission / unavailable
 - offline / stale
@@ -109,3 +118,19 @@
 ## 停止条件
 
 Coverage 扫描完成后，应能说明：本次真正需要深入的模块有哪些，哪些已有可复用，哪些明确不适用。不得把“没想到”伪装成 `N/A`。
+
+## 14. Design Spec Compilation
+- Visual Laws 是否已形成
+- composition grammar 是否具体
+- typography roles 是否有确定值/系统语义
+- color roles 是否有确定值/系统语义
+- spacing scale 与关键 gap 是否确定
+- radius / border / surface / shadow 是否确定
+- icon / imagery / motion 是否确定
+- 关键 component grammar 是否确定
+- 每个 Relevant Page 是否有独立 Page Spec
+- states / interaction / feedback 是否写入同一规格
+- adaptation / accessibility 是否具体
+- forbidden / guardrails 是否具体
+- Global + Page implementation prompts 是否生成
+- 是否仍有需要实现者二次设计的模糊项

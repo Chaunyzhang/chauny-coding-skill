@@ -2,6 +2,8 @@
 
 **何时加载**：完整 Screen / Surface、新页面、重做页面布局，或视觉属性已经明确但页面仍“不知道怎么排”时。
 
+> 识图任务：优先使用 `14-image-style-reverse-engineering.md` 中的 Page Reverse Spec、alignment axis、gutter、section rhythm 和 container evidence；不要在构图阶段重新发明与图片证据冲突的结构。
+
 **目标**：把内容、层级、行为和视觉语言合成一个具体页面方案。
 
 ## 必须决定
@@ -60,3 +62,26 @@ Visual direction applied:
 ## 停止条件
 
 当设计者和实现者都能从构图说明理解：页面首先看什么、如何分组、动作放哪、哪些区域滚动/固定、不同尺寸怎么变化时停止。
+
+---
+
+## Page Spec 必须具体化
+
+构图结论必须进入 `UI-DESIGN-SPEC.md` 的逐页面规格，而不是停在描述。
+
+对于 Relevant Page，明确到实现者无需再决定：
+
+- exact structure / section order。
+- content width / grid / columns。
+- page gutter。
+- top / bottom inset。
+- section before/after spacing。
+- row/item gap。
+- alignment axis。
+- container/surface/divider strategy。
+- primary/secondary action placement。
+- scroll/sticky/fixed/overlay ownership。
+- responsive reflow。
+- page states 和 content stress。
+
+如果某个 gap、max-width、min-height、column width 会明显改变页面观感，就在 Page Spec 中给出确切值或已命名 token，不留给实现者“按感觉调”。

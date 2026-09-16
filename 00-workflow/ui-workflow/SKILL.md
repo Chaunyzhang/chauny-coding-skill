@@ -1,14 +1,14 @@
 ---
 name: ui-workflow
 display_name: UI 设计工作流
-description: 一个自包含的 UI 设计与实现 Skill。覆盖从零设计、已有 UI 优化、局部修改、视觉语言、组件与状态、实现契约、前端落地和真实运行验证；先做完整 Coverage，再按任务只展开相关能力，避免用户逐项提醒，也避免机械跑全流程。
+description: 一个自包含的 UI 设计与实现 Skill。覆盖从零设计、已有 UI 优化、视觉语言、页面构图、组件与状态、实现契约、前端落地和真实运行验证；先做完整 Coverage，再按任务只展开相关能力，并把最终设计编译成具体、可复制、无需下游再猜的 UI-DESIGN-SPEC.md。
 ---
 
 # UI 设计工作流
 
 ## 目标
 
-本 Skill 负责把产品事实变成可运行、可验证、视觉统一的 UI。
+本 Skill 负责把产品事实变成可运行、可验证、视觉统一的 UI，并把设计阶段的全部 Relevant 决策编译成一份可直接执行的 `UI-DESIGN-SPEC.md`。
 
 它既可以从零设计，也可以修改已有 UI；既可以只做设计，也可以继续落到实现。它不要求每次执行完整流程，而是先扫描完整问题空间，再只展开当前任务需要的能力。
 
@@ -33,6 +33,7 @@ UI 工作始终要能回答五件事：
 - 局部页面、组件、状态、交互或视觉修改。
 - 建立或扩展 Design System。
 - 把主观感觉编译成明确视觉语言。
+- 从 UI 截图/设计稿中逆向设计语言并复刻视觉风格。
 - 把设计定义落成真实前端 UI。
 - 审查 UI 是否完整、统一、可实现、可访问、可验证。
 
@@ -67,7 +68,15 @@ UI 工作始终要能回答五件事：
 
 不得为了套模板重建已经成立的系统。
 
-## 3. 精细视觉之前，结构和行为必须足够清楚
+## 3. 图片参考必须先逆向成规则，再进入设计
+
+用户提供 UI 截图、设计稿或 Moodboard 并要求复刻风格时，先区分 `Observed / Resolved / Unknown`，把图片反编译成结构、Visual Laws、tokens、component grammar 和 Page Spec。
+
+禁止从静态图片虚构业务 truth、hidden states、responsive 或 motion；也禁止只抄像素坐标。
+
+见 `references/14-image-style-reverse-engineering.md`。
+
+## 4. 精细视觉之前，结构和行为必须足够清楚
 
 与当前任务相关的内容结构、层级、组件边界、状态、交互、反馈、布局和适配必须先达到“不会逼实现者临场猜”的程度。
 
@@ -75,7 +84,7 @@ UI 工作始终要能回答五件事：
 
 结构与内容见 `references/02-structure-and-content.md`；状态与交互见 `references/03-state-and-interaction.md`。
 
-## 4. 主观感觉必须落成可观察规则
+## 5. 主观感觉必须落成可观察规则
 
 `极简 / 温暖 / 成熟 / 活跃 / 高级 / 安静` 不是完成的设计语言。
 
@@ -94,13 +103,13 @@ UI 工作始终要能回答五件事：
 
 见 `references/04-visual-language.md`。
 
-## 5. 页面不是属性表
+## 6. 页面不是属性表
 
 列出颜色、圆角、字体、间距之后，仍必须形成具体页面排版：视觉重心、内容顺序、分组方式、容器策略、动作位置、滚动归属和响应式变化。
 
 见 `references/05-page-composition.md`。
 
-## 6. Variant、State、Owner 必须分开
+## 7. Variant、State、Owner 必须分开
 
 - `Variant`：组件是哪一种语义版本。
 - `State`：现在处于什么状态。
@@ -108,13 +117,13 @@ UI 工作始终要能回答五件事：
 
 状态可以是多个维度同时成立，不要把页面简化成单一 `normal/loading/error` enum。
 
-## 7. UI 真相必须显式
+## 8. UI 真相必须显式
 
 Permission、lifecycle、approval、route、session 等会影响决策的事实，必须来自明确字段或状态源。
 
 禁止从文案、颜色、位置、字符串前缀、CSS class 或视觉标签反推业务真相。
 
-## 8. 组件按意义和变化边界形成
+## 9. 组件按意义和变化边界形成
 
 组件边界优先依据：
 
@@ -128,7 +137,7 @@ Permission、lifecycle、approval、route、session 等会影响决策的事实�
 
 系统化规则见 `references/06-design-system.md`。
 
-## 9. 设计与实现之间必须有共同定义
+## 10. 设计与实现之间必须有共同定义
 
 重要 UI 必须能追踪：
 
@@ -138,13 +147,33 @@ Permission、lifecycle、approval、route、session 等会影响决策的事实�
 
 见 `references/07-ui-contracts.md`。
 
-## 10. 核心规则平台无关，平台差异下沉
+## 11. 核心规则平台无关，平台差异下沉
 
 通用规则不得假设 React、Web、SwiftUI 或其他框架。
 
 平台专属约束只在对应平台触发。当前内置 SwiftUI 适配见 `references/09-platform-swiftui.md`。
 
-## 11. 思考必须留下东西
+## 12. 设计必须收束成一份权威规格
+
+只要任务涉及新页面、完整页面重设计、新视觉方向或设计交付实现，设计阶段最终必须创建或更新 `UI-DESIGN-SPEC.md`。
+
+这份文档是实现阶段的设计权威来源，必须包含本次 Relevant 的：
+
+- Visual Laws / Composition Grammar。
+- Typography / Color / Spacing / Shape / Surface / Border / Depth。
+- Icon / Imagery / Motion。
+- Component Grammar。
+- 每个页面的具体 Page Spec。
+- States / Interaction / Feedback。
+- Adaptation / Accessibility。
+- Forbidden / Guardrails。
+- Copyable implementation prompts。
+
+不得把“中等圆角、舒适留白、温暖配色、高级感”等仍需实现者解释的词当作最终规格。
+
+完整格式见 `references/13-ui-design-spec.md`。
+
+## 13. 思考必须留下东西
 
 重要分析最终至少落成一种结果：
 
@@ -160,7 +189,7 @@ Permission、lifecycle、approval、route、session 等会影响决策的事实�
 
 没有改变后续设计、实现或验证行为的分析，不算完成的工作。
 
-## 12. 可见 UI 必须看真实运行结果
+## 14. 可见 UI 必须看真实运行结果
 
 不能只看源码、设计稿或静态截图就宣称 UI 正确。
 
@@ -168,7 +197,7 @@ Permission、lifecycle、approval、route、session 等会影响决策的事实�
 
 见 `references/11-verification.md`。
 
-## 13. Human 拥有最终审美权
+## 15. Human 拥有最终审美权
 
 Agent 可以检查一致性、完整性、规则遵守、布局、状态覆盖、可访问性和实现证据。
 
@@ -185,6 +214,12 @@ Human 说感觉不对时，回到相应视觉或构图规则迭代，不与用�
 ## 从零做 UI
 
 通常需要：Coverage → 结构/内容 → 状态/交互 → Human 方向 → 视觉语言 → 页面构图 → 系统化 → Contract → 实现（若要求）→ 验证。
+
+## 图片 / 截图逆向风格
+
+先加载识图模式，提取 `Observed → Resolved → Unknown`：页面结构、视觉层级、构图、Typography、Color、Spacing、Shape/Surface/Depth、Icon/Imagery、可见组件和状态。随后把可复用 Style DNA 编译进视觉语言、页面构图、Design System 和 `UI-DESIGN-SPEC.md`。
+
+如果是“把这张图的风格用于另一个产品”，只迁移 Style DNA，不复制源产品的业务结构、品牌资产或隐藏行为。见 `references/14-image-style-reverse-engineering.md`。
 
 ## 已有 UI 重设计 / 优化
 
@@ -250,6 +285,12 @@ Pressure tests、negative/source gates、rendered verification、mechanical desi
 ### L. Accessibility 与适配
 输入方式、focus、语义、contrast、text scaling、reduced motion、viewport、RTL/localization 等横切约束。见 `references/12-accessibility-and-adaptation.md`。
 
+### M. UI Design Spec 编译
+把所有 Relevant 设计决定收束为 `UI-DESIGN-SPEC.md`，包含具体数值、全局视觉语言、组件规则、逐页面规格、Guardrails 与可复制实现 Prompt。见 `references/13-ui-design-spec.md`。
+
+### N. 识图与风格逆向
+从截图/设计稿逆向结构、视觉规律、tokens、组件语法和页面规格；严格区分 Observed / Resolved / Unknown，并把 Style DNA 编译回统一 Spec。见 `references/14-image-style-reverse-engineering.md`。
+
 ---
 
 # 默认执行方式
@@ -257,15 +298,16 @@ Pressure tests、negative/source gates、rendered verification、mechanical desi
 不是固定阶段，而是默认依赖顺序。简单任务可以合并，复杂任务可以来回迭代。
 
 1. **Route + Coverage**：识别任务形态，扫完整 Coverage，只展开 Relevant 项。
-2. **Restore Reality**：读产品/项目/现有 UI，确认用户任务、核心对象、主要动作和不能擅改的约束。
+2. **Restore Reality**：读产品/项目/现有 UI，确认用户任务、核心对象、主要动作和不能擅改的约束；若输入是图片参考，先做 Image Reverse Engineering，把视觉证据转成规则。
 3. **Define UI**：把本次相关的内容、层级、组件、状态、交互、反馈、布局和适配定义清楚。
 4. **Resolve Visuals**：需要新视觉方向时，把 Human 感觉编译成统一视觉语言；已有稳定系统则复用。
 5. **Compose Surface**：完整页面必须形成明确构图，不停留在属性列表。
 6. **Systematize**：只把稳定、真实复用的规则上升为 token/component/pattern。
-7. **Form Contracts**：让 UI、数据、状态、事件和结果之间没有暗缝。
-8. **Implement**：如果任务包含代码，在现有 repo 约束下最小完整落地。
-9. **Verify**：只验证 Relevant 场景，但可见 UI 必须有真实 rendered evidence。
-10. **Human Review**：机械问题由 Agent 修，最终视觉感觉由 Human 裁决。
+7. **Compile Spec**：把视觉、构图、组件、状态、适配与 Guardrails 编译成权威 `UI-DESIGN-SPEC.md`；不得保留需要实现者再次做设计判断的模糊项。
+8. **Form Contracts**：让 UI、数据、状态、事件和结果之间没有暗缝，并写回 Spec。
+9. **Implement**：如果任务包含代码，只消费已确定的 Spec，在现有 repo 约束下最小完整落地；不得重新解释视觉方向。
+10. **Verify**：按 Spec 和 Relevant 场景验证真实 rendered result。
+11. **Human Review**：机械问题由 Agent 修，最终视觉感觉由 Human 裁决；若方向改变，更新 Spec 后再实现。
 
 ---
 
@@ -284,6 +326,27 @@ Pressure tests、negative/source gates、rendered verification、mechanical desi
 
 ## Composition Gate
 完整 Surface 不能只有 tokens / 属性清单，必须有具体视觉重心、分组、容器策略、动作位置和滚动/适配方案。
+
+## Image Reverse-Engineering Gate
+
+当任务使用图片逆向风格时：
+- 已区分 `Observed / Resolved / Unknown`。
+- 已提取结构、层级、构图和 Visual Laws。
+- spacing/radius/type/color 等来自重复规律归纳，而不是逐像素抄写。
+- 没有从静态图虚构 motion、responsive、hidden state 或业务 truth。
+- 风格迁移时已分离 Style DNA 与源产品业务/品牌特征。
+- 结果能够继续编译进 `UI-DESIGN-SPEC.md`。
+
+## Spec Gate
+需要完整设计交付时，`UI-DESIGN-SPEC.md` 已生成或更新，并且：
+
+- Global visual language 已解析为具体规则。
+- Typography / Color / Spacing / Radius / Border / Surface / Shadow / Icon / Motion 有确定值或确定平台语义。
+- 每个 Relevant 页面都有具体结构、尺寸/间距、组件使用、状态和适配规则。
+- 关键组件有可执行 geometry / state / motion 规则。
+- Forbidden / Guardrails 明确。
+- 已生成可复制的 Global + Page implementation prompt。
+- 不存在会让实现者二次设计的模糊词。
 
 ## Contract Gate
 重要状态有来源和 owner；重要动作有 command、pending、结果、失败与恢复；实现不需要猜业务真相或关键 UI 行为。
@@ -307,20 +370,24 @@ Pressure tests、negative/source gates、rendered verification、mechanical desi
 7. **Secondary Trait Takeover**：次要性格侵占整体结构语言。
 8. **Attributes Without Composition**：有 color/radius/type，却没有页面排版方案。
 9. **Reference Cloning**：复制参考产品外壳而不理解结构与原则。
-10. **Card Everything**：用 Card 代替层级、分组和 layout 判断。
-11. **Component Everything**：把每个视觉块都组件化。
-12. **Token Before Meaning**：从“温暖/高级”直接跳到色值和 radius。
-13. **Variant-State Confusion**：把语义版本、运行状态和 owner 混成 props 大杂烩。
-14. **Semantic Inference from Presentation**：从显示文本/颜色/位置推断业务真相。
-15. **Prose-Only Handoff**：只有散文，没有 UI ↔ data/state/event/action 映射。
-16. **Leaf Durable Mutation**：叶子组件直接改 durable shared truth。
-17. **Business Logic in Base UI**：基础 UI 组件携带产品业务判断。
-18. **Platform Leakage**：把某框架习惯写成通用 UI 规则。
-19. **Old Path Lives On**：新逻辑上线后，旧推断/旧入口仍作为正常 fallback 存活。
-20. **Source-Only Confidence**：只看代码就宣布可见 UI 已正确。
-21. **Agent Declares Taste Correct**：Agent 用自己的审美评价覆盖 Human 判断。
-22. **Prototype Theater**：简单交互也强制高成本 prototype。
-23. **Verification Theater**：为了形式重复截图、全设备遍历或无风险全链路测试。
+10. **Screenshot Tracing**：只抄截图坐标/像素，不逆向 spacing、type、surface、component 等系统规律。
+11. **Image Hallucination**：从静态图虚构 hidden state、业务 truth、responsive 或 motion。
+12. **Card Everything**：用 Card 代替层级、分组和 layout 判断。
+13. **Component Everything**：把每个视觉块都组件化。
+14. **Token Before Meaning**：从“温暖/高级”直接跳到色值和 radius。
+15. **Variant-State Confusion**：把语义版本、运行状态和 owner 混成 props 大杂烩。
+16. **Semantic Inference from Presentation**：从显示文本/颜色/位置推断业务真相。
+17. **Prose-Only Handoff**：只有散文，没有 UI ↔ data/state/event/action 映射。
+18. **Spec-Free Implementation**：设计做完却没有 `UI-DESIGN-SPEC.md`，让实现者根据形容词或截图重新猜 spacing/radius/color/layout/motion。
+19. **Near-Equivalent Drift**：规格已有确定值，却在不同页面/组件自行使用“差不多”的新值。
+20. **Leaf Durable Mutation**：叶子组件直接改 durable shared truth。
+21. **Business Logic in Base UI**：基础 UI 组件携带产品业务判断。
+22. **Platform Leakage**：把某框架习惯写成通用 UI 规则。
+23. **Old Path Lives On**：新逻辑上线后，旧推断/旧入口仍作为正常 fallback 存活。
+24. **Source-Only Confidence**：只看代码就宣布可见 UI 已正确。
+25. **Agent Declares Taste Correct**：Agent 用自己的审美评价覆盖 Human 判断。
+26. **Prototype Theater**：简单交互也强制高成本 prototype。
+27. **Verification Theater**：为了形式重复截图、全设备遍历或无风险全链路测试。
 
 ---
 
