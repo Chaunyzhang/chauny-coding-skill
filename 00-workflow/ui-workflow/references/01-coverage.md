@@ -4,6 +4,14 @@
 
 **怎么用**：每项只标 `Relevant / Existing / N/A`。如果是 `Relevant`，再加载对应 reference。
 
+## 0. Route / Scope
+
+- 当前是 micro patch / component / page / multi-page / full product / implementation-only / refactor 哪一类？
+- 能完整解决问题的最小路径是什么？
+- 哪些风险会触发升级？
+- 最终需要 Full Spec / Page Spec / Patch Spec 哪一种？
+
+
 ## 1. 产品与语义
 - 用户 / actor
 - 用户目标 / task
@@ -70,7 +78,7 @@
 
 ## 9. Image Evidence（有截图/设计稿时）
 - source scope：单页 / 多页 / 多状态 / 多 breakpoint
-- Observed / Resolved / Unknown 是否分开
+- 重要产品/代码/图片/设计判断的 Observed / Resolved / Unknown 是否分开
 - structure / hierarchy / composition 是否可逆向
 - typography / color / spacing / radius / surface / icon / imagery 是否可提取
 - 可见 component / state 是否有重复证据
@@ -103,7 +111,18 @@
 - pending/result/error ↔ visible feedback
 - recovery ↔ available action
 
-## 13. Verification
+
+## 13. Implementation Structure（包含代码且非平凡时）
+- repo / feature tree 是否需要画出
+- shared vs page-local
+- state / data / mutation owner
+- navigation owner
+- repeated UI / collection renderer
+- tokens / icons / assets 单一来源
+- duplicated markup / logic / fixtures 风险
+- 新增下一个同类页面是否需要 copy-paste
+
+## 14. Verification
 - normal / empty / loading / error
 - permission / unavailable
 - offline / stale
@@ -119,7 +138,7 @@
 
 Coverage 扫描完成后，应能说明：本次真正需要深入的模块有哪些，哪些已有可复用，哪些明确不适用。不得把“没想到”伪装成 `N/A`。
 
-## 14. Design Spec Compilation
+## 15. Design Spec Compilation
 - Visual Laws 是否已形成
 - composition grammar 是否具体
 - typography roles 是否有确定值/系统语义

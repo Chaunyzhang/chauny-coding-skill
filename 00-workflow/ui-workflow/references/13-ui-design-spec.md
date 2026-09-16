@@ -4,6 +4,39 @@
 
 **目标**：把前面所有设计判断编译成一份具体、无歧义、可直接实现的 `UI-DESIGN-SPEC.md`。实现者执行规范，不重新猜视觉意图。
 
+## Spec 粒度：一个权威体系，三种修改尺度
+
+不要把每个任务都强制成完整文档重编译。选择能完整约束当前任务的最小 Spec 粒度：
+
+### Full Spec
+用于：从零产品、新视觉语言、全局 Design System、多个页面共同变化。
+
+产物：完整 `UI-DESIGN-SPEC.md`。
+
+### Page Spec
+用于：已有稳定 Global Spec 下新增/重做一个页面。
+
+产物：更新 `UI-DESIGN-SPEC.md` 中对应 Page Section，或在仓库约定允许时生成引用 Global Spec 的 `PAGE-SPEC-<name>.md`。Page Spec 不复制全局规则，也不能静默覆盖全局规则。
+
+### Patch Spec
+用于：局部组件、单一视觉属性、局部状态/交互变化。
+
+最少包含：
+
+```text
+Target:
+Observed context:
+Preserved rules:
+Changed rules:
+Reason / source:
+Implementation impact:
+Verification:
+```
+
+若 Patch 产生了新的长期设计规则，必须把该规则合并回权威 `UI-DESIGN-SPEC.md`；否则 Patch 只是当前改动的 delta，不成为第二套设计系统。
+
+**原则：一个权威系统，多个修改粒度；禁止多个互相竞争的 Spec。**
+
 ## 核心规则
 
 1. **设计没有形成明确规格，就不算设计完成。**
@@ -29,14 +62,14 @@
 
 只写当前产品或当前任务真正需要的内容，但以下结构必须逐项判断，不能因没想到而漏掉。
 
-## 0. Evidence Provenance（识图任务时）
+## 0. Evidence Provenance
 
-如果本 Spec 来自截图/设计稿逆向，先记录：
-- `Observed`：图片直接证明的规则/值。
-- `Resolved`：由重复视觉证据归纳的规则/token。
-- `Unknown`：图片无法证明、不得伪装成源设计事实的行为/状态/适配。
+所有重要事实/决定都可使用同一套证据状态，不只识图：
+- `Observed`：用户、产品文档、代码、运行结果、图片等直接证明。
+- `Resolved`：由 Observed + 明确规则得到的设计/实现决定。
+- `Unknown`：证据不足，不能伪装成事实。
 
-最终实现仍需具体，但凡 Unknown 需要在目标产品中补设计时，应明确这是“目标产品的新设计决定”，不是“从图片提取所得”。
+识图时记录图片证据；已有项目时记录 repo/runtime 证据；产品规则记录其上游来源。Unknown 若需要由 UI 设计补齐，标记 `Resolved (new target decision)`；若超出 UI authority，则保持 Unknown 或取得上游事实。
 
 ## 1. Design Intent
 
@@ -373,7 +406,20 @@ DO NOT
 
 Guardrails 必须针对当前 Design Intent，不写泛泛而谈的设计常识。
 
-## 14. Verification Checklist
+## 14. Implementation Structure（任务包含非平凡代码实现时）
+
+设计规格完成后，不把代码组织留给实现 Agent 临场决定。加载 `15-implementation-structure.md`，创建或更新独立的 `IMPLEMENTATION-STRUCTURE.md`，至少画出：
+
+- repo / feature tree；
+- shared vs page-local；
+- state/data/mutation ownership；
+- navigation ownership；
+- repeated renderer/component；
+- token/icon/asset single source。
+
+`UI-DESIGN-SPEC.md` 规定 UI 应该是什么；`IMPLEMENTATION-STRUCTURE.md` 规定这些事实在代码里由谁拥有、放在哪里、如何复用。
+
+## 15. Verification Checklist
 
 从本次 Coverage 中生成真正要验证的场景：
 

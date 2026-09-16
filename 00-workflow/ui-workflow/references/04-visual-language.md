@@ -6,6 +6,19 @@
 
 如果视觉方向来自截图/设计稿，而不是 Human 形容词，先读取 `14-image-style-reverse-engineering.md` 的 `Resolved Style DNA`。图片已经证明的 Visual Laws / type / color / spacing / shape / surface / icon 规则优先作为输入，本模块负责统一和消解，而不是重新凭感觉发明另一套风格。
 
+
+## 视觉来源优先级
+
+视觉决策不能把所有来源等权混合。默认优先级：
+
+1. **Human 明确 correction / Avoid**：最终审美方向的最高优先级。
+2. **当前任务中被批准的 Existing Design System / Spec**：若不是明确 redesign，不得随意推翻。
+3. **高质量参考/截图的 Observed + Resolved 证据**：用于复刻/迁移时优先于知识库。
+4. **视觉生成知识库**：当现有系统或参考不足时，用 `16-visual-generation-knowledge.md` 补齐成熟构图与视觉 recipe。
+5. **Agent 自由发挥**：只填无法由前四项决定、且属于 UI 设计权范围的剩余细节。
+
+任何低优先级来源不得默默覆盖高优先级来源。
+
 ## Human Alignment
 
 只对齐会改变整体方向的内容：

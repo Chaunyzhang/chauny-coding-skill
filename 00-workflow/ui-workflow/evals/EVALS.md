@@ -206,3 +206,91 @@
 **失败行为**：
 - 把两个冲突值直接平均。
 - 隐藏冲突并声称源产品就是统一的。
+
+
+## Eval 15 — 两页面实现必须主动做结构自查
+
+**输入**：根据已确认 Spec 实现 Todo Home 和 Chat 两个页面；两页都有 TabBar，多个 chevron/icon，Todo 有重复 TaskRow，Chat 有重复 Bubble。用户没有提醒组件化。
+
+**期望行为**：
+- 在写主体代码前主动触发 Implementation Structure。
+- 创建 `IMPLEMENTATION-STRUCTURE.md`，用 Markdown 画 repo/feature tree。
+- 明确 TabBar、icons/asset registry、TaskRow/Bubble、mock data、state/navigation owner 的 shared/local 边界。
+- 重复 collection 数据驱动；同一 icon/SVG 只有一个来源。
+- 对只出现一次、无独立状态的 Hero/局部结构不做为了抽象而抽象。
+- 实现后重新按真实 repo 更新结构图并做 duplication audit。
+- 明确回答“新增第三个同类页面需要复制什么”；若答案包含复制页面主体，则先重构。
+
+**失败行为**：
+- 先复制两份 TabBar / SVG / task markup，等用户提醒后才二次重构。
+- 只在 README 写“应复用组件”，实际代码仍重复。
+- 为了避免重复把所有单用块都组件化。
+- 没有 `IMPLEMENTATION-STRUCTURE.md` 或结构图与实际 repo 不一致。
+
+
+---
+
+## Eval: 小任务必须走最小路径
+
+### Scenario
+已有完整 `UI-DESIGN-SPEC.md`，用户只要求把 PrimaryButton 的 pressed 背景色调整为更深一级，不改 geometry/state/API。
+
+### Expected
+- 不重跑完整 Coverage、视觉语言、页面构图或 Implementation Structure。
+- 读取现有 button/color rules。
+- 产出 Patch Spec：Target / Preserved / Changed / Verification。
+- targeted implement + rendered verify。
+
+### Failure
+- 重建整个设计系统或重新询问产品方向。
+- 没有 Patch Spec 就直接改代码。
+
+---
+
+## Eval: 无参考视觉生成不能自由发挥
+
+### Scenario
+从零做一个 Todo 首页。Human 只说“极简、成熟，但交互时有一点活力”，没有参考图和既有 Design System。
+
+### Expected
+- 加载视觉生成知识。
+- Resolve Primary/Secondary/Micro。
+- 形成 3–5 条 Visual Laws。
+- 选择明确 composition grammar。
+- 输出具体 type/spacing/radius/surface/color/icon/motion recipe 与 Forbidden。
+- 活力主要进入 icon/feedback/micro-motion，不把全局 palette/Card 变高能。
+
+### Failure
+- 只写“minimal + lively”。
+- 自由发明多彩 Card、渐变或大圆角，没有统一规律。
+
+---
+
+## Eval: 全局证据纪律
+
+### Scenario
+Repo 中只观察到 `task.status` 和当前 rendered UI，没有任何离线同步字段或产品文档。Agent 需要定义 TaskRow。
+
+### Expected
+- `task.status` 标为 Observed。
+- 由 status 映射出的已批准展示规则标为 Resolved。
+- offline sync behavior 标为 Unknown，不从文案/颜色/经验推断。
+- 若 UI 设计必须补一个临时 offline presentation，明确标为 `Resolved (new target decision)`，且不能伪装成后端事实。
+
+### Failure
+- 自动假设存在 syncPending 并当成 Observed product truth。
+
+---
+
+## Eval: Spec Drift Audit
+
+### Scenario
+现有 Spec spacing = `8/12/16/24`、radius = `8/12`、单一 outline icon family。第三个页面实现出现 `15px` gap、`10px` 新 radius、另一套 filled icons。
+
+### Expected
+- Drift Audit 主动发现三类未登记漂移。
+- 默认回退到既有 Spec；若确有新设计理由，先更新 Spec，再统一代码。
+- 不因为“看起来差不多”放过。
+
+### Failure
+- 页面能跑、截图好看就宣布通过。

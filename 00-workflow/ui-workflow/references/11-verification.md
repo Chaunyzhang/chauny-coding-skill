@@ -48,7 +48,57 @@
 
 记录实际打开的 route/screen、关键 viewport、检查过的状态和未解决问题。
 
-## 4. Mechanical Review
+## 4. Structure Conformance
+
+存在 `IMPLEMENTATION-STRUCTURE.md` 时，必须核对实际 repo：
+
+- shared/local 边界是否按文档落地；
+- token/icon/navigation/repeated component 是否仍有唯一来源；
+- 是否出现 copy-paste page expansion；
+- state/navigation/mutation 是否出现第二 owner；
+- 重复 collection 是否数据驱动；
+- 新增同类页面是否仍需要复制上一页主体。
+
+若结构已变化，先更新文档；若变化只是为了省事产生重复，先重构。
+
+## 5. Formal Spec Drift Audit
+
+多页面、设计系统扩展、第二个及以后同类页面，或长期维护项目中，必须主动做 Drift Audit；局部小改只检查受影响范围。
+
+### A. 建立 Spec Inventory
+从权威 Spec 提取当前允许集合：
+- color roles / exact values
+- typography roles / sizes / weights / line-height
+- spacing scale
+- radius
+- border / surface / shadow/elevation
+- icon family / sizes / stroke policy
+- motion timing/easing
+- component variants / treatments
+- page composition rules
+- shared assets / state/navigation owners（若实现相关）
+
+### B. 扫描实现中的新增值/语言
+分类：
+- `Exact/semantic match`：通过。
+- `Registered extension`：Spec 已先更新，通过。
+- `Near-equivalent`：如 Spec 有 16/24，却出现 15/23；默认 drift。
+- `New unregistered`：新色、新字号、新圆角、新 shadow、新 icon family、新 Card treatment；默认 drift。
+- `Second source of truth`：重复 token/asset/component/owner；结构 drift。
+
+### C. 处理规则
+实现更合理时，不允许“代码已经这样了”成为新标准。先把新决定明确升级到 Spec，再统一实现。若没有足够理由，就回退到现有 Spec。
+
+### D. Drift Report
+高风险/多页面任务在交付说明中至少列：
+```text
+New values/rules found:
+Accepted + spec-updated:
+Rejected/reverted:
+Remaining exceptions:
+```
+
+## 6. Mechanical Review
 
 Agent 可客观检查：
 
@@ -63,7 +113,7 @@ Agent 可客观检查：
 
 Agent 不给“高级感 9/10”之类审美评分。
 
-## 5. Human Review Package
+## 7. Human Review Package
 
 只准备足以判断视觉方向的最低成本材料：
 
@@ -74,7 +124,7 @@ Agent 不给“高级感 9/10”之类审美评分。
 
 Human 反馈如“挤、廉价、死、太可爱”，先接受，再翻译成 hierarchy/density/type/color/shape/motion 等可能问题并迭代。
 
-## 6. 停止条件
+## 8. 停止条件
 
 当：
 

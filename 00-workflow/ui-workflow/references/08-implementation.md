@@ -4,6 +4,12 @@
 
 **目标**：在现有项目约束下，把 UI 定义实现成真实运行界面；核心规则不绑定 React、SwiftUI 或其他框架。
 
+## 实现结构先于非平凡代码
+
+只要任务新增页面、跨页面复用、共享组件/资产、state owner、navigation 或 data/mutation path，就必须先加载 `15-implementation-structure.md`，创建或更新 `IMPLEMENTATION-STRUCTURE.md`。
+
+不得先复制页面把功能做出来，再等用户提醒后重构结构。
+
 ## 先读 repo 现实
 
 实现前确认相关：
@@ -97,4 +103,4 @@ Platform/App shell
 
 ## 停止条件
 
-当实现遵守现有依赖方向、状态 owner 清楚、旧路径不再干扰、目标 UI 可运行，并已进入真实 rendered verification 时停止实现阶段。
+当实现遵守现有依赖方向、状态 owner 清楚、旧路径不再干扰、目标 UI 可运行，并且非平凡任务的 `IMPLEMENTATION-STRUCTURE.md` 已按真实 repo 更新、通过 Post-Implementation Structure Audit，再进入 rendered verification。
