@@ -48,7 +48,24 @@
 
 记录实际打开的 route/screen、关键 viewport、检查过的状态和未解决问题。
 
-## 4. Structure Conformance
+## 4. Human Decision / Spec / Code Trace
+
+对任何 Human 可感知变化，验证链必须能追溯：
+
+`Human intent → confirmed decision/delegation → Spec diff → Code diff → Rendered result`
+
+检查：
+
+- Human 只给模糊反馈时，是否先出现精确 Alignment，而不是直接进代码。
+- 是否存在对应 Full/Page/Patch Spec 更新。
+- Spec 是否先于对应设计相关代码变化成为权威。
+- 代码是否偷偷新增 Spec 中没有的可见行为、motion、state presentation、structure 或 token。
+- 如果没有 Spec diff，是否能证明这是纯实现重构，且 rendered result / observable behavior / contract 均未变化。
+- 并行 Agent 是否都消费同一权威 Spec，是否存在分支各自创造设计事实。
+
+发现 `design-changing code without prior spec authority`，直接判定交付失败；不要用“现在代码已经这样了”倒推 Spec。
+
+## 5. Structure Conformance
 
 存在 `IMPLEMENTATION-STRUCTURE.md` 时，必须核对实际 repo：
 
@@ -61,7 +78,7 @@
 
 若结构已变化，先更新文档；若变化只是为了省事产生重复，先重构。
 
-## 5. Formal Spec Drift Audit
+## 6. Formal Spec Drift Audit
 
 多页面、设计系统扩展、第二个及以后同类页面，或长期维护项目中，必须主动做 Drift Audit；局部小改只检查受影响范围。
 
@@ -98,7 +115,9 @@ Rejected/reverted:
 Remaining exceptions:
 ```
 
-## 6. Mechanical Review
+## 7. Mechanical Review
+
+先运行 `18-visual-craft-floor.md`：Hard Fail 必须清零；Warning 要么删除，要么能追溯到 Human 已确认的 Art Direction / 产品理由。
 
 Agent 可客观检查：
 
@@ -113,7 +132,7 @@ Agent 可客观检查：
 
 Agent 不给“高级感 9/10”之类审美评分。
 
-## 7. Human Review Package
+## 8. Human Review Package
 
 只准备足以判断视觉方向的最低成本材料：
 
@@ -122,9 +141,9 @@ Agent 不给“高级感 9/10”之类审美评分。
 3. 必要时多个关键状态对比。
 4. 只有设备行为无法替代时才升级真机。
 
-Human 反馈如“挤、廉价、死、太可爱”，先接受，再翻译成 hierarchy/density/type/color/shape/motion 等可能问题并迭代。
+Human 反馈如“挤、廉价、死、太可爱、太跳”，先接受；Agent 先把感觉翻译成可观察候选决定并让 Human 确认，再更新 Spec，再迭代实现。禁止直接在代码里凭感觉微调到“看起来差不多”。
 
-## 8. 停止条件
+## 9. 停止条件
 
 当：
 
@@ -132,6 +151,7 @@ Human 反馈如“挤、廉价、死、太可爱”，先接受，再翻译成 h
 - 没有已知 contract/state/layout/accessibility 漏洞。
 - 可见 UI 有真实证据。
 - Human 所需的最低成本审美判断材料已准备。
+- Human 可感知变化都能追溯到确认决定与先行 Spec；没有 code-first / spec-backfill。
 - 未解决问题明确列出。
 
 就停止，不进行重复低收益检查。
@@ -149,4 +169,4 @@ Human 反馈如“挤、廉价、死、太可爱”，先接受，再翻译成 h
 - 是否让 Secondary/Micro trait 侵占全局视觉语言。
 - 是否违反 Forbidden / Guardrails。
 
-如果最终实现更合理，需要先更新 Spec，再让代码与 Spec 一致；不要让“实现已经这么写了”反过来成为未经记录的新设计规则。
+如果最终实现暴露出更合理的新方向，不能直接接受代码结果：先回到 Human Alignment，让 Human 确认该方向，再更新 Spec，最后让代码与新 Spec 一致。不要让“实现已经这么写了”反过来成为未经确认的新设计规则。

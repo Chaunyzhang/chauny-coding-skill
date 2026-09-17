@@ -77,6 +77,12 @@ affordance
 
 Motion 必须有工作：连续性、状态变化、空间关系、反馈或注意力引导。不要为“看起来高级”添加无职责动画。
 
+## Human 可感知行为先对齐
+
+如果 Human 只说“太跳、太慢、反馈不明显、想更顺”之类感觉，先按 `17-human-alignment-change-control.md` 把它翻译成可观察的候选行为（什么连续、什么保持、是否 overshoot、何时反馈、失败如何恢复），让 Human 确认后再写入 Spec。
+
+未经确认，不得把 Agent 自选的 motion/state/feedback 直接固化进生产代码。若现有 Spec 已经明确该行为或 Human 指令本身足够精确，则无需重复确认。
+
 ## 禁止
 
 - 从 button label / color 推断 permission。

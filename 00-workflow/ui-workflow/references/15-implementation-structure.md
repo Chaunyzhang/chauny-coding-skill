@@ -228,6 +228,10 @@ IMPLEMENTATION-STRUCTURE.md
 
 实现不能通过复制代码制造第二套“差不多”的设计系统。
 
+如果结构规划暴露出新的 Human 可感知设计决定（例如某状态究竟如何表现、某交互是否改变顺序语义），`IMPLEMENTATION-STRUCTURE.md` 不能自行定案。把它标成 Candidate Spec Delta，按 `17-human-alignment-change-control.md` 先对齐 Human、更新 `UI-DESIGN-SPEC.md`，再继续结构/代码。
+
+并行 Agent 只能共享同一版本的权威 Spec；Structure owner 不等于 Design owner，不能因为自己负责代码结构就擅自改变 UI truth。
+
 ---
 
 ## 禁止模式

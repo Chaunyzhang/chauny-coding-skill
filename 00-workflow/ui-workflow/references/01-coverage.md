@@ -12,6 +12,19 @@
 - 最终需要 Full Spec / Page Spec / Patch Spec 哪一种？
 
 
+## 0.5 Human Alignment / Change Control
+
+- 当前请求是否已经足够精确，还是 Human 只表达了感觉/结果？
+- Agent 是否准备新增 Human 可感知的设计决定？
+- 哪些东西会改变，哪些必须保持不变？
+- 哪些候选决定需要 Human 确认，哪些已由现有 Spec / 明确指令确认？
+- Human 是否明确授权 Agent 在限定范围内自行决定？
+- 最终需要更新 Full / Page / Patch Spec 中哪一块？
+- 是否存在“先写代码再补 Spec”的风险？
+- 并行 Agent 是否有明确 Spec owner / Candidate Spec Delta 路径？
+
+若任务只是纯实现重构且 rendered result、observable behavior、contract 与 Spec 都不变，可将本节标为 `N/A — implementation-preserving`。
+
 ## 1. 产品与语义
 - 用户 / actor
 - 用户目标 / task
@@ -86,6 +99,8 @@
 - Style DNA 与源产品业务/品牌特征是否分离
 
 ## 10. Visual Language
+- Visual Craft Floor：alignment / hierarchy / spacing / typography / color / shape-depth / icon consistency / content stress
+- Hard Fail 是否清零，Warning 是否有明确理由
 - Human intent
 - Primary / Secondary / Micro / Avoid
 - reference extraction
@@ -152,4 +167,6 @@ Coverage 扫描完成后，应能说明：本次真正需要深入的模块有�
 - adaptation / accessibility 是否具体
 - forbidden / guardrails 是否具体
 - Global + Page implementation prompts 是否生成
+- Human 可感知的新决定是否已经确认
+- Spec 是否在代码之前更新
 - 是否仍有需要实现者二次设计的模糊项

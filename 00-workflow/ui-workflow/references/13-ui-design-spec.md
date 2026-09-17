@@ -2,7 +2,7 @@
 
 **何时加载**：任何需要新建页面、改变视觉方向、形成完整 UI 方案、交给实现 Agent/工程师，或需要把已有零散设计规则收束成可执行规范的任务。
 
-**目标**：把前面所有设计判断编译成一份具体、无歧义、可直接实现的 `UI-DESIGN-SPEC.md`。实现者执行规范，不重新猜视觉意图。
+**目标**：把 Human 已确认的设计判断编译成一份具体、无歧义、可直接实现的 `UI-DESIGN-SPEC.md`。实现者执行规范，不重新猜视觉意图。任何 Human 可感知的新设计决定都必须先经过 Alignment，再进入 Spec。
 
 ## Spec 粒度：一个权威体系，三种修改尺度
 
@@ -26,6 +26,8 @@
 ```text
 Target:
 Observed context:
+Human intent / approval:
+Confirmed interpretation:
 Preserved rules:
 Changed rules:
 Reason / source:
@@ -36,6 +38,20 @@ Verification:
 若 Patch 产生了新的长期设计规则，必须把该规则合并回权威 `UI-DESIGN-SPEC.md`；否则 Patch 只是当前改动的 delta，不成为第二套设计系统。
 
 **原则：一个权威系统，多个修改粒度；禁止多个互相竞争的 Spec。**
+
+## 变更控制：Human Confirm 先于 Spec，Spec 先于 Code
+
+涉及 Human 可感知变化时，权威顺序固定为：
+
+`Human intent → Agent precise translation → Human confirm/delegate → Spec update → Code → Rendered verification`
+
+- Candidate decision 在 Human 确认前不得写成权威 Spec，也不得进入生产代码。
+- Human 原始指令本身已经足够精确、已批准现有 Spec，或明确授权 Agent 在限定范围内决定时，不重复询问。
+- Human 只描述感觉时，Agent 必须先把它翻译成“屏幕上会发生什么 / 保持什么 / 关键规则 / Unknown”，再确认。
+- 如果实现过程中发现必须改变可见结果、interaction、motion、state presentation、page/component structure 或 design token，先停代码，回到 Alignment。
+- 纯实现重构如果 rendered result、observable behavior、contract 与 Spec 完全不变，可以没有 Spec diff。
+
+详细规则见 `17-human-alignment-change-control.md`。
 
 ## 核心规则
 
@@ -51,6 +67,8 @@ Verification:
 5. 如果项目没有 Design System，本次规格必须给出当前范围所需的完整基础值。
 6. 平台原生值可以作为最终答案，但必须明确使用哪个系统语义，例如 `systemBackground`、`body`、`secondaryLabel`；不能写“用系统默认差不多即可”。
 7. 下游实现不得重新解释 Human Feeling。视觉方向只在设计阶段解析一次。
+8. Human 可感知的新决定必须有确认来源：明确指令、对 Alignment Block 的确认，或 Human 明确授权。
+9. 设计变更必须先更新 Spec 再进入生产代码；禁止 code-first / spec-backfill。
 
 ---
 
@@ -70,6 +88,21 @@ Verification:
 - `Unknown`：证据不足，不能伪装成事实。
 
 识图时记录图片证据；已有项目时记录 repo/runtime 证据；产品规则记录其上游来源。Unknown 若需要由 UI 设计补齐，标记 `Resolved (new target decision)`；若超出 UI authority，则保持 Unknown 或取得上游事实。
+
+### 0.1 Human Decision Provenance
+
+对本次新增/改变的 Human 可感知规则，记录最小必要来源：
+
+```text
+Human intent:
+Confirmation: explicit instruction / confirmed alignment / delegated scope
+Confirmed interpretation:
+Preserved:
+Changed:
+Remaining Unknown / blockers:
+```
+
+这不是要求建立冗长审批日志，而是保证后续能回答：**这条设计规则是谁确认的，为什么成为真相？**
 
 ## 1. Design Intent
 
@@ -391,7 +424,9 @@ UI element
 
 ## 13. Forbidden / Guardrails
 
-列出这套设计最容易漂移的 5–15 条禁令，例如：
+先加载 `18-visual-craft-floor.md`。其中 `Hard Fail` 不应以“风格选择”留在 Spec 中；必须先解决。`Warning` 若保留，需记录明确 Art Direction / 产品理由。
+
+然后列出这套设计最容易漂移的 5–15 条项目特定禁令，例如：
 
 ```text
 DO NOT
@@ -404,11 +439,18 @@ DO NOT
 - 页面自行新增 typography role。
 ```
 
-Guardrails 必须针对当前 Design Intent，不写泛泛而谈的设计常识。
+Guardrails 必须针对当前 Design Intent；共同视觉下限由 `18-visual-craft-floor.md` 统一承担，不要在每个项目重复抄一遍。
+
+同时记录：
+```text
+Visual Craft Floor: PASS
+Warnings intentionally retained:
+- <warning> — <why it belongs to this Art Direction>
+```
 
 ## 14. Implementation Structure（任务包含非平凡代码实现时）
 
-设计规格完成后，不把代码组织留给实现 Agent 临场决定。加载 `15-implementation-structure.md`，创建或更新独立的 `IMPLEMENTATION-STRUCTURE.md`，至少画出：
+Human 已确认且设计规格更新完成后，不把代码组织留给实现 Agent 临场决定。加载 `15-implementation-structure.md`，创建或更新独立的 `IMPLEMENTATION-STRUCTURE.md`，至少画出：
 
 - repo / feature tree；
 - shared vs page-local；
@@ -460,12 +502,13 @@ Reuse the exact global design language, tokens, component grammar,
 states, accessibility rules, and forbidden rules defined in the spec.
 
 If the existing codebase conflicts with the spec, preserve product and
-architecture truth, surface the conflict explicitly, and resolve the UI
-through the nearest valid implementation rather than silently changing
-the design language.
+architecture truth and surface the conflict explicitly. If resolving the
+conflict would change any human-perceptible design decision, stop and
+return to Human Alignment; update the spec before changing production code.
+Do not let implemented behavior silently become the new design truth.
 
 Validate the rendered result against the relevant verification scenarios
-before declaring completion.
+and the confirmed human decision before declaring completion.
 ```
 
 ## B. Per-page Implementation Prompt
@@ -498,6 +541,9 @@ Do not redesign the page or substitute different visual values.
 
 进入实现前必须通过：
 
+- [ ] 本次 Human 可感知的新决定已经确认，或原始指令/既有批准 Spec 已足够明确。
+- [ ] Human 模糊反馈已经被翻译成可观察的精确规则，而不是直接由 Agent 在代码里解释。
+- [ ] Spec 已先于任何对应生产代码变化更新。
 - [ ] 没有未解析的核心形容词。
 - [ ] 视觉规律明确。
 - [ ] Typography 有具体 role/value。
@@ -517,4 +563,4 @@ Do not redesign the page or substitute different visual values.
 
 ## 停止条件
 
-当下游实现者可以只读取 `UI-DESIGN-SPEC.md` 就完成当前 UI，而无需重新做视觉设计决策时停止。
+当 Human 已确认本次可感知设计决定，且下游实现者可以只读取最新 `UI-DESIGN-SPEC.md` 就完成当前 UI、无需重新解释 Human 意图或再做视觉设计决策时停止。

@@ -21,7 +21,9 @@
 
 ## Human Alignment
 
-只对齐会改变整体方向的内容：
+本模块负责把 Human 感觉编译成候选视觉语言；真正进入权威 Spec 前，遵守 `17-human-alignment-change-control.md`。
+
+只对齐会改变整体方向或 Human 可感知结果的内容：
 
 - 产品气质。
 - 想突出什么、压低什么。
@@ -31,9 +33,11 @@
 - motion character。
 - 明确 Avoid。
 
-不要让用户审批普通 padding、radius、token 数值。
+不要让用户审批普通 padding、radius、token 微值；Agent 应先把模糊感觉翻译成“屏幕上会怎么变 / 保持什么 / 关键规则 / Unknown”的候选方案，再一次性让 Human 确认有意义的决策边界。
 
 用户说“挤、廉价、死、幼稚”时，先把它当作设计症状，推断可能原因，再结合真实 UI 判断；不要直接把一个词机械映射成一个属性。
+
+Human 确认前，这些只是 Candidate Visual Decisions；确认后才进入 `UI-DESIGN-SPEC.md`。
 
 ## 多个形容词先分角色
 
@@ -152,6 +156,9 @@ Resolved:
 每个重要 Human trait 至少能指出 2–3 个实际改变的设计决定。若删掉该 trait 后 UI 基本不变，说明它没有真正进入设计。
 
 ## Visual Coherence Gate
+
+Visual Coherence 通过后，还要用 `18-visual-craft-floor.md` 检查共同视觉下限。Coherence 解决“是不是同一套语言”，Craft Floor 解决“这套语言本身有没有明显脏乱/业余的结构性问题”。
+
 
 检查：
 

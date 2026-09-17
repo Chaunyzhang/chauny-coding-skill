@@ -10,6 +10,37 @@
 
 不得先复制页面把功能做出来，再等用户提醒后重构结构。
 
+## Human Confirm + Spec 必须先于设计相关代码
+
+加载 `17-human-alignment-change-control.md`。只要实现会新增或改变 Human 可感知的 UI/interaction/motion/state presentation/component/page structure/design token：
+
+1. 先把需要改变的结果翻译成 Human 可确认的精确决定；
+2. Human 确认，或已有明确指令/批准 Spec/授权范围；
+3. 先更新对应 Full/Page/Patch Spec；
+4. 再修改生产代码。
+
+禁止把代码当 prototype 偷偷定设计，再事后补 Spec。
+
+### 实现中发现 Spec 不够怎么办
+
+如果写代码时发现“为了做下去必须选一个新设计行为”：
+
+- 停止该设计相关实现；
+- 把冲突/缺口标成 Candidate Decision；
+- 回到 Human Alignment；
+- Human 确认后先改 Spec；
+- 再继续代码。
+
+### 纯实现重构不需要审批
+
+如果 rendered result、observable behavior、state/data contract、Design System 与 Spec 全部不变，可直接处理内部技术细节，不要求 Human 重新确认，也不要求制造虚假的 Spec diff。
+
+允许 Agent 自主决定：内部 helper、私有数据结构、不改变体验的可靠清理机制、性能优化、文件内部组织等。禁止借重构顺手做“更好看一点”的未确认变化。
+
+### 并行 Agent
+
+并行实现必须消费同一版本的权威 Spec。非 Spec owner Agent 若发现需要新设计决定，只能提出 Candidate Spec Delta；Human/owner 合并 Spec 后才能把该决定写进生产代码。
+
 ## 先读 repo 现实
 
 实现前确认相关：
@@ -103,4 +134,10 @@ Platform/App shell
 
 ## 停止条件
 
-当实现遵守现有依赖方向、状态 owner 清楚、旧路径不再干扰、目标 UI 可运行，并且非平凡任务的 `IMPLEMENTATION-STRUCTURE.md` 已按真实 repo 更新、通过 Post-Implementation Structure Audit，再进入 rendered verification。
+当实现遵守现有依赖方向、状态 owner 清楚、旧路径不再干扰、目标 UI 可运行，并且：
+
+- 本次 Human 可感知变化已先确认并写入最新 Spec；
+- 不存在 code-first / spec-backfill；
+- 非平凡任务的 `IMPLEMENTATION-STRUCTURE.md` 已按真实 repo 更新并通过 Post-Implementation Structure Audit；
+
+再进入 rendered verification。

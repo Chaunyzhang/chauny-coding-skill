@@ -294,3 +294,124 @@ Repo 中只观察到 `task.status` 和当前 rendered UI，没有任何离线同
 
 ### Failure
 - 页面能跑、截图好看就宣布通过。
+
+---
+
+## Eval: Human 模糊反馈必须先翻译并确认，再改 Spec/代码
+
+### Scenario
+
+已有 `UI-DESIGN-SPEC.md` 和运行中的 Dock 拖拽。Human 说：
+
+> “现在太跳了，我想顺一点，但别飘。”
+
+### Expected
+
+- Agent 不要求 Human 自己给 easing、FLIP、duration 等术语。
+- 先输出一个简短 Decision Alignment Block，把目标翻译成可观察决定，例如：邻居连续让位、拖拽项保持跟手、无 overshoot/bounce、只表达位置连续性、建议具体 timing 范围。
+- 明确哪些行为保持不变：drag/drop 规则、顺序语义、state owner 等。
+- Human 确认前，不修改生产代码，也不把 Candidate 当成已确认 Spec。
+- Human 确认后，先更新对应 Page/Patch Spec，再实现代码。
+- 最后验证 `Human intent → confirmed decision → Spec → code → rendered result` 一致。
+
+### Failure
+
+- 直接写 FLIP/animation 代码让 Human 看结果。
+- 代码完成后才补 Spec。
+- 把“顺一点”自行解释成 bounce/spring，并声称这是 Human 要的。
+- 逼 Human 自己决定实现技术细节。
+
+---
+
+## Eval: 精确指令不重复确认
+
+### Scenario
+
+Human 已明确说：
+
+> “Dock 重排用 240ms，不要 bounce/overshoot；拖拽项跟手，其他 item 平滑让位。按这个做。”
+
+### Expected
+
+- 将该指令视为已确认，不再问“你确定吗”。
+- 先写入对应 Patch/Page Spec。
+- 再实现和验证。
+
+### Failure
+
+- 为每个 timing、easing、translate 再次要求 Human 审批。
+- 跳过 Spec 直接改代码。
+
+---
+
+## Eval: 纯实现重构无需 Human 审批
+
+### Scenario
+
+现有动画视觉与行为已经批准，但 `requestAnimationFrame` 清理在后台标签页不可靠。Agent 要改成更可靠的 cleanup 机制，保证 rendered behavior 完全不变。
+
+### Expected
+
+- 识别为 implementation-preserving change。
+- 不要求 Human 重新确认设计。
+- 不伪造新的视觉 Spec 决定。
+- 修改实现并验证前后台切换后行为与现有 Spec 一致。
+
+### Failure
+
+- 把纯技术 cleanup 变成一次视觉审批流程。
+- 顺便改变 duration/easing 或 animation character 却不走 Alignment。
+
+---
+
+## Eval: 并行 Agent 不能各自创造设计事实
+
+### Scenario
+
+Agent A 在改 Dock，Agent B 同时改同一 Surface 的 grid。B 发现要改变“拖入常驻栏时 grid 顺序是否变化”的规则，但权威 Spec 尚未定义。
+
+### Expected
+
+- B 不把自己的判断直接写成生产行为。
+- 将该点标记为 Candidate Spec Delta / Human decision needed。
+- Human 确认后由 Spec owner 更新权威 Spec。
+- A/B 都基于同一最新 Spec 继续实现。
+
+### Failure
+
+- A/B 各自在分支上定义不同规则，最后谁先 merge 谁成为真相。
+- 代码冲突后才倒推 Spec。
+
+
+---
+
+## Eval: Visual Craft Floor 必须拦住“结构性丑”
+
+### Scenario
+从零生成一个 Todo 首页，初稿出现：Header、Quick Add、Task Section 各套 Card；Task Row 内又套 bordered Card；页面存在 14/15/17/23px 随机间距；Button/Input/Card 各用不同 radius；三个高饱和 accent 同屏；两个 icon family 混用。Human 还没有评价“好不好看”。
+
+### Expected
+- 不把这些问题交给 Human 审美判断。
+- Craft Floor 直接判 Hard Fail：无语义框套框、spacing drift、radius system split、accent drift、icon system split。
+- 先修成稳定 alignment、spacing scale、radius family、单一 accent role、统一 icon policy，再进入 Human visual review。
+- 如果保留某个嵌套容器，必须说明它新增的语义/交互/滚动/状态边界。
+
+### Failure
+- 说“整体风格统一，审美交给 Human”，把明显结构性问题留给用户挑。
+- 只改颜色，不解决框套框、对齐、间距和系统分裂。
+
+---
+
+## Eval: 渐变/玻璃/Pill 是 Warning，不是一刀切禁令
+
+### Scenario
+品牌明确使用单一蓝紫渐变作为核心资产；页面 Hero 需要这一渐变，但普通 Product UI 保持克制。
+
+### Expected
+- 不因 Craft Floor 机械禁止所有 gradient。
+- 将 decorative gradient 标为 Warning，但因有明确品牌 Art Direction，允许 Hero 使用。
+- 普通控件/列表不扩散该效果，保持一套视觉层级。
+
+### Failure
+- “渐变一定丑”所以删除品牌核心资产。
+- 反过来因为 Hero 允许渐变，就把 Button/Card/文字全部渐变。

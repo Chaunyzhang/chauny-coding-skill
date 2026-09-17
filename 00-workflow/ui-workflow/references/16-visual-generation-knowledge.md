@@ -206,6 +206,9 @@ Motion 必须有 job：反馈、连续性、状态变化、空间关系。
 
 ## 11. Concrete Recipe Gate
 
+具体 recipe 形成后，在进入高保真/Spec 前必须加载 `18-visual-craft-floor.md`：先消除 alignment/spacing/hierarchy/type/color/radius/depth/icon 等 Hard Fail；gradient/glass/pill/card/heavy shadow 等 Warning 必须有明确理由。
+
+
 进入高保真或 Full/Page Spec 前，视觉方案必须至少能给出：
 - 主构图语法与 focal rule
 - type roles + scale relationship
