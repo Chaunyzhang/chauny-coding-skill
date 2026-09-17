@@ -1,568 +1,272 @@
 ---
 name: ui-workflow
 display_name: UI 设计工作流
-description: 一个自包含的 UI 设计与实现 Skill。覆盖从零设计、已有 UI 优化、视觉语言、页面构图、组件与状态、Human 决策对齐、实现契约、前端落地和真实运行验证；先做完整 Coverage，再按任务只展开相关能力，并把 Human 已确认的设计决定编译成具体、可复制、无需下游再猜的 UI-DESIGN-SPEC.md。
+description: 自包含的 UI 设计与实现工作流。把产品事实、Human 意图或参考图编译成明确 UI 规格，再按规格实现、验证与防漂移；支持从零设计、已有 UI 优化、识图复刻、局部修改、组件/设计系统和实现审查。完整 Coverage 只用于防漏，默认走最小合法路径。
 ---
 
 # UI 设计工作流
 
 ## 目标
 
-本 Skill 负责把产品事实变成可运行、可验证、视觉统一的 UI，并把设计阶段的全部 Relevant 决策编译成一份可直接执行的 `UI-DESIGN-SPEC.md`。
+把输入编译成一套**可确认、可实现、可验证、可持续扩展**的 UI，而不是让 Agent 边写边猜。
 
-它既可以从零设计，也可以修改已有 UI；既可以只做设计，也可以继续落到实现。它不要求每次执行完整流程，而是先扫描完整问题空间，再只展开当前任务需要的能力。
+默认真相链：
 
-UI 工作始终要能回答五件事：
+`Reality / Human Intent / Visual Evidence → UI Definition → Visual System → UI-DESIGN-SPEC → Implementation Structure → Code → Rendered Verification`
 
-1. **现实是什么**：用户、任务、内容、业务事实、权限、状态、平台约束。
-2. **怎么呈现**：信息层级、页面结构、布局、视觉语言、组件系统。
-3. **怎么行为**：交互、反馈、状态变化、时间行为、恢复路径。
-4. **怎么落地**：状态归属、数据映射、组件边界、实现路径。
-5. **怎么证明**：真实运行状态、边界内容、可访问性和 Human 视觉验收。
-
-任何模块都是为这五件事服务，不另起一套平行流程。
+完整 UI 设计任务的最终设计权威是 `UI-DESIGN-SPEC.md`；非平凡实现还必须有 `IMPLEMENTATION-STRUCTURE.md`。
 
 ---
 
-# 触发范围
+# 1. 先路由：默认走最小合法路径
 
-适用于：
+Coverage 是问题全集，不是固定流程。先判断任务范围，再只加载会改变结果的能力。
 
-- 从零设计 Screen / Flow / App UI。
-- 优化、重构或统一已有 UI。
-- 局部页面、组件、状态、交互或视觉修改。
-- 建立或扩展 Design System。
-- 把主观感觉编译成明确视觉语言。
-- 从 UI 截图/设计稿中逆向设计语言并复刻视觉风格。
-- 把设计定义落成真实前端 UI。
-- 审查 UI 是否完整、统一、可实现、可访问、可验证。
+| 任务 | 默认路径 |
+|---|---|
+| 改单个颜色/间距/文案 | Existing Spec → Patch Spec → Implement → Render verify |
+| 改一个组件 | Existing System → Component definition/states → Patch Spec → State proof → Verify |
+| 新增一个页面 | Coverage scan → UI Definition → Visual inheritance/new direction → Page Spec → Implement → Verify |
+| 从零做 UI | Coverage → UI Definition → Human alignment → Visual System → Full Spec → Structure → Implement → Verify |
+| 图片/截图复刻风格 | Image reverse-engineering → Visual System → Full/Page Spec → Implement → Verify |
+| 已有 UI 重设计 | Restore reality → diagnose hierarchy/layout/system → Human alignment → Patch/Page Spec → Verify |
+| 已有设计只实现 | Spec/contract → Structure → Implement → Verify；禁止重新设计 |
+| 纯技术重构 | Structure/ownership → Implement → regression verify；可见行为不变时无需重新找 Human 审批 |
 
-不替代：
+只有出现新风险时才升级路径：新页面/新状态、新视觉语言、跨页共享、状态 owner 不清、业务真相不清、复杂交互、结构复制、Spec drift。
 
-- 产品战略和 Feature 是否存在。
-- 后端业务规则、权限真相和服务端生命周期。
-- 已冻结的顶层架构约束。
-- Human 对最终审美的裁决。
+完整扫描见 `references/01-coverage.md`。
 
 ---
 
-# 核心工作原则
+# 2. 全局证据纪律：Observed / Resolved / Unknown
 
-## 1. Coverage 不是 Procedure
+任何会影响设计、实现或验证的结论都必须属于：
 
-每个任务先快速扫完整 UI Coverage，再标记：
+- **Observed**：图片、代码、产品文档、运行结果或 Human 明确说过。
+- **Resolved**：由 Observed 事实 + 已批准规则推导出的决定。
+- **Unknown**：证据不足，不能伪装成事实。
 
-- `Relevant`：本次需要展开。
-- `Existing`：已有定义可直接复用。
-- `N/A`：本次不适用。
+Unknown 若会改变业务语义、设计方向或可见行为：先问 Human/上游；若不阻塞当前范围，显式记录而不是偷偷补全。
 
-不得因为用户没提就默认不存在；也不得把完整清单机械跑成固定流程。
-
-完整清单见 `references/01-coverage.md`。
-
-## 2. 默认走最小合法路径
-
-任务默认只加载能完整解决当前问题的最小能力集合，不把“完整能力”误用成“完整流程”。
-
-- 单一视觉属性修改：读取现有 Spec/Design System → 生成 Patch Spec → 实现 → targeted rendered verification。
-- 单一组件修改：组件规则/状态 → Patch Spec → 实现 → 组件级验证。
-- 既有系统新增简单页面：现有 Global Spec → 结构/状态 → Page Spec → 实现 → 页面验证。
-- 多页面、新视觉语言、状态 ownership 改动、共享结构变化、证据冲突时才升级加载更多能力。
-
-只有发现真实风险证据才升级路径；不得因为 Skill 能做很多，就默认全跑。
-
-## 3. Observed / Resolved / Unknown 是全局证据纪律
-
-重要判断不只在识图时区分来源，整个 UI 工作都遵守：
-
-- `Observed`：用户要求、产品文档、代码、运行结果、图片等直接证明的事实。
-- `Resolved`：基于 Observed 证据与本 Skill 规则得到的明确设计/实现决定；必要时标记 `Resolved (new target decision)`。
-- `Unknown`：当前证据不足，不能伪装成事实。
-
-Unknown 若属于 UI 设计权范围，可在明确标注“新设计决定”后 Resolve；若属于业务真相、权限、服务端生命周期或其他上游 authority，则必须保持 Unknown 或取得上游证据。
-
-禁止把“Agent 觉得应该如此”写成 Observed。
-
-## 4. Human 可感知变化必须先对齐，再进 Spec，再进代码
-
-Human 可以只说“太跳、太挤、太幼稚、想顺一点但别飘”。Agent 的职责是把这种模糊感觉翻译成 Human 能确认的精确、可观察设计决定，而不是要求 Human 自己说 FLIP、easing、spacing token 或 state machine。
-
-对任何新增/改变 Human 可感知结果的设计决定，强制顺序：
-
-`Clarify → Confirm → Specify → Implement → Verify`
-
-- 如果 Human 已经给出足够精确的规则、已确认现有 Spec，或明确授权 Agent 在限定范围内决定，则 `Confirm` 视为已满足，不重复审批。
-- 如果 Agent 要主动改变 layout、motion、state presentation、component behavior、hierarchy、visual language 或用户可感知不变量，必须先把候选决定讲清楚让 Human 确认。
-- Human 确认后，先更新 Full/Page/Patch Spec，再改生产代码。
-- 纯实现重构若 rendered result、observable behavior、contract 与 Spec 均不变，可跳过 Human Confirm 和 Spec 变更。
-- 禁止“代码先行、文档后补”；代码实现过程中若暴露出新的设计决定，必须停下并回到 Alignment。
-
-见 `references/17-human-alignment-change-control.md`。
-
-## 5. 先读真实情况，再发明结构
-
-已有项目先看真实 repo、现有 UI、组件、tokens、状态、API、测试和运行结果。
-
-从零任务则至少明确用户任务、核心对象、主要动作、平台和约束。
-
-不得为了套模板重建已经成立的系统。
-
-## 6. 图片参考必须先逆向成规则，再进入设计
-
-用户提供 UI 截图、设计稿或 Moodboard 并要求复刻风格时，先区分 `Observed / Resolved / Unknown`，把图片反编译成结构、Visual Laws、tokens、component grammar 和 Page Spec。
-
-禁止从静态图片虚构业务 truth、hidden states、responsive 或 motion；也禁止只抄像素坐标。
-
-见 `references/14-image-style-reverse-engineering.md`。
-
-## 7. 精细视觉之前，结构和行为必须足够清楚
-
-与当前任务相关的内容结构、层级、组件边界、状态、交互、反馈、布局和适配必须先达到“不会逼实现者临场猜”的程度。
-
-不要求先写大文档，但禁止只凭一张理想静态截图直接进入高保真。
-
-结构与内容见 `references/02-structure-and-content.md`；状态与交互见 `references/03-state-and-interaction.md`。
-
-## 8. 主观感觉必须落成可观察规则
-
-`极简 / 温暖 / 成熟 / 活跃 / 高级 / 安静` 不是完成的设计语言。
-
-它们必须实际改变至少一项：
-
-- Composition / Hierarchy
-- Typography
-- Spacing / Density
-- Shape / Surface / Depth
-- Color role
-- Iconography / Imagery
-- Component treatment
-- Feedback / Motion
-
-多个特征必须处理主次、兼容、张力和冲突；最终只形成一套统一视觉语言。
-
-见 `references/04-visual-language.md`；当缺少成熟现有系统/高质量参考，需要从零生成视觉方案时，同时加载 `references/16-visual-generation-knowledge.md`。
-
-## 9. 先守住视觉下限，再谈风格高级
-
-本 Skill 不承诺客观保证“高级”，但必须主动排除会稳定制造脏乱、廉价、业余感的结构性问题：对齐漂移、间距失序、无语义框套框、层级塌缩、Typography/Color/Radius/Shadow/Icon 系统分裂、状态造成几何跳动、内容溢出和基本可访问性失败。
-
-同时区分 `Hard Fail` 与 `Warning`：渐变、玻璃、Pill、Card、重阴影不是绝对禁用，但若没有明确 Art Direction / 语义理由，默认作为高风险装饰处理。
-
-见 `references/18-visual-craft-floor.md`。
-
-## 10. 页面不是属性表
-
-列出颜色、圆角、字体、间距之后，仍必须形成具体页面排版：视觉重心、内容顺序、分组方式、容器策略、动作位置、滚动归属和响应式变化。
-
-见 `references/05-page-composition.md`。
-
-## 11. Variant、State、Owner 必须分开
-
-- `Variant`：组件是哪一种语义版本。
-- `State`：现在处于什么状态。
-- `Owner`：谁拥有并改变这个状态。
-
-状态可以是多个维度同时成立，不要把页面简化成单一 `normal/loading/error` enum。
-
-## 12. UI 真相必须显式
-
-Permission、lifecycle、approval、route、session 等会影响决策的事实，必须来自明确字段或状态源。
-
-禁止从文案、颜色、位置、字符串前缀、CSS class 或视觉标签反推业务真相。
-
-## 13. 组件按意义和变化边界形成
-
-组件边界优先依据：
-
-- 独立语义。
-- 真实复用。
-- 独立状态或交互。
-- 独立视觉规则。
-- 独立变化概率。
-
-禁止“看到一个矩形就做一个 Component”，也禁止用 Card 包掉所有层级问题。
-
-系统化规则见 `references/06-design-system.md`。
-
-## 14. 设计与实现之间必须有共同定义
-
-重要 UI 必须能追踪：
-
-`UI element → content/data → state source/owner → user event → action/command → pending → success/failure → recovery`
-
-如果实现者仍需猜关键状态、数据来源或反馈行为，设计没有完成。
-
-见 `references/07-ui-contracts.md`。
-
-## 15. 核心规则平台无关，平台差异下沉
-
-通用规则不得假设 React、Web、SwiftUI 或其他框架。
-
-平台专属约束只在对应平台触发。当前内置 SwiftUI 适配见 `references/09-platform-swiftui.md`。
-
-## 16. 设计必须收束成一份权威规格
-
-只要任务涉及新页面、完整页面重设计、新视觉方向或设计交付实现，设计阶段最终必须创建或更新 `UI-DESIGN-SPEC.md`。
-
-这份文档是实现阶段的设计权威来源，必须包含本次 Relevant 的：
-
-- Visual Laws / Composition Grammar。
-- Typography / Color / Spacing / Shape / Surface / Border / Depth。
-- Icon / Imagery / Motion。
-- Component Grammar。
-- 每个页面的具体 Page Spec。
-- States / Interaction / Feedback。
-- Adaptation / Accessibility。
-- Forbidden / Guardrails。
-- Copyable implementation prompts。
-
-不得把“中等圆角、舒适留白、温暖配色、高级感”等仍需实现者解释的词当作最终规格。
-
-完整格式见 `references/13-ui-design-spec.md`。
-
-## 17. 思考必须留下东西
-
-重要分析最终至少落成一种结果：
-
-- 明确设计决定。
-- 可执行规则。
-- 页面排版。
-- 状态 / 交互定义。
-- Component / Surface Contract。
-- Design System 规则。
-- Prototype / State Proof。
-- 实现或测试。
-- Rendered evidence。
-
-没有改变后续设计、实现或验证行为的分析，不算完成的工作。
-
-## 18. 可见 UI 必须看真实运行结果
-
-不能只看源码、设计稿或静态截图就宣称 UI 正确。
-
-可见改动必须按本次 Relevant 项验证真实 rendered state、content stress、viewport、interaction 和 accessibility。
-
-见 `references/11-verification.md`。
-
-## 19. Human 拥有最终审美权
-
-Agent 可以检查一致性、完整性、规则遵守、布局、状态覆盖、可访问性和实现证据。
-
-但“好不好看、够不够高级、是不是太幼稚、整体感觉对不对”由 Human 最终裁决。
-
-Human 说感觉不对时，不与用户争论审美正确性；先把新反馈翻译成可观察候选决定并确认，再更新相应视觉/构图 Spec，最后迭代实现。
+禁止从颜色、label、CSS class、字符串前缀、组件位置反推权限、生命周期、route、approval 等业务真相。
 
 ---
 
-# 任务路由
+# 3. Human 可感知变化：Clarify → Confirm → Specify → Implement → Verify
 
-路由的作用是决定加载哪些能力，不是选择不同的 Skill。
+Human 可以只说“太跳”“太挤”“不够稳”“想温暖一点”。Agent 的工作是把感觉翻译成**可观察决定**：
 
-## 最小路径矩阵
+1. 想改变什么。
+2. 什么保持不变。
+3. 屏幕上会发生什么可观察变化。
+4. 关键规则/数值候选。
+5. 仍然 Unknown 的地方。
 
-| 任务形态 | 默认最小路径 | 升级触发 |
-|---|---|---|
-| 单一视觉属性小改 | Existing Spec → Patch Spec → 实现 → targeted verify | 改到 token/共享组件/状态 |
-| 单一组件修改 | Component rules + states → Patch Spec → 实现 → component verify | 影响 2+ Surface、owner 或共享 API |
-| 既有系统新增简单页面 | Global Spec → structure/state → Page Spec → 实现 → page verify | 新视觉语言、共享结构、复杂交互 |
-| 图片风格复刻 | Image reverse → Resolved Style DNA → Spec/Page Spec → verify | 多图冲突、目标产品需补未知状态 |
-| 多页面扩展 | Existing Spec → shared system → page specs → structure plan → implement → drift/verify | 默认已属高风险路径 |
-| 从零完整产品/UI | Coverage → UI definition → visual generation → Full Spec → structure → implement → verify | 按相关域展开 |
-| 已有设计只实现 | Existing Spec/Contract → structure → implement → verify | 发现 Spec 缺口时回设计层 |
-| 基础/设计系统重构 | reality → contracts → system boundaries → structure → migration → regression/drift | 默认已属高风险路径 |
+Human 确认后，**先更新 Full/Page/Patch Spec，再改生产代码**。禁止 `Code first → 看效果 → 事后补 Spec`。
 
-### 升级条件
+不需要重复确认：Human 指令已足够精确、现有批准 Spec 已覆盖、Human 明确授权 Agent 决定，或纯实现重构不改变可见行为。
 
-出现任一项才扩大加载范围：
-- 新增或改变全局视觉语言。
-- 新增共享 token/component/pattern/asset。
-- state/data/navigation/mutation owner 改变。
-- 影响 2 个及以上页面/Surface。
-- 新增复杂异步、错误恢复、权限或跨页面 flow。
-- Observed 证据冲突或 Unknown 会阻塞正确实现。
-- 平台适配、accessibility 或 responsive 风险被触发。
-
-没有升级条件时，坚持最小路径。
-
-## 从零做 UI
-
-通常需要：Coverage → 结构/内容 → 状态/交互 → 候选视觉/交互决定 → Human Alignment → Spec → Contract → 实现（若要求）→ 验证。
-
-Human 只需确认可感知结果和关键边界；Agent 负责把模糊感觉翻译成精确候选。
-
-## 图片 / 截图逆向风格
-
-先加载识图模式，提取 `Observed → Resolved → Unknown`：页面结构、视觉层级、构图、Typography、Color、Spacing、Shape/Surface/Depth、Icon/Imagery、可见组件和状态。随后把可复用 Style DNA 编译进视觉语言、页面构图、Design System 和 `UI-DESIGN-SPEC.md`。
-
-如果是“把这张图的风格用于另一个产品”，只迁移 Style DNA，不复制源产品的业务结构、品牌资产或隐藏行为。见 `references/14-image-style-reverse-engineering.md`。
-
-## 已有 UI 重设计 / 优化
-
-先读取现状。优先诊断：
-
-`purpose → hierarchy → grouping → layout → density/spacing → typography → components → color/surface/icon → motion`
-
-不要先从像素、阴影、圆角换皮开始。
-
-## 局部 UI 修改
-
-只展开受影响能力。例如危险按钮可能只需要现有视觉系统、动作层级、destructive semantics、反馈、states、accessibility 和 rendered verification。
-
-优先生成 `Patch Spec`，明确 `Preserved / Changed / Verification`；除非改动改变全局规则，否则不重编完整 `UI-DESIGN-SPEC.md`。
-
-不得借局部改动重做整个产品。
-
-## 已有设计，只做实现
-
-直接从 Human 已确认的现有 UI 定义、Spec、Contract、状态归属、组件实现和验证开始；不要重新发明视觉方向。
-
-如果实现中发现 Spec 缺口会迫使新增 Human 可感知设计决定，立即停下，回到 `Clarify → Confirm → Specify`，更新 Spec 后再继续。
-
-## 设计系统 / 基础重构
-
-重点展开现状、系统边界、contracts、state ownership、components、implementation 和 regression verification。
+详细协作与并行 Agent 规则见 `references/07-human-alignment.md`。
 
 ---
 
-# 能力模块
+# 4. 定义 UI：视觉之前先消除实现猜测
 
-这些模块按需加载，不是固定步骤。
+进入精细视觉前，与本次任务相关的以下内容应清楚到“不逼实现者临场猜”：
 
-### A. Coverage
-完整问题空间与适用性扫描。见 `references/01-coverage.md`。
+- 用户任务、核心对象、主/次动作。
+- 内容字段、数量/长度/缺失/溢出范围。
+- 信息/动作层级、导航与页面结构。
+- Surface / Region / Section / Pattern / Component 边界。
+- 业务状态、数据状态、操作状态、权限/环境/交互状态及 owner。
+- 事件 → action/command → pending → success/failure → recovery。
+- Layout、scroll ownership、viewport/adaptation、accessibility。
 
-### B. 结构、内容、层级与布局
-内容边界、IA、导航、Hierarchy、Surface/Region/Section/Pattern/Component、layout ownership。见 `references/02-structure-and-content.md`。
-
-### C. 状态、交互、反馈与时间行为
-状态组合、owner、事件、命令、pending/success/failure、retry/undo/cancel、loading/progress、motion continuity。见 `references/03-state-and-interaction.md`。
-
-### D. 视觉语言
-Human Alignment、特征主次、兼容/对冲、Design Grammar、Typography/Color/Shape/Surface/Icon/Motion。见 `references/04-visual-language.md`。
-
-### D2. 视觉生成知识
-当没有足够成熟的现有视觉系统/高质量参考时，提供可组合的构图、Typography、spacing、surface/depth、color、icon、motion 生成知识，把 Visual Laws 继续编译成成熟具体方案。见 `references/16-visual-generation-knowledge.md`。
-
-### D3. 视觉下限 / Anti-Ugly Craft Floor
-把广泛认可的 alignment、hierarchy、proximity、typography consistency、color semantics、surface/depth consistency 与 accessibility floor 编译成 Hard Fail / Warning；高保真与最终 Review 都必须过线。见 `references/18-visual-craft-floor.md`。
-
-### E. 页面构图
-把内容、层级、行为和视觉方向合成具体页面方案。见 `references/05-page-composition.md`。
-
-### F. 设计系统与组件
-Tokens、primitives、components、patterns、variants、themes、reuse boundaries。见 `references/06-design-system.md`。
-
-### G. UI Contracts
-Surface / Component / Data / State / Implementation 定义统一收口。见 `references/07-ui-contracts.md`。
-
-### H. 实现
-平台无关的 repo 读取、依赖方向、状态投影、组件/page 实现、迁移和工程质量。见 `references/08-implementation.md`。
-
-### I. 平台适配
-平台规则只在相关平台加载。SwiftUI 见 `references/09-platform-swiftui.md`。
-
-### J. 参考分析与交互 Proof
-用户给参考时提取可迁移原则；复杂交互风险高时做最低成本 proof。见 `references/10-reference-and-proof.md`。
-
-### K. 验证与 Review
-Pressure tests、negative/source gates、rendered verification、正式 Spec Drift Audit、mechanical design review、Human review package。见 `references/11-verification.md`。
-
-### L. Accessibility 与适配
-输入方式、focus、语义、contrast、text scaling、reduced motion、viewport、RTL/localization 等横切约束。见 `references/12-accessibility-and-adaptation.md`。
-
-### M. UI Design Spec 编译
-把所有 Relevant 设计决定收束为 `UI-DESIGN-SPEC.md`，包含具体数值、全局视觉语言、组件规则、逐页面规格、Guardrails 与可复制实现 Prompt。见 `references/13-ui-design-spec.md`。
-
-### N. 识图与风格逆向
-从截图/设计稿逆向结构、视觉规律、tokens、组件语法和页面规格；严格区分 Observed / Resolved / Unknown，并把 Style DNA 编译回统一 Spec。见 `references/14-image-style-reverse-engineering.md`。
-
-### O. 实现结构自查
-非平凡代码实现前后都必须把 repo/feature、shared/local、state/data/mutation、navigation、重复 renderer 与单一来源用 Markdown 画清楚，并做结构去重审计。见 `references/15-implementation-structure.md`。
-
-### P. Human Alignment 与设计变更控制
-把 Human 难以描述的感觉翻译成可观察、可确认的候选决定；确认后先更新 Spec，再允许生产实现；同时约束并行 Agent 不得各自在代码中创造设计事实。见 `references/17-human-alignment-change-control.md`。
+详细规则见 `references/02-ui-definition.md`。
 
 ---
 
-# 默认执行方式
+# 5. 视觉：先把秩序排对，再形成统一风格
 
-不是固定阶段，而是默认依赖顺序。简单任务可以合并，复杂任务可以来回迭代。
+“极简、温暖、成熟、活跃、高级”不是完成的视觉语言。完整视觉设计先解决**秩序**，再解决**风格**：
 
-1. **Route + Coverage**：先选最小合法路径，再扫完整 Coverage；只有风险证据触发时才升级能力范围。
-2. **Restore Reality**：读产品/项目/现有 UI，确认用户任务、核心对象、主要动作和不能擅改的约束；若输入是图片参考，先做 Image Reverse Engineering，把视觉证据转成规则。
-3. **Define Candidate UI**：把本次相关的内容、层级、组件、状态、交互、反馈、布局和适配定义成候选决定。
-4. **Resolve Candidate Visuals + Compose Surface**：需要新视觉方向时，把 Human 感觉/参考/视觉知识编译成统一 Visual Laws、具体 visual recipe 和页面构图；同时跑 Visual Craft Floor，先排除 Hard Fail，再讨论风格；此时仍是 Candidate，不得直接成为代码事实。
-5. **Human Decision Alignment**：把 Human 难以描述的目标翻译成简短、可观察、可确认的决定，明确“会变什么 / 保持什么 / 关键规则 / Unknown”；若用户已精确指定、已批准现有 Spec 或明确授权，则本步可视为已满足。
-6. **Specify / Systematize**：Human 确认后，才把稳定规则上升为 token/component/pattern，并更新 Full/Page/Patch Spec。
-7. **Form Contracts**：让 UI、数据、状态、事件和结果之间没有暗缝，并写回 Spec。
-8. **Plan Implementation Structure**：非平凡实现先创建/更新 `IMPLEMENTATION-STRUCTURE.md`，画清 shared/local、state/data/mutation/navigation ownership 和单一来源；结构没画清楚不写主体代码。
-9. **Implement**：只消费 Human 已确认并已写入的最新 Spec 和 Structure；实现中若暴露出新的 Human 可感知设计决定，立即停下并回到 Alignment，不得 code-first / spec-backfill。
-10. **Audit Structure**：实现后按真实 repo 更新结构图，扫描重复资产、重复 markup、重复 state/navigation owner；若新增同类页面仍需复制上一页，先重构。
-11. **Audit Drift + Spec-Code Sync**：对照 Spec 扫描新 visual/system 规则，并确认任何 Human 可感知代码变化都有先行 Spec diff；纯实现重构可无 Spec diff，但必须证明可观察行为不变。
-12. **Verify**：按 Spec 和 Relevant 场景验证真实 rendered result，并追溯 `Human intent → confirmed decision → Spec → code → rendered result`。
-13. **Human Review**：机械问题由 Agent 修，最终视觉感觉由 Human 裁决；若感觉仍不对，先重新 Alignment，再更新 Spec，再改代码。
+1. **Visual Order**：明确第一/第二/第三视觉焦点、主对齐轴、分组、密度、容器策略和哪些信息必须退后。
+2. **Visual Laws**：3–5 条统治整个界面的规则。
+3. **Composition grammar**：页面怎样组织、什么最突出、什么退后。
+4. **Concrete visual recipe**：Typography / spacing / density / color / shape / surface / depth / icon / imagery / motion 的明确规则和值。
+5. **Component grammar**：不同组件如何继承同一视觉世界。
+6. **Forbidden / Guardrails**：什么不能出现。
 
----
+多个特征不能平均混合。先分主次与 Avoid；次要性格可以进入局部表达，但不能推翻主结构语言。
 
-# 完成门槛
+### Visual Order Gate
 
-## Routing Gate
+完整页面进入高保真前，必须能回答：
+- 一眼先看什么、再看什么、最后看什么？
+- 页面只有哪些主对齐轴？数字/状态/文本分别如何对齐？
+- 哪些内容是一组，组内与组间距离是否明显不同？
+- 哪些信息必须主动弱化、隐藏或按需出现？
+- 去掉无语义 Card/border/shadow 后，结构是否仍成立？
 
-当前任务使用的是能完整解决问题的最小合法路径；没有因为 Skill 能力很多而展开无关模块。若扩大范围，必须指出触发它的具体风险。
+若没有明确答案，不得用颜色、阴影、渐变去掩盖结构问题。
 
-## Coverage Gate
-进入精细设计前，本次 Relevant 项已识别；内容、层级、状态、交互没有明显“忘了考虑”的空白。
+## Visual Math：把可数学化的审美变成硬检查
 
-## Evidence Gate
+- Typography 只从批准的 type scale 取；不同文字 role 不能靠随机 1–3px 差异假装层级。
+- 同级 role 固定 `font-size + line-height + weight`，不允许页面各自发明。
+- Spacing 只从批准的 scale 取；相同语义关系必须使用相同间距。
+- **组内 gap 必须明显小于组间 gap**；若 16 与 20 分别代表“同组/跨组”，优先判层级对比不足。
+- 层级差异要有可见对比；不要让所有区域在尺寸、颜色、surface、elevation 上同权。
+- 页面使用有限对齐轴；无理由的 3–8px 左边缘漂移视为缺陷。
+- Radius、icon size、control height、border、shadow 形成有限 family；大量近义值视为 drift。
+- 长正文控制合理行宽；极长内容必须有明确换行、截断或重排规则。
 
-会影响设计、状态、实现或验证的重要判断已区分 `Observed / Resolved / Unknown`；Unknown 没有被伪装成产品/代码/图片事实。
+## Craft Floor：先排除稳定显脏/显乱的做法
 
-## Visual Craft Floor Gate
+Hard fail：
+- 无语义价值的框套框/Card 套 Card。
+- 随机字号、随机 spacing、随机 radius、accent 漂移、icon family 混用。
+- 所有东西都强调、所有区域都卡片化、所有 surface 都有阴影。
+- hover/focus/loading/error 导致几何跳动。
+- 长内容/大字体一来就溢出或破坏布局。
+- 焦点、对比、触控目标等基础可访问性失败。
 
-进入最终高保真/交付前：
-- 没有无理由 alignment drift、spacing drift、Typography/Color/Radius/Shadow/Icon system drift。
-- 没有无语义 frame-within-frame / Card nesting。
-- hierarchy 没有“所有东西同样强调”。
-- 状态变化没有造成无意 geometry shift。
-- content stress 与基本 contrast/focus/target floor 通过。
-- gradient/glass/pill/heavy shadow/all-card 等 Warning 要么被移除，要么有明确 Art Direction/产品理由。
+Warning（除非有明确理由）：装饰性渐变、到处 glass/blur、universal pill、重阴影、多个装饰处理同时叠加、重复完全同构 card grid、每节 eyebrow/编号/divider 装饰。
 
-详细规则见 `references/18-visual-craft-floor.md`。
-
-## Visual Gate
-需要新视觉方向时：
-
-- 主次特征已消解冲突。
-- 形成唯一视觉方向。
-- 每个重要形容词都改变了实际设计决定。
-- 页面没有互相打架的视觉信号。
-
-## Composition Gate
-完整 Surface 不能只有 tokens / 属性清单，必须有具体视觉重心、分组、容器策略、动作位置和滚动/适配方案。
-
-## Alignment Gate
-
-当任务新增或改变 Human 可感知设计决定时：
-- Agent 已把模糊 Human intent 翻译成可观察的候选决定；
-- 明确了“会改变什么、保持什么、关键规则/数值、真正 Unknown”；
-- Human 已确认，或原始指令本身足够精确/已明确授权 Agent 在限定范围内决定；
-- 未确认的 Candidate 没有先写进生产代码；
-- Human 确认后先更新对应 Full/Page/Patch Spec，再允许实现；
-- 纯实现重构若跳过 Alignment，能证明 rendered result、observable behavior、contract 与 Spec 均不变。
-
-## Image Reverse-Engineering Gate
-
-当任务使用图片逆向风格时：
-- 已区分 `Observed / Resolved / Unknown`。
-- 已提取结构、层级、构图和 Visual Laws。
-- spacing/radius/type/color 等来自重复规律归纳，而不是逐像素抄写。
-- 没有从静态图虚构 motion、responsive、hidden state 或业务 truth。
-- 风格迁移时已分离 Style DNA 与源产品业务/品牌特征。
-- 结果能够继续编译进 `UI-DESIGN-SPEC.md`。
-
-## Spec Gate
-需要完整设计交付时，相关 Human 可感知决定已经通过 Alignment Gate，随后 `UI-DESIGN-SPEC.md` 已生成或更新，并且：
-
-- Global visual language 已解析为具体规则。
-- Typography / Color / Spacing / Radius / Border / Surface / Shadow / Icon / Motion 有确定值或确定平台语义。
-- 每个 Relevant 页面都有具体结构、尺寸/间距、组件使用、状态和适配规则。
-- 关键组件有可执行 geometry / state / motion 规则。
-- Forbidden / Guardrails 明确。
-- 已生成可复制的 Global + Page implementation prompt。
-- 不存在会让实现者二次设计的模糊词。
-
-## Contract Gate
-重要状态有来源和 owner；重要动作有 command、pending、结果、失败与恢复；实现不需要猜业务真相或关键 UI 行为。
-
-## Structure Gate
-若包含非平凡代码实现：
-- `IMPLEMENTATION-STRUCTURE.md` 已创建/更新；
-- repo/feature tree 已用 Markdown 画出；
-- shared vs local、state/data/mutation/navigation owner 已明确；
-- token/icon/asset/repeated component 不存在明显第二来源；
-- 重复 collection 已数据驱动；
-- 实现后已再次自查；
-- 新增一个同类页面不需要复制现有页面主体。
-
-## Implementation Gate
-若包含代码：遵守现有依赖方向和 repo 约定；关键 state/contract 行为有相称的测试或证据；废弃路径不作为正常 fallback 存活；Structure Gate 已通过。
-
-## Drift Gate
-
-多页面/设计系统扩展任务中，已对照 Spec 检查新增 color/type/spacing/radius/shadow/icon/component/motion/asset/owner；所有新规则要么被拒绝，要么先登记进 Spec 后再实现，不存在“差不多”的隐性分叉。
-
-## Spec-Code Sync Gate
-
-任何改变可观察 UI、interaction、motion、state presentation、component/page structure、visual token 或用户可感知不变量的代码变化，都有：
-
-`Human confirmed decision → prior Spec diff → Code diff`
-
-若代码改变了上述任一项却没有对应 Spec 变化，默认失败；唯一例外是能证明可观察结果、行为、contract 与设计规则完全不变的纯实现重构。
-
-## Rendered Gate
-可见 UI 已在真实运行环境覆盖本次 Relevant states / content stress / viewport / interaction；未解决问题明确列出；Human 保留审美裁决权。
+详细视觉生成、Visual Math、Anti-Ugly 规则统一见 `references/03-visual-design.md`。
 
 ---
 
-# 禁止模式
+# 6. 图片参考：先逆向系统，不抄截图像素
 
-1. **User-as-Linter**：等用户逐条提醒状态、层级、组件、内容边界或验证遗漏。
-2. **Checklist Theater**：与任务无关也机械展开全部能力。
-3. **Screenshot-Only Design**：只设计 ideal / loaded 状态。
-4. **Visual Before Reality**：内容、状态和核心动作不清时先做高保真。
-5. **Adjective-Only Design**：形容词没有落成可观察规则。
-6. **Style Averaging**：冲突风格平均混合成四不像。
-7. **Secondary Trait Takeover**：次要性格侵占整体结构语言。
-8. **Attributes Without Composition**：有 color/radius/type，却没有页面排版方案。
-9. **Reference Cloning**：复制参考产品外壳而不理解结构与原则。
-10. **Screenshot Tracing**：只抄截图坐标/像素，不逆向 spacing、type、surface、component 等系统规律。
-11. **Image Hallucination**：从静态图虚构 hidden state、业务 truth、responsive 或 motion。
-12. **Card Everything**：用 Card 代替层级、分组和 layout 判断。
-13. **Component Everything**：把每个视觉块都组件化。
-14. **Token Before Meaning**：从“温暖/高级”直接跳到色值和 radius。
-15. **Variant-State Confusion**：把语义版本、运行状态和 owner 混成 props 大杂烩。
-16. **Semantic Inference from Presentation**：从显示文本/颜色/位置推断业务真相。
-17. **Prose-Only Handoff**：只有散文，没有 UI ↔ data/state/event/action 映射。
-18. **Spec-Free Implementation**：设计做完却没有 `UI-DESIGN-SPEC.md`，让实现者根据形容词或截图重新猜 spacing/radius/color/layout/motion。
-19. **Near-Equivalent Drift**：规格已有确定值，却在不同页面/组件自行使用“差不多”的新值。
-20. **Leaf Durable Mutation**：叶子组件直接改 durable shared truth。
-21. **Business Logic in Base UI**：基础 UI 组件携带产品业务判断。
-22. **Platform Leakage**：把某框架习惯写成通用 UI 规则。
-23. **Old Path Lives On**：新逻辑上线后，旧推断/旧入口仍作为正常 fallback 存活。
-24. **Source-Only Confidence**：只看代码就宣布可见 UI 已正确。
-25. **Agent Declares Taste Correct**：Agent 用自己的审美评价覆盖 Human 判断。
-26. **Prototype Theater**：简单交互也强制高成本 prototype。
-27. **Verification Theater**：为了形式重复截图、全设备遍历或无风险全链路测试。
-28. **Maximal Route by Default**：小任务默认跑完整 Coverage/Spec/Prototype/结构流程，而不是最小合法路径。
-29. **Evidence Laundering**：把 Agent 推断、默认习惯或实现方便包装成 Observed 产品/设计事实。
-30. **Unregistered Visual Drift**：新增近似 color/type/spacing/radius/shadow/icon/component/motion，却不先更新权威 Spec。
-31. **Freeform Beauty Guessing**：无成熟现有系统/参考时，只凭“高级、现代、好看”自由发挥，不使用视觉生成知识形成 Visual Laws 和具体 recipe。
-32. **Silent Design Interpretation**：Human 只说“太跳/太挤/不够自然”，Agent 不经确认就自行决定 layout/motion/state/visual 规则并固化。
-33. **Code-First Design Change**：先把 Human 可感知变化写进代码，再让 Human 看结果或事后补 Spec。
-34. **Spec Backfill**：把已经存在于代码中的新行为事后抄进 Spec，使 Spec 退化成历史记录而非权威来源。
-35. **Confirmation Theater**：已经精确确认的规则、纯技术重构或无关微值仍反复要求 Human 审批。
-36. **Frame-in-Frame Without Meaning**：没有新增语义/交互/层级边界，却用 Card/Border/Surface 一层套一层。
-37. **Typography Entropy**：同一产品不断新增近义字号、字重、字体，或同语义角色跨页面漂移。
-38. **Visual System Split**：Color/Radius/Shadow/Icon/Spacing 在不同页面各自形成一套语言。
-39. **Hierarchy Collapse**：同一 viewport 多个元素同等强烈，所有东西都在抢第一视觉。
-40. **Decorative Effect Stacking**：gradient/glass/glow/shadow/texture/border 等无理由叠加，把装饰当层级。
-41. **Parallel Design Fork**：并行 Agent 在不同代码分支中各自创造新的设计事实，而没有统一 Spec owner / confirmed Spec delta。
+截图只能证明可见事实。识图结论必须标 Observed / Resolved / Unknown。
+
+逆向目标：
+`结构/层级 → composition → type/color/spacing/shape/surface/icon → component grammar → token candidates → Visual Laws → Spec`
+
+不得从静态图编造 motion、hidden states、responsive breakpoint、权限或后端行为；多图优先归纳重复规律，单图不得过拟合为完整 Design System。
+
+见 `references/06-image-reverse-engineering.md`。
 
 ---
 
-# 成本 / 价值原则
+# 7. 设计系统：只上升真实稳定规则
 
-只执行能改变设计决策、发现真实缺陷、降低实现歧义或给 Human 提供必要判断材料的工作。
+组件按**意义与变化边界**形成，不按矩形形成。满足任一条件再考虑抽取：真实复用、独立状态/交互、稳定视觉/行为 contract、共享资产/primitive、复制会产生第二真相源。
 
-默认不做：
+同义设计规则必须共享 semantic token；不得先发明 primitive 值再给它找意义。
 
-- 没有设计分歧时生成多套 Variant。
-- 简单页面强制建立 Gallery / Prototype。
-- 每个小改动遍历所有设备和状态组合。
-- 为了“再看看”重复截图和 Agent 自我审美循环。
-- 没有风险证据时做性能 profiling。
-- 设计当前任务无关的未来页面。
-- 对已经精确确认的规则重复向 Human 询问。
-- 让 Human 决定不会改变可感知体验的实现细节。
-- 把每个 token 微调都拆成一次独立确认；应按一个有意义的决策边界批量对齐。
+见 `references/04-design-system.md`。
 
+---
+
+# 8. 设计必须收束成权威 Spec
+
+完整设计不能停在分析、截图或“适度圆角/舒适间距”。进入实现前，所有 Relevant 决定必须编译进同一权威体系：
+
+- **Full Spec**：新产品/新视觉系统。
+- **Page Spec**：在已批准全局系统上增加/重做一个页面。
+- **Patch Spec**：局部改动，只记录 delta 与保持不变项。
+
+Spec 至少覆盖：Visual Laws、页面结构、type/color/spacing/shape/surface/icon/motion、component grammar、states、adaptation、guardrails、UI↔data/state/event/action contract、验证项和可复制实现提示词。
+
+Spec 内可附一个**机器可读 manifest**，用于下一页继承和 drift audit；它是同一 Spec 的 appendix，不是第二真相源。
+
+模板与编译规则见 `references/05-ui-design-spec.md`。
+
+---
+
+# 9. 非平凡实现前后必须画结构
+
+包含多页面、共享组件、共享状态/数据或长期演进的实现，必须创建/更新 `IMPLEMENTATION-STRUCTURE.md`：
+
+- repo / feature tree
+- shared vs page-local
+- state / data / mutation owner
+- navigation owner
+- component/rendering plan
+- token/icon/asset 单一来源
+
+代码前画计划；代码后按真实 repo 重画并做 duplication audit。
+
+硬问题：**“现在再加一个同类页面，需要复制什么？”** 若答案包含“复制上一页主体再改”，Structure Gate 不通过。
+
+见 `references/08-implementation-structure.md`。
+
+---
+
+# 10. 实现：消费 Spec，不重新设计
+
+实现负责把已批准的 UI truth 投影成代码：正确 ownership、依赖方向、数据/状态映射、共享边界、迁移与测试。实现中若发现必须新增可见设计决定：停代码，回到 Human alignment → Spec。
+
+平台无关规则见 `references/09-implementation.md`；SwiftUI 适配见 `references/11-platform-swiftui.md`。
+
+---
+
+# 11. 验证：真实渲染 + 结构 + Drift
+
+可见 UI 不得只看源码宣称正确。按 Relevant 风险验证：
+
+- normal / loading / empty / error / permission / offline 等适用状态
+- 长文本、大数据、小 viewport、动态字体
+- hover/pressed/focus/disabled 等适用交互状态
+- accessibility 与 reduced motion
+- Spec conformance、Visual Order / Craft Floor
+- 能否在弱化颜色后仍看出焦点、分组和层级
+- Structure conformance、重复 truth source
+- Drift：新 color/type/spacing/radius/shadow/icon/motion/component language
+
+复杂交互按风险做最小 State Proof / prototype；不做 prototype theater。
+
+见 `references/10-verification.md`。
+
+---
+
+# 12. 完成门槛
+
+| Gate | 通过条件 |
+|---|---|
+| Routing | 已选择最小合法路径；升级有真实风险理由 |
+| Evidence | 关键事实标明 Observed/Resolved/Unknown；Unknown 未被伪装 |
+| Alignment | 新的 Human 可感知决定已确认，或有明确跳过理由 |
+| UI Definition | Relevant 内容/层级/状态/交互/布局不需要实现者临场猜 |
+| Visual | Visual Order 明确；有统一 Visual Laws + Concrete Recipe；Visual Math、视觉预算与 Craft Floor 通过 |
+| Spec | Relevant 决定已写入 Full/Page/Patch Spec，具体到足够直接实现 |
+| Structure | 非平凡实现前后均有结构图；没有 copy-paste expansion 或第二 truth source |
+| Implementation | 代码遵守 Spec、ownership、repo 约定；旧路径不作为正常 fallback 存活 |
+| Drift | 新设计值/语言均已解释并进入 Spec，或被移除/归并 |
+| Rendered | Relevant 状态与内容压力在真实运行结果中验证 |
+| Human Review | 机械问题已清；最终审美交给 Human 裁决 |
+
+---
+
+# 13. 禁止模式
+
+- **User-as-Linter**：等用户逐项提醒状态、层级、组件、内容边界或验证遗漏。
+- **Checklist Theater**：小任务机械跑完整流程。
+- **Screenshot Tracing**：抄坐标而不提取设计系统。
+- **Static-Motion Hallucination**：静态图编造 motion。
+- **Visual Before Reality**：内容/状态/核心动作不清先做高保真。
+- **Adjective-Only Design**：形容词没变成规则和值。
+- **Style Averaging**：冲突风格平均混成四不像。
+- **Attributes Without Composition**：只有 type/color/radius，没有页面构图。
+- **Card Everything / Component Everything**：用容器/组件化代替结构判断。
+- **Token Before Meaning**：从“高级/温暖”直接跳 hex/radius。
+- **Variant-State-Owner Confusion**：语义版本、运行状态和 ownership 混成一团。
+- **Semantic Inference from Presentation**：从视觉反推业务真相。
+- **Prose-Only Handoff**：没有 UI↔data/state/event/action 映射。
+- **Code-First Design**：先写可见行为再补 Spec。
+- **Copy-Paste Expansion**：新页面靠复制旧页面扩展。
+- **Post-Hoc Structure Cleanup**：先堆重复代码，提醒后才抽真相源。
+- **Platform Leakage**：把某框架习惯写成通用 UI 原则。
+- **Source-Only Confidence**：没看真实渲染就宣称完成。
+- **Agent Declares Taste Correct**：Agent 覆盖 Human 审美裁决。
+
+---
+
+# 14. 成本 / 价值原则
+
+只做能改变设计决定、发现真实缺陷、降低实现歧义或给 Human 提供必要判断材料的工作。
+
+默认不做：无分歧时强制多套方案、简单交互强制 prototype、每个小改遍历所有设备/状态、重复截图自我审美循环、与当前任务无关的未来页面设计。

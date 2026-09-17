@@ -1,172 +1,76 @@
-# UI 完整性扫描
+# UI Coverage：防漏，不是固定流程
 
-**何时加载**：任何 UI 任务开始时快速扫描；不是要求逐项详细执行。
+使用方式：每项标 `Relevant / Existing / N/A`。只展开 Relevant；不得留空靠“没想到”跳过。
 
-**怎么用**：每项只标 `Relevant / Existing / N/A`。如果是 `Relevant`，再加载对应 reference。
+## 1. Reality / Scope
+- 用户与核心任务
+- 核心对象、主/次动作
+- 平台、设备、repo、现有 UI / Design System
+- 不能擅改的产品/架构/权限事实
+- 任务粒度：Full / Page / Patch / Component / Implementation-only
 
-## 0. Route / Scope
+## 2. Evidence / Human
+- 关键结论是否标 Observed / Resolved / Unknown
+- 是否存在 Human 模糊感受需要先翻译并确认
+- 是否有参考图；证据是单图、多图还是多 breakpoint
 
-- 当前是 micro patch / component / page / multi-page / full product / implementation-only / refactor 哪一类？
-- 能完整解决问题的最小路径是什么？
-- 哪些风险会触发升级？
-- 最终需要 Full Spec / Page Spec / Patch Spec 哪一种？
+## 3. Content / IA
+- 字段、集合、required/optional
+- 数量范围、长度范围、缺失、极值、overflow
+- 分组、排序、导航、空态
+- microcopy / error / CTA 是否需要定义
 
+## 4. Hierarchy / Composition
+- primary task / object / action / information
+- visual focal order
+- Surface / Region / Section / Pattern / Component
+- alignment axis、container strategy、scroll ownership
 
-## 0.5 Human Alignment / Change Control
+## 5. State / Interaction / Feedback
+- domain / data / operation / permission / environment / interaction state
+- owner、entry/exit condition、allowed actions
+- event → command → pending → success/failure → recovery
+- loading/progress/optimistic/undo/retry/cancel
 
-- 当前请求是否已经足够精确，还是 Human 只表达了感觉/结果？
-- Agent 是否准备新增 Human 可感知的设计决定？
-- 哪些东西会改变，哪些必须保持不变？
-- 哪些候选决定需要 Human 确认，哪些已由现有 Spec / 明确指令确认？
-- Human 是否明确授权 Agent 在限定范围内自行决定？
-- 最终需要更新 Full / Page / Patch Spec 中哪一块？
-- 是否存在“先写代码再补 Spec”的风险？
-- 并行 Agent 是否有明确 Spec owner / Candidate Spec Delta 路径？
+## 6. Visual System
+- Visual Laws
+- composition grammar
+- typography / spacing / density / color / shape / surface / depth
+- icon / imagery / motion
+- Visual Math scale 与 Craft Floor
+- Forbidden / Avoid
 
-若任务只是纯实现重构且 rendered result、observable behavior、contract 与 Spec 都不变，可将本节标为 `N/A — implementation-preserving`。
+## 7. System / Reuse
+- token / primitive / component / pattern
+- variants 与 states
+- shared vs local
+- icon / asset / formatter / renderer 单一来源
 
-## 1. 产品与语义
-- 用户 / actor
-- 用户目标 / task
-- 核心对象
-- 主要动作 / 次要动作
-- 产品约束
-- permission / ownership 语义
+## 8. Adaptation / Accessibility
+- viewport / orientation / window / safe area
+- keyboard / pointer / touch / focus
+- text scaling / zoom / RTL / localization
+- contrast / target size / reduced motion
 
-## 2. 内容
-- 字段、对象、集合
-- required / optional
-- 数量范围
-- 最小 / 常见 / 最大长度
-- missing / unknown / invalid
-- wrap / truncate / overflow
-- empty / large dataset
-- labels / errors / empty copy
+## 9. Implementation Mapping
+- UI element → data/view model
+- state source / owner
+- event → action/command
+- pending/result/recovery
+- navigation / mutation ownership
 
-## 3. IA / Navigation
-- grouping / ordering
-- parent-child
-- entry / exit
-- current location
-- back / deep link / selection
-- progressive disclosure
-
-## 4. Hierarchy
-- task hierarchy
-- object hierarchy
-- information hierarchy
-- action hierarchy
-- visual hierarchy
-- navigation hierarchy
-
-## 5. Composition / Component
-- Flow / Surface / Region / Section / Pattern / Component / Primitive
-- anatomy / slot / metadata / control / action ownership
-- flat vs container strategy
-
-## 6. State
-- domain
-- data: loading / ready / empty / stale / partial / error
-- operation: idle / pending / success / failed / retrying
-- permission: allowed / denied / readonly / unavailable
-- interaction: enabled / hover / focus / pressed / dragged / disabled
-- selection / navigation / environment / presentation
-- state composition
-
-## 7. Interaction / Feedback
-- affordance / input modality / gesture
-- precondition / event / command
-- confirmation / undo / retry / cancel
-- pending / progress / success / failure / warning
-- recovery path
-
-## 8. Layout / Adaptation
-- flow / alignment / grid / containment
-- whitespace / density
-- scroll / sticky / fixed / overlay
-- safe area / clipping
-- viewport / orientation / device class
-- pointer / touch / keyboard
-- dark / high contrast / text scaling / zoom / RTL / localization
-
-## 9. Image Evidence（有截图/设计稿时）
-- source scope：单页 / 多页 / 多状态 / 多 breakpoint
-- 重要产品/代码/图片/设计判断的 Observed / Resolved / Unknown 是否分开
-- structure / hierarchy / composition 是否可逆向
-- typography / color / spacing / radius / surface / icon / imagery 是否可提取
-- 可见 component / state 是否有重复证据
-- motion / responsive / hidden state / business truth 是否缺证据
-- Style DNA 与源产品业务/品牌特征是否分离
-
-## 10. Visual Language
-- Visual Craft Floor：alignment / hierarchy / spacing / typography / color / shape-depth / icon consistency / content stress
-- Hard Fail 是否清零，Warning 是否有明确理由
-- Human intent
-- Primary / Secondary / Micro / Avoid
-- reference extraction
-- composition logic
-- typography / color / shape / surface / depth
-- spacing / density / icon / imagery / motion
-- coherence / drift
-
-## 11. System / Reuse
-- semantic tokens
-- primitives
-- components
-- patterns
-- variants
-- themes
-- shared state rules
-
-## 12. Implementation Mapping
-- UI object ↔ content/domain object
-- UI state ↔ source/owner
-- UI event ↔ command
-- property ↔ view model/data
-- pending/result/error ↔ visible feedback
-- recovery ↔ available action
-
-
-## 13. Implementation Structure（包含代码且非平凡时）
-- repo / feature tree 是否需要画出
-- shared vs page-local
-- state / data / mutation owner
-- navigation owner
-- repeated UI / collection renderer
-- tokens / icons / assets 单一来源
-- duplicated markup / logic / fixtures 风险
-- 新增下一个同类页面是否需要 copy-paste
-
-## 14. Verification
-- normal / empty / loading / error
-- permission / unavailable
-- offline / stale
-- long / missing / many items
-- small / large viewport
-- focus / hover / pressed / disabled / selected
-- keyboard / touch / pointer
-- reduced motion / contrast / text scaling
-- localization / RTL
-- real rendered evidence
+## 10. Verification
+- rendered states
+- content stress
+- component state proof（适用时）
+- structure audit
+- drift audit
+- Human visual review
 
 ## 停止条件
+已选最小合法路径；所有 Relevant 项都有明确决定、Existing 来源或明确 Unknown；没有需要用户继续充当 linter 的空白。
 
-Coverage 扫描完成后，应能说明：本次真正需要深入的模块有哪些，哪些已有可复用，哪些明确不适用。不得把“没想到”伪装成 `N/A`。
 
-## 15. Design Spec Compilation
-- Visual Laws 是否已形成
-- composition grammar 是否具体
-- typography roles 是否有确定值/系统语义
-- color roles 是否有确定值/系统语义
-- spacing scale 与关键 gap 是否确定
-- radius / border / surface / shadow 是否确定
-- icon / imagery / motion 是否确定
-- 关键 component grammar 是否确定
-- 每个 Relevant Page 是否有独立 Page Spec
-- states / interaction / feedback 是否写入同一规格
-- adaptation / accessibility 是否具体
-- forbidden / guardrails 是否具体
-- Global + Page implementation prompts 是否生成
-- Human 可感知的新决定是否已经确认
-- Spec 是否在代码之前更新
-- 是否仍有需要实现者二次设计的模糊项
+## 视觉秩序快速检查
+
+完整 Surface 若 Relevant，至少检查：主焦点、主对齐轴、组内/组间距离、辅助信息弱化、容器数量、数字/状态/文本列对齐。发现问题进入 `03-visual-design.md`，不要用配色掩盖。
