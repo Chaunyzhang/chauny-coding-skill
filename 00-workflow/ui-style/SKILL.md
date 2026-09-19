@@ -1,11 +1,11 @@
 ---
-name: ui-style-replication
-display_name: UI 风格延续
+name: ui-style
+display_name: UI Style
 version: 2.0
 description: 从图片、截图、文字或混合参考中提取可持续复用的 UI 设计语言。高精度记录视觉事实，只强约束真正构成身份的部分，让后续模型既不跑风格，也不被模板锁死。
 ---
 
-# UI 风格延续
+# UI Style
 
 ## 目标
 

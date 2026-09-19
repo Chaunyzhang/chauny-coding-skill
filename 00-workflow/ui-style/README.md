@@ -1,4 +1,4 @@
-# UI Style Replication v2
+# UI Style v2
 
 核心：**高精度记录，选择性约束。**
 

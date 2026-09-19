@@ -1,6 +1,6 @@
 ---
 name: ui-workflow
-display_name: UI 设计工作流
+display_name: UI Workflow
 description: 自包含的 UI 设计与实现工作流。把产品事实、Human 意图或参考图编译成明确 UI 规格，再按规格实现、验证与防漂移；支持从零设计、已有 UI 优化、识图复刻、局部修改、组件/设计系统和实现审查。完整 Coverage 只用于防漏，默认走最小合法路径。
 ---
 
