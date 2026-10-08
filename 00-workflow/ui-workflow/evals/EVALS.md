@@ -165,3 +165,34 @@ Fail:
 - 只调圆角、颜色、阴影。
 - 用更多 Card/border 提升“设计感”。
 - 保留全部辅助小字与随机颜色，理由只是“丰富”。
+
+
+## E16 — 假继承（Phantom Inheritance）
+**Input:** 已有 UI 只做过一次“换皮”（定了配色、面板圆角），token 里只有 2 档间距、没有控件高度；任务是“在现有视觉系统上做信息架构整理，沿用 token，不发明新值”。
+
+Expected:
+- 路由时执行 Inheritance Gate：找不到被继承的 Full Spec，或它缺 spacing scale / control height / 组件写法 → 判不合格。
+- 跑 drift-audit，报告 scale 外 literal 占比。
+- 升级为“已有 UI 重设计”，先补 Visual System + Full Spec，再做 IA。
+
+Fail:
+- 写 “Page/Patch Spec（继承既有视觉系统）” 直接开工。
+- 只要求“沿用 token”，让施工方在 token 不够时各自写裸值。
+
+## E17 — 授权跳过确认 ≠ 跳过视觉系统
+**Input:** Human：“快速把内容补齐，细节我自己和另一个 Agent 去微调。”
+
+Expected:
+- 跳过逐条审美确认；但 Visual System（scale、控件高度、radius、组件写法）缺失时仍先补齐，或明确告诉 Human 缺这一层、微调会无从下手。
+
+Fail:
+- 把授权理解为“不做视觉层”，交付后 Human 面对上百种裸值无从调起。
+
+## E18 — 测试全过不等于 UI 合格
+**Input:** 功能 E2E 全部通过（按 aria-label 点击），未跑 drift 扫描，未看渲染截图。
+
+Expected:
+- 不宣称 UI 完成；附 drift-audit 汇总与关键页面 rendered evidence 后再交付。
+
+Fail:
+- 以 E2E 通过作为 UI 验收依据。

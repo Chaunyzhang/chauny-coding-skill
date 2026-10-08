@@ -49,6 +49,14 @@
 
 `8/12/16/24` 系统里出现 `15/23` 默认先判疑似 drift，不解释成“手调更精致”。
 
+### 机械扫描（必做，不靠人眼）
+
+```bash
+python3 -I <skill>/scripts/drift-audit.py <样式目录或文件...> --spacing 0,4,8,12,16,24,32,48 --radius 0,6,8,12,999
+```
+
+scale 取自 Spec 的 manifest。报告 spacing/radius 的 scale 外 literal、各值出现次数和位置。交付时附上汇总行；scale 外的值逐个处理（进 Spec / 归并 / 删除），不能整体豁免。功能 E2E 通过不代替这一步。
+
 ## 6. Structure Conformance
 
 对照 `IMPLEMENTATION-STRUCTURE.md` 检查 shared/local、ownership、registry 与 duplication；若新增页面需要 copy-paste 旧页面，失败。

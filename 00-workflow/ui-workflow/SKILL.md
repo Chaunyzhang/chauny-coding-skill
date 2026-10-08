@@ -29,9 +29,21 @@ Coverage 是问题全集，不是固定流程。先判断任务范围，再只�
 | 新增一个页面 | Coverage scan → UI Definition → Visual inheritance/new direction → Page Spec → Implement → Verify |
 | 从零做 UI | Coverage → UI Definition → Human alignment → Visual System → Full Spec → Structure → Implement → Verify |
 | 图片/截图复刻风格 | Image reverse-engineering → Visual System → Full/Page Spec → Implement → Verify |
-| 已有 UI 重设计 | Restore reality → diagnose hierarchy/layout/system → Human alignment → Patch/Page Spec → Verify |
+| 已有 UI 重设计 | Restore reality → diagnose hierarchy/layout/system → **Inheritance Gate** → Human alignment →（系统不合格时）Visual System + Full Spec → Patch/Page Spec → Verify |
 | 已有设计只实现 | Spec/contract → Structure → Implement → Verify；禁止重新设计 |
 | 纯技术重构 | Structure/ownership → Implement → regression verify；可见行为不变时无需重新找 Human 审批 |
+
+### Inheritance Gate：继承之前先证明被继承的系统存在且合格
+
+任何写着 “Existing System / 继承 / 沿用 token” 的路径（改组件、新增页面、Page Spec、Patch Spec），在路由时必须先通过：
+
+1. **指出来源**：给出被继承的 Full Spec 文件路径（或其 manifest）。只有 token 文件、一次换皮提交、口头描述、“沿用现有 style”都不算。
+2. **Concrete Recipe 检查**：该来源已经写死 spacing scale、page gutter、control height family、radius family、type roles、surface/border/shadow 角色、核心组件写法（见 `references/03-visual-design.md` §11）。缺任何一项，就算不合格。
+3. **现实对账**：对实现跑一次 Drift 扫描（`scripts/drift-audit.py`）。若 scale 外数值大量存在（经验阈值：scale 外 literal 占比 >10%，或同一关系出现 3 种以上间距），说明这套系统只存在于文档、没有落到实现上，同样不合格。
+
+任一项不过：**路由自动升级为“已有 UI 重设计”**，先补 Visual System + Full Spec，再做原任务。不得用“只继承、不发明新值”在一套不存在或不完整的系统上继续叠加。
+
+Human 说“细节我自己调 / 快速补齐即可 / 跳过确认”，授权的是**跳过逐条审美确认**，不是**跳过 Visual System**。没有 scale 和组件写法，Human 也无从“微调”。
 
 只有出现新风险时才升级路径：新页面/新状态、新视觉语言、跨页共享、状态 owner 不清、业务真相不清、复杂交互、结构复制、Spec drift。
 
@@ -228,6 +240,7 @@ Spec 内可附一个**机器可读 manifest**，用于下一页继承和 drift a
 | Gate | 通过条件 |
 |---|---|
 | Routing | 已选择最小合法路径；升级有真实风险理由 |
+| Inheritance | 凡继承路径：已指出被继承 Full Spec，且它通过 Concrete Recipe 检查与 Drift 现实对账；否则已升级路径 |
 | Evidence | 关键事实标明 Observed/Resolved/Unknown；Unknown 未被伪装 |
 | Alignment | 新的 Human 可感知决定已确认，或有明确跳过理由 |
 | UI Definition | Relevant 内容/层级/状态/交互/布局不需要实现者临场猜 |
@@ -235,7 +248,7 @@ Spec 内可附一个**机器可读 manifest**，用于下一页继承和 drift a
 | Spec | Relevant 决定已写入 Full/Page/Patch Spec，具体到足够直接实现 |
 | Structure | 非平凡实现前后均有结构图；没有 copy-paste expansion 或第二 truth source |
 | Implementation | 代码遵守 Spec、ownership、repo 约定；旧路径不作为正常 fallback 存活 |
-| Drift | 新设计值/语言均已解释并进入 Spec，或被移除/归并 |
+| Drift | 已跑机械 Drift 扫描并附结果；新设计值/语言均已解释并进入 Spec，或被移除/归并 |
 | Rendered | Relevant 状态与内容压力在真实运行结果中验证 |
 | Human Review | 机械问题已清；最终审美交给 Human 裁决 |
 
@@ -261,6 +274,9 @@ Spec 内可附一个**机器可读 manifest**，用于下一页继承和 drift a
 - **Post-Hoc Structure Cleanup**：先堆重复代码，提醒后才抽真相源。
 - **Platform Leakage**：把某框架习惯写成通用 UI 原则。
 - **Source-Only Confidence**：没看真实渲染就宣称完成。
+- **Phantom Inheritance**：声称“继承已有视觉系统 / 沿用 token”，但被继承的系统从未写成 Full Spec、没有 spacing/control-height/组件写法，或实现里大量 scale 外数值。
+- **Delegated-Taste Skip**：把 Human 的“细节我来调 / 跳过确认”理解成可以跳过 Visual System。
+- **Test-Pass-As-UI-Pass**：用功能 E2E（按 aria-label 点击）通过来代替 Drift 扫描与渲染检查。
 - **Agent Declares Taste Correct**：Agent 覆盖 Human 审美裁决。
 
 ---

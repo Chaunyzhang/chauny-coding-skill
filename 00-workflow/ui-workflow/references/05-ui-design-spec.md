@@ -13,6 +13,15 @@
 ### Patch Spec
 局部改动，只记录：Target、Preserved、Changed、Reason、Verification。禁止为小改重写整个产品。
 
+### Page / Patch Spec 的头部必须写明继承来源
+
+```md
+Inherits: docs/ui/<FULL-SPEC>.md （或 manifest 路径）
+Inheritance Gate: PASS — recipe 完整；drift-audit: scale 外 N / 共 M（x%）
+```
+
+写不出 `Inherits` 路径，或 Gate 不是 PASS，就不能用 Page/Patch 尺度，必须先补 Full Spec（见 SKILL.md §1 Inheritance Gate）。
+
 ## 2. Human change control
 
 新的 Human 可感知决定必须：
