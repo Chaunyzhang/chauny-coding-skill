@@ -126,7 +126,7 @@ Task Exit 后按 `references/execution-continuity.md` 重新计算 Ready Work；
 - 产品语义、ownership、permission、lifecycle、visible failure/recovery、acceptance 等 → Product。
 - Stage Scope、Decision、interface/data/security/provider/migration 等架构决定 → Chief Architect。
 - 低成本、可逆、已冻结边界内的机械实现细节 → 当前施工层自己解决。
-- 用户已定原则、权威文档或 Engineering Standards 能决定的事 → 直接按其执行，不问用户。只把用户可见的取舍（显示什么、行为怎么变）交用户。
+- 要不要问用户、怎么问 → 看 chauny-align。
 
 FULL AUTO 下，能由已授权 Product / Architect / Blueprint / Stage Verifier / Repair Planning 解决同一 Authorized Objective 的问题应自动路由，不重复索取同一份用户授权；需要用户主观裁决或不可代理动作时才暂停。
 
@@ -162,8 +162,4 @@ Blueprint Mode 下：
 
 FULL AUTO：有合法推进路径就继续；停止必须有合法理由。
 
-向用户汇报时：
-
-- 第一句给结论与进度数：完成几项、共几项、卡在哪。
-- 用用户可见的产品行为表达，不用代码名、内部术语和英文缩写。
-- 发现方向性问题（概念没对上 Host System / 架构、同类问题反复出现、修复成本接近重做）立即说明，并给出继续 / 改方案 / 停的建议，不闷头继续修。
+向用户汇报看 chauny-align。
