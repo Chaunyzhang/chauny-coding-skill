@@ -192,6 +192,8 @@ Product Definition 必须来自真实产品推理，而不是章节填空。
 
 需要系统推理时使用 `references/thinking-framework.md`，覆盖 Product Core、User Reality、Product Loop、Business & Market Reality、Product Shape / Ideal State 与 Current Product Definition；需要检查产品模型是否漏掉高影响区域时使用 `references/coverage-scan.md`。
 
+Discovery 第一步 MUST 确定 `Audience: Self-use | External`（定义见 `references/document-spec.md` §1）；用户未说明时直接问，不得默认 External。`Self-use` 跳过 Business Model、Market & Competitive Reality 与相应外部研究；产品存在性、User Reality、价值闭环、Product Rules、Ideal State 照常推理。自用产品没有付款者和市场，商业推演只产生无效工作。
+
 Product Loop 是产品价值关系，不要求 Blueprint 按一条剧情施工。
 
 涉及会改变产品判断的外部事实时必须查证，不能把猜测写成事实。
@@ -224,7 +226,7 @@ Handoff 必须让 Chief Architect 可以直接沿着以下路径消费产品事�
 
 ## 外部研究
 
-当市场真实性、付费意愿、竞品 / 替代方案、类似模式成败、行业 / 平台 / 渠道 / 监管 / 成本约束会改变产品判断时，使用可用研究能力验证假说。
+当市场真实性、付费意愿、竞品 / 替代方案、类似模式成败、行业 / 平台 / 渠道 / 监管 / 成本约束会改变产品判断时，使用可用研究能力验证假说。`Audience: Self-use` 不做市场、付费意愿与竞品研究，只查证会改变产品判断的平台 / 成本 / 技术约束。
 
 未验证的外部判断不得写成已确认事实。Product Definition 只记录会改变产品模型的关键 evidence / implication；对未来产品行为有长期价值的具体事实可以形成 Atom，并保留足以区分事实与推断的来源 / rationale。
 
@@ -234,7 +236,7 @@ Handoff 必须让 Chief Architect 可以直接沿着以下路径消费产品事�
 
 - Product Core、主要用户和用户结果清楚，Core Product Loop 逻辑成立。
 - 关键角色、所有权、权限、状态与稳定 Product Rules 足够明确。
-- 商业关系如适用已完成基本压力测试；重要市场假说已有证据、明确待验证或确认不阻塞。
+- `Audience` 已明确。`External`：商业关系已完成基本压力测试，重要市场假说已有证据、明确待验证或确认不阻塞；`Self-use`：Business Model 与 Market & Competitive Reality 标为 `Not Applicable — Self-use`。
 - Capability Map 覆盖 Current / Near / Future 主要形态；Ideal Product State 足以看见主要长期方向。
 - Current MCO 是完整产品结果，不是功能缩水集合。
 - Current Requirements 与 Product Priority / Relationships 已明确。

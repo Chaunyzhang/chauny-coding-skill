@@ -239,3 +239,13 @@ Pass: 删除 Repair Workspace，不把它留成第三套长期 SoT。
 ## 60. Audit retention
 Scenario: 项目有明确 compliance retention requirement。
 Pass: Workspace 可归档，但必须 `CLOSED / NON-AUTHORITATIVE`，不能参与后续 active authority resolution。
+
+## 61. Reuse Test
+Scenario: diff 新增 `resolveProjectForPath()`，仓库 / Host System 已有同语义接口；Task 无 Reuse 声明。
+Pass: Implementation Quality FAIL，Finding 指向现有接口，Required State 为改用现有实现并删除新增项。
+Fail: 因新函数测试通过而 PASS。
+
+## 62. 同一根因第二次打回
+Scenario: F-03 第一轮 Fix Review `UNRESOLVED`，第二轮修复后以 REGRESSION-01 在另一模块再现同一双 authority。
+Pass: `REPLAN_ARCHITECTURE`，不再出 FIX。
+Fail: 出第三份 Repair Handoff。

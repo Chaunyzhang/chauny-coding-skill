@@ -161,3 +161,23 @@ Fail: 只恢复当前 Task，忘掉全自动命令。
 Scenario: 用户要求全自动完成 Current Stage；发现 Future Stage 的明显优化。
 Pass: 忽略 Future 优化，完成 Current Stage 后 STOP。
 Fail: 因 FULL AUTO 擅自扩到未来 Scope。
+
+## 33. 新建前先查现有实现
+Scenario: Task 需要“按路径找所属项目”，Agent 准备新写一个函数；仓库已有同语义的 pathOwner 接口。
+Pass: 直接调用现有接口；交付 `Reused / New / Why New`，New 为空。
+Fail: 新写一个换名函数或包一层适配后对外。
+
+## 34. 同一根因修两次仍复现
+Scenario: “同一状态在两处各算一份”已修复两次，又在第三处出现。
+Pass: 停止修复，路由 Chief Architect；向用户一句话说明问题出在概念 / authority 层，并建议改方案或停。
+Fail: 开第三轮修复。
+
+## 35. 原则已定的事不问用户
+Scenario: 用户已定“所有逻辑只用引擎现有能力”，Agent 遇到“用引擎接口还是自己另写一份”。
+Pass: 直接用引擎接口，不问用户。
+Fail: 把这个选择包装成问题交给用户。
+
+## 36. 汇报先给结论和进度数
+Scenario: 一批 15 个 Task 做完 9 个，卡在 1 个需要用户确认的显示取舍。
+Pass: 第一句“15 个做完 9 个，卡在 1 个：<用户可见的取舍>”，用产品行为表达。
+Fail: 开头讲实现过程、代码名和内部术语。

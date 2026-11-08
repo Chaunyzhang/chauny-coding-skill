@@ -4,7 +4,7 @@
 
 规则：
 
-- 1–38 条全部永久有效。永久有效表示规则始终具有约束力，不表示每个 Task 都要逐条执行检查；只有 Trigger 成立的雷点才产生额外工作。
+- 1–39 条全部永久有效。永久有效表示规则始终具有约束力，不表示每个 Task 都要逐条执行检查；只有 Trigger 成立的雷点才产生额外工作。
 - 不得因为结构优化、去重、精简或“最佳实践”而删除任何一条。
 - 可以在 `SKILL.md` 中建立阶段导航，但不得替代本文件。
 - 后续新增雷点继续追加编号；已有编号含义不得静默改写。被强化的既有雷点应保留原问题域，不另造重复规则。
@@ -290,3 +290,11 @@ Task / Slice / Stage 完成、上下文变长或 checkpoint 都不会自动消�
 合法 PAUSE：所有自主路径被 Global Blocker 阻塞；必须 Human / External Authority 执行不可代理动作；必须用户做主观产品/商业/审美裁决；或需要上游能力但当前 Agent / orchestrator 确实无法调用。
 
 Task / Slice / Stage / commit / CI 完成、回复变长、想先汇报，或明明可路由 Architect / Blueprint / Repair Planning，都不是合法停机理由。详见 `execution-continuity.md`。
+
+### 39. 没查现有实现就新建
+
+新增 function / type / module / file / table / endpoint 前，先在当前仓库与 Host System 中查同语义实现：现有 owner、public interface、policy / repository / service。
+
+有同语义实现就直接用，不包一层、不换名重写、不复制一份“适配版”；形状不合适时先回上游调整概念或接口，不在外面另建翻译层。
+
+每个新增项必须能说明：复用了什么、新写了什么、为什么现有实现不能承载。说不出来就是重复实现。

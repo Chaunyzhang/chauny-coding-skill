@@ -36,6 +36,7 @@ docs/architecture/
 | 当前架构入口、Current Stage、文档索引 | `README.md` |
 | Scope、System / Domain / Module / Data / Runtime / Interface / Quality、长期驱动、Invariants | `ARCHITECTURE.md` |
 | 技术栈当前选择 | `TECH_STACK.md` |
+| Host System Concept Mapping / Gap | `ARCHITECTURE.md § Host System Mapping`；选择论证在 `DECISIONS.md` |
 | 项目结构、职责、边界、依赖方向 | `PROJECT_STRUCTURE.md` |
 | 跨项目工程规则 | `ENGINEERING_STANDARDS.md` |
 | 外部服务 / Provider / Build-Buy / 数据成本锁定 | `EXTERNAL_SERVICES.md` |
@@ -57,6 +58,7 @@ docs/architecture/
 - **Product & Long-term Drivers**：只记录影响技术的产品事实与必要规模假设，直接引用产品权威来源。
 - **Scope Decisions**：按原 `Requirement-n` 记录 `Scope Result | Why | Revisit Trigger / Accepted Stage`。
 - **System Context**
+- **Host System Mapping**：仅依托现成系统时。按 `Product Concept | Host Object / Interface | Gap → Architecture Delta` 逐项列出；Gap 为空表示全部直接复用。
 - **Domain Ownership / Semantic Authority**
 - **Module Model**
 - **Data Model**

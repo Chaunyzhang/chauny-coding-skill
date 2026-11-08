@@ -36,6 +36,7 @@
 - 外部正确 public path。
 - 哪些直接访问会 bypass owner。
 - 是否已有同语义实现。
+- 依托 Host System 时，触及概念在 `ARCHITECTURE.md § Host System Mapping` 中的承载对象；仓库现实与 Mapping 不符时回 Architecture。
 - 正常变化应落在哪个 owning domain。
 
 若两个独立位置已在决定同一核心业务事实，这是 Repository Reality 冲突；不要规划第三套。

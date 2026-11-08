@@ -61,6 +61,7 @@ Goal
 Reasoning: Low (0–4) | Medium (5–10)
 Criticality: Sensitive | Critical   # 仅适用时
 Implementation Constraints          # 仅触及 owner/authority/boundary/reuse 时
+Reuse                               # 计划新增 symbol/type/file/module/table/endpoint 时
 Prerequisites
 Targets
 Actions
@@ -94,6 +95,16 @@ Do Not Bypass:
 Mutation / Side-effect Boundary:
 ```
 不触及边界就省略。若 owner/authority 尚未决定，回 Architecture，不能让 Construction 自选。
+
+### Reuse
+
+Task 计划新增任何 symbol / type / file / module / table / endpoint 时 MUST 写：
+```text
+Reused:   直接使用的现有 owner / interface / implementation（path + symbol）
+New:      计划新增项
+Why New:  逐项说明现有实现为何不能承载（引用 Authority / Reuse Intake 结论）
+```
+`Why New` 只接受“现有无同语义实现”或“现有实现承载不同语义”；“改旧代码麻烦”“新写更干净”“包一层更方便”不是理由。依托 Host System 时，`Reused` 先查 `ARCHITECTURE.md § Host System Mapping`。
 
 ### Targets / Actions
 

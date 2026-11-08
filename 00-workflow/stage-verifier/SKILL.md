@@ -354,6 +354,7 @@ Builder 偏离 Repair Execution Contract 时：
 结果：
 
 - Finding 未清零 → `FIX` 或上游 Route。
+- 同一根因第二次被打回（同一 Finding 两轮 Fix Review 未 `RESOLVED`，或以 `REGRESSION-XX` 换处再现）→ `REPLAN_ARCHITECTURE`，不再出 `FIX`。反复修不好说明问题在 owner / authority / 概念映射层，不在实现层。
 - Frozen Findings 清零、proof 足够、无 blocking direct regression → `REPAIR VERIFIED`。
 
 `REPAIR VERIFIED` 后禁止继续代码修复和 hardening，进入 Stage Reconciliation。

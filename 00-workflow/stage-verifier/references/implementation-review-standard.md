@@ -103,6 +103,19 @@ Actual Decision Sites:
 
 `多个互不依赖的判断点`
 
+### Reuse Test
+
+对 diff 中每个新增 symbol / type / file / module / table / endpoint：
+
+```text
+New Item:
+Declared In Task Reuse: Yes | No
+Existing Same-Semantic Implementation (repo / Host System):
+Why New Valid: Yes | No
+```
+
+存在同语义现有实现、未声明，或 `Why New` 不成立 → FAIL。新增项包一层现有实现并换名 / 翻译后对外，等同重复实现。
+
 ## 4. Modular Integrity
 
 ### Ownership Test

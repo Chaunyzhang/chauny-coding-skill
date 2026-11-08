@@ -137,3 +137,27 @@ Requirement：“用户可以让 AI 修改已引用的灵感。” Atoms：AI �
 已确认：“AI 必须理解被引用灵感实际内容并能修改原对象。” downstream 只留下 `referenceId`。
 
 正确：能从 Atom Store 指出仅传 ID 未覆盖 Behavior / Identity / Acceptance 等既有语义；这不是新功能，而是已有产品语义未完整实现。
+
+## 22. 自用产品不做商业推演
+
+用户：“做个自己用的工作台，管我自己的几个项目。”
+
+正确：写 `Audience: Self-use`；Business Model、Market & Competitive Reality 写 `Not Applicable — Self-use`；不研究竞品与付费意愿；用户价值闭环、Product Rules、Ideal State 照常推理。
+
+错误：追问谁付钱、定价、市场规模、竞品功能表。
+
+## 23. Audience 未说明
+
+用户：“做一个 AI 写作工具。”未说明给谁用。
+
+正确：第一轮直接问自用还是对外。
+
+错误：默认 External 并展开商业闭环；或默认 Self-use 跳过商业。
+
+## 24. 自用转对外
+
+已有 `Audience: Self-use`，用户：“打算开源并做成产品卖。”
+
+正确：改为 `External`，补齐 Business Model 与 Market & Competitive Reality 后再 Handoff。
+
+错误：只改 Audience 字段，两节仍为 `Not Applicable`。

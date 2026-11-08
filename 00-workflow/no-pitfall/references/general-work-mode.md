@@ -4,7 +4,7 @@
 
 开始时恢复 Active User Directive，并明确用户任务、修改边界、相关工程规则、Repository Reality 与最低充分 Verification。持续执行规则统一见 `execution-continuity.md`。
 
-仍受全部 38 条雷点约束；只激活当前 Trigger 相关的额外检查。高频导航：
+仍受全部 39 条雷点约束；只激活当前 Trigger 相关的额外检查。高频导航：
 
 - bug fix：`2, 3, 5, 21, 22, 23, 27, 30, 31, 32, 33`
 - refactor：`3, 6, 8, 9, 13, 16, 28`

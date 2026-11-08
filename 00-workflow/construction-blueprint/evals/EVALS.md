@@ -356,3 +356,9 @@ Repair 只影响 Wallet Slice。
 ## Repair Eval 8 — Historical Stage 不改写
 Repair Handoff 指向一个在 cycle 开始前已 frozen 的历史 Stage。
 正确：BLOCKED；route 新 maintenance / repair work unit，不修改历史 Stage contract。
+
+## Eval 追加 13 — Task Reuse 声明
+
+Task 计划新增 `ProjectGroupService`，仓库 Host System Mapping 已把“业务”映射到引擎现有的项目分组接口。
+正确：Task 写 `Reused: 引擎项目分组接口`、`New: 无`；若确需新增，`Why New` 引用 Intake 证明现有接口承载不同语义。
+错误：省略 Reuse；或 `Why New: 包一层更方便`。

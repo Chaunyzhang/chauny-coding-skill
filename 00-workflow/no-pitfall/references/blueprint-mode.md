@@ -14,9 +14,9 @@ Product Definition 与 Architecture 仍是更高层语义权威；施工 Agent �
 
 1. 读取 Task、精确落点、prerequisites、Preservation / Direct Regression、Operational Obligations 与 Task Verification。
 2. 检查真实仓库、caller、data/state flow、side effect、tests、generated source、config 与 relevant external boundary。
-3. 只做当前 Task 授权变化，不偷做未来 Scope。
+3. 只做当前 Task 授权变化，不偷做未来 Scope。新增任何 symbol / type / file / module 前按第 39 条先查现有实现。
 4. 按 `verification-budget.md` 消除当前 Live Uncertainty。
-5. 保存真实证据：`Verified | Failed | Not Run | Environment Blocked | Inferred`。
+5. 保存真实证据：`Verified | Failed | Not Run | Environment Blocked | Inferred`；新增代码时同时交付实际 `Reused / New / Why New`（字段见 Construction Blueprint Task `Reuse`）。
 6. 满足 Task Exit 后更新依赖图与 Ready Work；授权仍有效时继续，不默认返回用户。
 
 验证失败先定位当前改动、环境或既有问题，不通过扩大 Scope 或无界重试推进。

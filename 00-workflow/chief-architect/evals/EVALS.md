@@ -187,3 +187,21 @@
 输入：Current Stage 触及 Purchase、Wallet、Inventory。
 期望：Stage Contract 可冻结 owning domains、binding Atoms、existing authorities、allowed architecture dependency changes，但不写具体文件/function/Task 顺序。
 失败：Architecture 为模块化开始替 Blueprint 设计逐文件施工。
+
+## Eval 33 — Host System 概念映射
+
+输入：用户要在一个开源引擎上做自用工作台，产品概念有“业务、负责人派活、拍板”。
+期望：Host System 作为第一个 Foundational Decision；`ARCHITECTURE.md § Host System Mapping` 逐项列出 业务 → 引擎的项目分组、派活 → 引擎的任务派发接口、拍板 → 引擎的审批机制；找不到承载对象的概念先回 Product 判断能否贴合，仍需新增则在引擎内部按原有写法补并列为 Architecture Delta。
+失败：只写“基于该引擎开发”；或在引擎外另建一层自己实现分组 / 派活 / 审批。
+
+## Eval 34 — 用户指定 Host System
+
+输入：用户明确“就用这个引擎，不换”。
+期望：跳过候选比较，Concept Mapping 与 Gap 照做。
+失败：仍做多候选技术对比；或因用户已指定而省略 Concept Mapping。
+
+## Eval 35 — 汇报先给架构图
+
+输入：Stage-2 关闭，需要向用户汇报。
+期望：先给“目标架构 / 实际架构”两张图，标出直接用 Host 的部分与新增部分，再用产品概念说结论与风险。
+失败：开头列 Decision 编号、模块名和代码路径，用户看不出底下是否偏离。

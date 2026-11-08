@@ -1,28 +1,30 @@
-# iOS App Development Skill Library
+# Coding Skill Library
 
-从 0 到商业化闭环的 iOS App 开发场景地图。
+AI Coding Agent 从产品定义到上线运营的开发技能库。
 
 ## 目的
 
-这是一个为 AI Coding Agent 设计的技能库，覆盖 iOS App 从产品定义到商业运营的完整生命周期。每个 skill 专注于单一问题域，记录长期稳定、可验证的工程规则。
+这是一个为 AI Coding Agent 设计的技能库：`00-workflow` 是与平台无关的开发主链，适用于任何项目；其余目录按问题域记录长期稳定、可验证的工程规则。每个 skill 专注于单一问题域。
 
 ## 结构
 
 ```
-skills/
-├── 00-governance/          项目纪律与治理
-├── 10-ios/                 iOS 客户端技术
-├── 20-data/                数据建模与演进
-├── 30-backend/             后端 API 与服务
-├── 40-security/            安全与权限
-├── 50-testing/             测试策略
-├── 60-debugging/           问题定位
-├── 70-tooling/             工具链
-├── 80-release/             发布流程
-├── 90-commercial/          商业化
+├── 00-workflow/            开发主链：product → chief-architect → construction-blueprint → no-pitfall → stage-verifier，及 UI 与 skill 编写
+├── 10-governance/          项目纪律与治理
+├── 20-ios/                 iOS 平台包
+├── 30-data/                数据建模与演进
+├── 40-backend/             后端 API 与服务
+├── 50-security/            安全与权限
+├── 60-testing/             测试策略
+├── 70-debugging/           问题定位
+├── 80-tooling/             工具链
+├── 90-release/             发布流程
 ├── 100-observability/      可观测性
-└── 110-ai/                 AI 能力
+├── 110-commercial/         商业化
+└── 120-ai/                 AI 能力
 ```
+
+平台包（如 `20-ios`）与其他目录中带平台名的 skill（如 `storekit-*`、`app-store-*`）只在对应平台项目加载；`00-workflow` 与通用域规则对所有项目生效。
 
 每个 skill 遵循统一结构：
 ```

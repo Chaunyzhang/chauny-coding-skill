@@ -128,6 +128,8 @@ Foundational Decision 必须检查 Current Fit、Long-term Fit、Break Point、M
 
 技术栈与 Provider 是核心交付，但只深入实际适用能力。对每项先判断 `Build | Buy | Managed | Self-host`，再决定具体 Provider；高影响选择按 Foundational Decision 程序执行。
 
+产品依托现成系统时，先做 Host System 决定并完成 Concept Mapping，再选其余技术栈；既未映射也未列为 Gap 的概念不得进入 Stage Contract。方法见 `references/technology-selection.md` § Host System。
+
 实际适用项应覆盖 Delivery Surface、Client / Frontend、Backend / Runtime、Primary Database、API / Interface、Hosting / Compute，以及触发的 Identity、Storage / Media / CDN、Cache / Search、Queue / Jobs、Realtime、Notifications、Payment、Analytics、Logging、Crash、Metrics、Tracing、Audit、CI/CD / Secrets / Environments、AI / External Providers。
 
 未使用能力不为填表展开；核心技术索引可标 `Not Applicable`，条件域只在触发时深入。Provider 选择必须考虑产品核心性、产品语义、Current / Long-term Fit、数据 / 隐私 / 合规、可靠性 / 配额 / failure mode、成本曲线、Lock-in / Exit、团队运维能力和 Revisit Trigger。
@@ -267,7 +269,9 @@ Stage 关闭后保留最终 Contract、Exit State、关键 Architecture Delta、
 
 恢复时先读权威文档与真实仓库；仍有效的 Decision 不重做，已关闭 Stage 不重规划，只重开受产品变化、现实变化或 Revisit Trigger 影响的决定；不因追求“更完美”重构不阻塞当前或长期方向的既有技术。
 
-聊天只报告本轮架构结论、重要技术栈 / Provider 选择、关键取舍与风险、Roadmap / Stage 变化、真正需要用户决定的产品 / 成本 / 数据 / 合规问题，以及更新了哪些权威文档。完整专业内容写入文档。
+聊天汇报 MUST 先给一张架构图：系统由哪几部分组成、业务逻辑落在哪、谁调用谁；依托 Host System 时标出哪些部分直接用 Host、哪些是新增。Stage 关闭时并列“目标架构 / 实际架构”两张图。看不到图，用户只能看功能，看不出底下是否偏离架构。
+
+图之后只报告本轮架构结论、重要技术栈 / Provider 选择、关键取舍与风险、Roadmap / Stage 变化、真正需要用户决定的产品 / 成本 / 数据 / 合规问题，以及更新了哪些权威文档。用产品概念和用户可见行为表达，不用代码名与内部术语。完整专业内容写入文档。
 
 ## Reference Routing
 
@@ -287,6 +291,7 @@ Stage 关闭后保留最终 Contract、Exit State、关键 Architecture Delta、
 - Current / Near `Requirement-n` 已有 Scope 裁决。
 - 影响当前或可信长期方向的 Foundational Decisions 已决定，或有明确且不阻塞当前的 Revisit Trigger。
 - Current Stage 所需技术栈、外部服务和运行环境已明确。
+- 依托现成系统时：Host System 已决定，Current Stage 触及的产品概念全部映射到 Host 对象，或已列为 Gap → Architecture Delta。
 - Architecture Spine 足以约束 Product Semantics、Domain Ownership、Semantic Authority、模块、数据、运行、接口与质量；核心 state / rule / mutation 没有已知双 authority。
 - Engineering Standards 已覆盖真正跨项目重复的适用规则；未把局部风格升级为全局流程税。
 - 使用中的 Observability 类型、关键流程与 Sink / Runtime Visibility 已明确。

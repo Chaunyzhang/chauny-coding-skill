@@ -11,6 +11,7 @@
 - 存在明显平台 / Provider Lock-in。
 - 会决定 Identity、Data Ownership、Domain Ownership、Semantic Authority、Deployment、Repository 或核心边界。
 - 今天选错后很可能要求系统级重写。
+- 选择产品所依托的现成系统（Host System）。
 
 否则按 **Reversible Decision**：记录结论、理由和替换边界即可。
 
@@ -92,6 +93,17 @@ Revisit Trigger:
 ## 3. 技术栈选择
 
 按“产品行为 + 长期形态 + 团队现实”选择，不按流行度。
+
+### Host System
+
+产品建在现成系统（开源项目、引擎、平台、已有仓库）之上时，Host System 是第一个 Foundational Decision，先于其余技术栈决定。按 §2 程序执行，Real Candidate Set 包含不依托 Host System 的自建路线，并 MUST 补两项：
+
+- **Concept Mapping**：产品每个核心概念（Product Core、Core Loop、Capability Map 中的对象与动作）→ Host System 中承载它的现有对象 / 接口 / 机制。逐项写明，不得只写“基于 X 开发”。
+- **Gap**：没有承载对象的概念，先回 Product 判断能否调整概念贴合 Host System；仍需新增时，新增 MUST 通过 Host System 的扩展机制或在其内部按原有写法补充，列为 Architecture Delta。
+
+不得在 Host System 之外另建一层承载已映射的概念。概念没有对上 Host System，施工会在外面重造一套平行逻辑。
+
+Host System 由用户指定时，跳过候选比较，Concept Mapping 与 Gap 照做。
 
 ### Client / Frontend
 

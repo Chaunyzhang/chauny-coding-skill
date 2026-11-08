@@ -14,6 +14,8 @@
 
 Stage Scope / Exit / Acceptance、Decision、module/interface semantics、data ownership/consistency、transaction、security boundary、provider/stack、migration/compatibility 等架构决定。
 
+同一根因的问题已修复两次仍未解决或换处再现 → Chief Architect，不进第三轮修复。反复出现说明 owner / authority / 概念映射有误，继续修只会扩散。
+
 ## 当前施工层
 
 普通 UI/代码组织、现有 convention、测试放置，以及不改变产品/架构语义的低成本可逆实现选择。

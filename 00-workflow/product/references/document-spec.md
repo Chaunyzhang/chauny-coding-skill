@@ -32,6 +32,19 @@ docs/product/Product-Atoms.md
 ## 14. Handoff to Architecture
 ```
 
+### 1. Product Core
+
+必须写 `Audience: Self-use | External`。
+
+- `Self-use`：只供用户本人使用，不获客、不收费、不对外发布。
+- `External`：面向他人使用、发布或收费。
+
+Audience 决定 §5–6 与商业 / 市场推理是否展开。
+
+### 5–6. Business Model / Market & Competitive Reality
+
+`Audience: Self-use` 时两节只写 `Not Applicable — Self-use`。Audience 改为 `External` 后，必须补齐两节才能再次 Handoff。
+
 ### 9. Current Minimum Complete Outcome
 
 包括：Outcome、Primary Actors、Core Journey、Must-Have Capabilities、Current Requirements、Required Product Rules / Failure Semantics、Visible Result、Completion Boundary、Explicitly Not Current，以及需要时的 Product Priority / Relationships。
@@ -54,6 +67,8 @@ Architecture-Shaping: Yes | No
 只做 consumer-aware index，不复制 Atom Statement：
 
 ```text
+Audience: Self-use | External
+
 Current Minimum Complete Outcome:
 ...
 
