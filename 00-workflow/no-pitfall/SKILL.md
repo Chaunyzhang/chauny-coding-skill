@@ -73,6 +73,8 @@ FULL AUTO 不授权改变产品目标、Architecture Authority、未冻结 Scope
 
 模型容易把“认真”误解成更多防御、更多测试和更多自我审计。施工中始终执行：
 
+0. 视角：问题出现时，先问「现有系统哪儿不完善、哪儿有问题」，不问「该设计一套什么系统来解决」。先定位是哪一处现有逻辑产生了问题，在那一处修（第 39、44 条）。
+
 1. 先区分 `Confirmed Defect` 与 `Hypothetical Risk`；假想风险按第 30 条先证明，不直接施工。
 2. Confirmed Defect 追到 invariant / ownership / source of truth / state / boundary 的正确层级，按第 31 条修根因。
 3. 每个新增验证都必须对应仍存在且会改变下一步行动的 `Live Uncertainty`；详见第 32 条和 `references/verification-budget.md`。
